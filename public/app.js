@@ -10,7 +10,12 @@ function esc(s) {
 
 function fmtDate(d) {
   if (!d) return "";
-  return new Date(d + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "long" });
+  const parts = d.split("-");
+  if (parts.length === 3) {
+    const eventDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0);
+    return eventDate.toLocaleDateString("es-ES", { day: "numeric", month: "long" });
+  }
+  return d;
 }
 
 function isAdminLoggedIn() {
@@ -21,23 +26,39 @@ function renderAdminControls(n) {
   if (!isAdminLoggedIn()) return "";
   return `
     <div class="admin-actions" style="margin-top: 10px; display: flex; gap: 8px;">
-      <button type="button" onclick="editNotice('${n.id}')" style="background:#f0ad4e; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">✏️ Editar</button>
-      <button type="button" onclick="deleteNotice('${n.id}')" style="background:#d9534f; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">🗑️ Borrar</button>
+      <button type="button" onclick="editNotice('${n.id}')" style="background:#f0ad4e; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:bold;">✏️ Editar</button>
+      <button type="button" onclick="deleteNotice('${n.id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:bold;">🗑️ Borrar</button>
     </div>
   `;
 }
 
 function renderImage(imageUrl) {
   if (!imageUrl) return "";
-  return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
+  return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:12px; display:block; height:auto;"></div>`;
 }
 
-// Comprueba si un evento ya ha pasado en base a su fecha y hora
 function isPastEvent(n) {
   if (!n.date) return false;
+
   const timeStr = n.time || "23:59";
-  const eventDateTime = new Date(`${n.date}T${timeStr}:00`);
-  return eventDateTime < new Date();
+  const parts = n.date.split("-");
+  
+  if (parts.length !== 3) return false;
+
+  let yearNum = Number(parts[0]);
+  let monthNum = Number(parts[1]);
+  let dayNum = Number(parts[2]);
+
+  if (parts[0].length === 2 && parts[2].length === 4) {
+    yearNum = Number(parts[2]);
+    dayNum = Number(parts[0]);
+  }
+
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  const eventDate = new Date(yearNum, monthNum - 1, dayNum, hours || 23, minutes || 59, 0);
+  const now = new Date();
+
+  return eventDate < now;
 }
 
 window.downloadICS = function(id) {
@@ -47,7 +68,10 @@ window.downloadICS = function(id) {
     return;
   }
 
-  const [yearNum, monthNum, dayNum] = n.date.split("-").map(Number);
+  const parts = n.date.split("-");
+  const yearNum = Number(parts[0]);
+  const monthNum = Number(parts[1]);
+  const dayNum = Number(parts[2]);
   const [hoursNum, minutesNum] = (n.time || "09:00").split(":").map(Number);
 
   const startDate = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum, 0);
@@ -112,14 +136,13 @@ function renderCard(n, isPast = false) {
     <article class="card">
       <div class="badge">${isPast ? "⌛" : "📅"}</div>
       <div style="flex:1;">
-        <!-- TÍTULO EN ROJO Y NEGRITA -->
-        <h3 style="color: #d9534f; font-weight: bold; margin: 0 0 6px 0;">${esc(n.title)}</h3>
+        <h3 style="color: #ef4444; font-weight: bold; margin: 0 0 4px 0;">${esc(n.title)}</h3>
         <p><strong>${n.date ? fmtDate(n.date) : "Sin fecha"}</strong>${n.time ? " · " + n.time : ""}</p>
         <p>${esc(n.description)}</p>
         ${renderImage(n.imageUrl)}
         ${!isPast ? `
           <div style="margin-top:12px;">
-            <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
+            <button type="button" onclick="downloadICS('${n.id}')" style="background:#209b59; color:white; border:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
           </div>
         ` : ""}
         ${renderAdminControls(n)}
@@ -129,31 +152,32 @@ function renderCard(n, isPast = false) {
 }
 
 function render() {
-  // Separar eventos futuros y pasados
-  const futureNotices = notices.filter(n => !isPastEvent(n)).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-  const pastNotices = notices.filter(n => isPastEvent(n)).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const futureNotices = notices
+    .filter(n => !isPastEvent(n))
+    .sort((a, b) => (a.date || "").localeCompare(b.date || ""));
 
-  // Renderizar eventos futuros
+  const pastNotices = notices
+    .filter(n => isPastEvent(n))
+    .sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
   const noticeList = $("#noticeList");
   if (noticeList) {
-    noticeList.innerHTML = futureNotices.map(n => renderCard(n, false)).join("") || "<p>No hay eventos próximos.</p>";
+    noticeList.innerHTML = futureNotices.map(n => renderCard(n, false)).join("") || "<p style='padding:10px; color:#59645e;'>No hay eventos próximos.</p>";
   }
 
-  // Renderizar eventos pasados
   const pastNoticeList = $("#pastNoticeList");
   if (pastNoticeList) {
-    pastNoticeList.innerHTML = pastNotices.map(n => renderCard(n, true)).join("") || "<p>No hay eventos pasados registrados.</p>";
+    pastNoticeList.innerHTML = pastNotices.map(n => renderCard(n, true)).join("") || "<p style='padding:10px; color:#59645e;'>No hay eventos pasados registrados.</p>";
   }
 
-  // Próximo evento destacado
-  const future = futureNotices.filter(n => n.date)[0];
+  const future = futureNotices.find(n => n.date);
   const nextCard = $("#next");
   if (nextCard) {
     nextCard.innerHTML = future ? `
       <strong>📌 Próximo Evento</strong>
-      <h3 style="color: #d9534f; font-weight: bold; margin: 4px 0;">${esc(future.title)}</h3>
-      <p>${fmtDate(future.date)}${future.time ? " · " + future.time : ""}</p>
-    ` : "<strong>📌 Todo al día</strong><p>No hay eventos próximos.</p>";
+      <h3 style="color: #ef4444; font-weight: bold; margin: 4px 0;">${esc(future.title)}</h3>
+      <p style="color:#59645e; margin:2px 0;">${fmtDate(future.date)}${future.time ? " · " + future.time : ""}</p>
+    ` : "<strong>📌 Todo al día</strong><p style='color:#59645e; margin:2px 0;'>No hay eventos próximos.</p>";
   }
 
   renderCalendar();
@@ -166,10 +190,15 @@ function renderCalendar() {
   
   let html = ["L", "M", "X", "J", "V", "S", "D"].map(x => `<b class="day">${x}</b>`).join("");
   for (let i = 0; i < offset; i++) html += "<span></span>";
+  
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
   for (let d = 1; d <= days; d++) {
     const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
     const has = notices.some(n => n.date === iso);
-    html += `<span class="day ${has ? "event" : ""}">${d}</span>`;
+    const isToday = isCurrentMonth && today.getDate() === d;
+    html += `<span class="day ${has ? "event" : ""} ${isToday ? "today" : ""}">${d}</span>`;
   }
   const calendarGrid = $("#calendarGrid");
   if (calendarGrid) calendarGrid.innerHTML = html;
