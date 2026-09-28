@@ -18,9 +18,9 @@
 
   <main>
     <section id="home" class="screen active">
-      <button id="adminBtn" class="admin-link">⚙ Publicar aviso</button>
+      <button id="adminBtn" class="admin-link">⚙ Publicar evento</button>
       <div id="next" class="next-card"></div>
-      <div class="section-title"><h2>Avisos recientes</h2></div>
+      <div class="section-title"><h2>Próximos eventos</h2></div>
       <div id="noticeList"></div>
     </section>
 
@@ -34,30 +34,31 @@
     </section>
 
     <section id="reminders" class="screen">
-      <div class="section-title"><h2>Recordatorios</h2></div>
-      <div id="reminderList"></div>
-      <button id="notifyBtn" class="primary">🔔 Activar notificaciones</button>
+      <div class="section-title"><h2>Notificaciones</h2></div>
+      <p style="margin-bottom: 15px; color: #555;">Activa las notificaciones para recibir un aviso en tu móvil u ordenador 24 horas antes de cada evento configurado.</p>
+      <button id="notifyBtn" class="primary">🔔 Activar notificaciones push</button>
     </section>
 
     <section id="admin" class="screen">
-      <div class="section-title"><button id="backBtn">‹</button><h2>Nuevo aviso</h2></div>
+      <div class="section-title"><button id="backBtn">‹</button><h2>Nuevo evento</h2></div>
       <div class="form">
-        <div class="types">
-          <button data-type="aviso" class="selected">📢<span>Aviso</span></button>
-          <button data-type="evento">📅<span>Evento</span></button>
-          <button data-type="recordatorio">🔔<span>Recordatorio</span></button>
-        </div>
         <label>Título<input id="title" placeholder="Ej. Excursión al museo"></label>
         <label>Descripción<textarea id="description" placeholder="Escribe los detalles..."></textarea></label>
-        <div class="two"><label>Fecha<input id="date" type="date"></label><label>Hora<input id="time" type="time"></label></div>
+        <div class="two">
+          <label>Fecha<input id="date" type="date"></label>
+          <label>Hora<input id="time" type="time"></label>
+        </div>
         
-        <!-- Campo para adjuntar imágenes -->
         <label>Imagen adjunta (opcional)
           <input id="imageFile" type="file" accept="image/*">
         </label>
 
-        <label class="switchrow"><span>🔴 Aviso importante</span><input id="important" type="checkbox"></label>
-        <button id="publish" class="primary">Publicar aviso</button>
+        <label class="switchrow">
+          <span>🔔 Recordatorio 24h antes</span>
+          <input id="reminder24h" type="checkbox">
+        </label>
+
+        <button id="publish" class="primary">Publicar evento</button>
         <p id="adminMsg" class="msg"></p>
       </div>
     </section>
@@ -66,7 +67,7 @@
   <nav class="bottom">
     <button data-screen="home" class="active">⌂<span>Inicio</span></button>
     <button data-screen="calendar">▦<span>Calendario</span></button>
-    <button data-screen="reminders">♧<span>Recordatorios</span></button>
+    <button data-screen="reminders">♧<span>Avisos</span></button>
   </nav>
   <script src="/app.js"></script>
 </body>
