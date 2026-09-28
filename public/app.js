@@ -32,7 +32,7 @@ function renderImage(imageUrl) {
   return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
-// Genera y descarga el archivo .ics formateado en UTC para compatibilidad con Google Calendar y Apple
+// Genera y descarga el archivo .ics formateado únicamente con la alarma de 24 horas antes
 window.downloadICS = function(id) {
   const n = notices.find(x => x.id === id);
   if (!n || !n.date) {
@@ -67,18 +67,11 @@ window.downloadICS = function(id) {
     `DESCRIPTION:${(n.description || "").replace(/\n/g, "\\n")}`,
     "STATUS:CONFIRMED",
     
-    // Alarma 1: 24 horas antes
+    // Única alarma: 24 horas antes (-P1D = 1 día antes)
     "BEGIN:VALARM",
     "ACTION:DISPLAY",
-    "TRIGGER;VALUE=DURATION:-P1D",
+    "TRIGGER:-P1D",
     `DESCRIPTION:Recordatorio 24h antes: ${n.title}`,
-    "END:VALARM",
-
-    // Alarma 2: 2 horas antes
-    "BEGIN:VALARM",
-    "ACTION:DISPLAY",
-    "TRIGGER;VALUE=DURATION:-PT2H",
-    `DESCRIPTION:Recordatorio 2h antes: ${n.title}`,
     "END:VALARM",
     
     "END:VEVENT",
@@ -226,7 +219,6 @@ window.deleteNotice = async function (id) {
   if (r.ok) { await load(); } else { alert("No se pudo borrar. Revisa la contraseña."); }
 };
 
-// Inicialización de escuchadores de eventos al cargar el DOM
 document.addEventListener("DOMContentLoaded", () => {
   $$(".bottom button").forEach(b => b.onclick = () => show(b.dataset.screen));
 
