@@ -1,7 +1,12 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const webpush = require('web-push');
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import webpush from 'web-push';
+import { fileURLToPath } from 'url';
+
+// Configuración necesaria para obtener __dirname usando ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
