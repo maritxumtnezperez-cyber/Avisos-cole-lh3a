@@ -1,5 +1,4 @@
 let notices = [];
-let currentType = "aviso";
 let month = new Date().getMonth(), year = new Date().getFullYear();
 let editingNoticeId = null;
 
@@ -12,10 +11,6 @@ function esc(s) {
 function fmtDate(d) {
   if (!d) return "";
   return new Date(d + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "long" });
-}
-
-function icon(n) {
-  return n.type === "evento" ? "🚌" : n.type === "recordatorio" ? "🔔" : "📢";
 }
 
 function isAdminLoggedIn() {
@@ -38,40 +33,28 @@ function renderImage(imageUrl) {
 }
 
 function render() {
-  const sorted = [...notices].sort((a, b) => String(b.created_at || b.id).localeCompare(String(a.created_at || a.id)));
+  const sorted = [...notices].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   
   $("#noticeList").innerHTML = sorted.map(n => `
-    <article class="card ${n.important ? "important" : ""}">
-      <div class="badge">${icon(n)}</div>
+    <article class="card">
+      <div class="badge">📅</div>
       <div style="flex:1;">
         <h3>${esc(n.title)}</h3>
-        <p>${n.date ? fmtDate(n.date) : "Sin fecha"}${n.time ? " · " + n.time : ""}</p>
+        <p><strong>${n.date ? fmtDate(n.date) : "Sin fecha"}</strong>${n.time ? " · " + n.time : ""}</p>
         <p>${esc(n.description)}</p>
+        ${n.reminder24h ? `<p style="font-size:0.85em; color:#2fa866; margin-top:4px;">🔔 Recordatorio programado (24h antes)</p>` : ""}
         ${renderImage(n.imageUrl)}
         ${renderAdminControls(n)}
       </div>
     </article>
-  `).join("") || "<p>No hay avisos todavía.</p>";
+  `).join("") || "<p>No hay eventos creados todavía.</p>";
 
   const future = notices.filter(n => n.date).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
   $("#next").innerHTML = future ? `
-    <strong>🔔 Próximo</strong>
+    <strong>📌 Próximo Evento</strong>
     <h3>${esc(future.title)}</h3>
     <p>${fmtDate(future.date)}${future.time ? " · " + future.time : ""}</p>
-  ` : "<strong>📌 Todo al día</strong><p>No hay próximos eventos.</p>";
-
-  $("#reminderList").innerHTML = notices.filter(n => n.type === "recordatorio" || n.important).map(n => `
-    <article class="card">
-      <div class="badge">🔔</div>
-      <div style="flex:1;">
-        <h3>${esc(n.title)}</h3>
-        <p>${n.date ? fmtDate(n.date) : ""}${n.time ? " · " + n.time : ""}</p>
-        <p>${esc(n.description)}</p>
-        ${renderImage(n.imageUrl)}
-        ${renderAdminControls(n)}
-      </div>
-    </article>
-  `).join("") || "<p>No hay recordatorios.</p>";
+  ` : "<strong>📌 Todo al día</strong><p>No hay eventos próximos.</p>";
 
   renderCalendar();
 }
@@ -89,7 +72,7 @@ function renderCalendar() {
   $("#calendarGrid").innerHTML = html;
   $("#eventList").innerHTML = notices.filter(n => n.date && new Date(n.date + "T12:00:00").getFullYear() === year && new Date(n.date + "T12:00:00").getMonth() === month).sort((a, b) => a.date.localeCompare(b.date)).map(n => `
     <article class="card">
-      <div class="badge">${icon(n)}</div>
+      <div class="badge">📅</div>
       <div style="flex:1;">
         <h3>${esc(n.title)}</h3>
         <p>${fmtDate(n.date)}${n.time ? " · " + n.time : ""}</p>
@@ -123,12 +106,6 @@ $("#backBtn").onclick = () => {
   show("home");
 };
 
-$$(".types button").forEach(b => b.onclick = () => {   $$
-(".types button").forEach(x => x.classList.remove("selected"));
-  b.classList.add("selected");
-  currentType = b.dataset.type;
-});
-
 function getBase64(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve(null);
@@ -152,12 +129,11 @@ $("#publish").onclick = async () => {
   }
 
   const payload = {
-    type: currentType,
     title: $("#title").value,
     description: $("#description").value,
     date: $("#date").value || null,
     time: $("#time").value || null,
-    important: $("#important").checked,
+    reminder24h: $("#reminder24h").checked,
     imageUrl: imageUrl
   };
 
@@ -178,7 +154,7 @@ $("#publish").onclick = async () => {
     return;
   }
 
-  $("#adminMsg").textContent = editingNoticeId ? "Aviso actualizado ✓" : "Publicado ✓";
+  $("#adminMsg").textContent = editingNoticeId ? "Evento actualizado ✓" : "Publicado ✓";
   resetAdminForm();
   await load();
   show("home");
@@ -187,9 +163,9 @@ $("#publish").onclick = async () => {
 function resetAdminForm() {
   editingNoticeId = null;
   ["title", "description", "date", "time"].forEach(id => { if ($("#" + id)) $("#" + id).value = ""; });
-  if ($("#important")) $("#important").checked = false;
+  if ($("#reminder24h")) $("#reminder24h").checked = false;
   if ($("#imageFile")) $("#imageFile").value = "";
-  if ($("#publish")) $("#publish").textContent = "Publicar aviso";
+  if ($("#publish")) $("#publish").textContent = "Publicar evento";
   if ($("#adminMsg")) $("#adminMsg").textContent = "";
 }
 
@@ -198,7 +174,6 @@ window.editNotice = function (id) {
   if (!n) return;
 
   editingNoticeId = id;
-  currentType = n.type || "aviso";
 
   const adminTabBtn = document.querySelector('.bottom button[data-screen="admin"]');
   if (adminTabBtn) {
@@ -212,9 +187,7 @@ window.editNotice = function (id) {
     if ($("#description")) $("#description").value = n.description || "";
     if ($("#date")) $("#date").value = n.date || "";
     if ($("#time")) $("#time").value = n.time || "";
-    if ($("#important")) $("#important").checked = !!n.important;      $$(".types button").forEach(b => {
-      b.classList.toggle("selected", b.dataset.type === currentType);
-    });
+    if ($("#reminder24h")) $("#reminder24h").checked = !!n.reminder24h;
 
     if ($("#publish")) $("#publish").textContent = "Guardar Cambios";
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -222,7 +195,7 @@ window.editNotice = function (id) {
 };
 
 window.deleteNotice = async function (id) {
-  if (!confirm("¿Seguro que quieres borrar este aviso?")) return;
+  if (!confirm("¿Seguro que quieres borrar este evento?")) return;
   const r = await fetch(`/api/notices/${id}`, {
     method: "DELETE",
     headers: { "x-admin-password": sessionStorage.getItem("adminPassword") || "" }
