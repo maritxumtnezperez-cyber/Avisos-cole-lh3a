@@ -1,2 +1,2 @@
 # avisos-cole-lh3a
-App de avisos y recordatorio de LH3
+app de avisos y recordatorio de LH3
