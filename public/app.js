@@ -32,7 +32,7 @@ function renderImage(imageUrl) {
   return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
-// Genera y descarga el archivo .ics formateado estrictamente para forzar 24h antes y evitar el de 30min por defecto
+// Genera el archivo .ics anulando notificaciones predeterminadas y dejando SOLO la de 24 horas
 window.downloadICS = function(id) {
   const n = notices.find(x => x.id === id);
   if (!n || !n.date) {
@@ -60,6 +60,7 @@ window.downloadICS = function(id) {
     "PRODID:-//Avisos Cole LH3A//ES",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
+    "X-WR-CALNAME:Avisos Cole",
     "BEGIN:VEVENT",
     `UID:${uid}`,
     `DTSTAMP:${dtStamp}`,
@@ -69,11 +70,15 @@ window.downloadICS = function(id) {
     `DESCRIPTION:${(n.description || "").replace(/\n/g, "\\n")}`,
     "STATUS:CONFIRMED",
     
-    // Alarma estrictamente formateada para sobrescribir alertas por defecto
+    // Anula notificaciones por defecto de la app del teléfono o Google Calendar
+    "X-APPLE-DEFAULT-ALARM:FALSE",
+    "X-GOOGLE-NO-DEFAULT-REMINDERS:TRUE",
+    
+    // Única alarma permitida: 24 horas antes
     "BEGIN:VALARM",
     `X-WR-ALARMUID:alarm-${uid}`,
     "ACTION:DISPLAY",
-    "TRIGGER;VALUE=DURATION:-P1D",
+    "TRIGGER:-P1D",
     `DESCRIPTION:Recordatorio 24h antes: ${n.title}`,
     "END:VALARM",
     
