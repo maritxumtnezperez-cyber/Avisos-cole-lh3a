@@ -2,7 +2,7 @@ let notices = [];
 let month = new Date().getMonth(), year = new Date().getFullYear();
 let editingNoticeId = null;
 
-const $ = s => document.querySelector(s); const $$ = s => [...document.querySelectorAll(s)];
+const $ = s => document.querySelector(s); const $$ = s => [...documentquerySelectorAll(s)];
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
@@ -32,7 +32,7 @@ function renderImage(imageUrl) {
   return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
-// Genera y descarga el archivo .ics con recordatorios a las 24h y a las 2h antes
+// Genera y descarga el archivo .ics formateado en UTC para compatibilidad con Google Calendar y Apple
 window.downloadICS = function(id) {
   const n = notices.find(x => x.id === id);
   if (!n || !n.date) {
@@ -40,44 +40,44 @@ window.downloadICS = function(id) {
     return;
   }
 
-  const dateStr = n.date.replace(/-/g, ""); // YYYYMMDD
-  const timeStr = n.time ? n.time.replace(":", "") + "00" : "090000"; // HHMMSS
-  
-  // Calcular hora de fin (1 hora de duración por defecto)
-  const startDt = new Date(`${n.date}T${n.time || "09:00"}:00`);
-  const endDt = new Date(startDt.getTime() + 60 * 60 * 1000);
-  const endYear = endDt.getFullYear();
-  const endMonth = String(endDt.getMonth() + 1).padStart(2, '0');
-  const endDay = String(endDt.getDate()).padStart(2, '0');
-  const endHours = String(endDt.getHours()).padStart(2, '0');
-  const endMinutes = String(endDt.getMinutes()).padStart(2, '0');
-  const endTimeStr = `${endHours}${endMinutes}00`;
-  const endDateStr = `${endYear}${endMonth}${endDay}`;
+  const [yearNum, monthNum, dayNum] = n.date.split("-").map(Number);
+  const [hoursNum, minutesNum] = (n.time || "09:00").split(":").map(Number);
+
+  const startDt = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum, 0);
+  const endDt = new Date(startDt.getTime() + 60 * 60 * 1000); // 1 hora por defecto
+
+  const toICSDate = (date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+  const dtStart = toICSDate(startDt);
+  const dtEnd = toICSDate(endDt);
+  const dtStamp = toICSDate(new Date());
 
   const icsData = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Avisos Cole LH3A//ES",
     "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
     "BEGIN:VEVENT",
-    `UID:event-${n.id}@avisoscole`,
-    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
-    `DTSTART:${dateStr}T${timeStr}`,
-    `DTEND:${endDateStr}T${endTimeStr}`,
+    `UID:event-${n.id}-${Date.now()}@avisoscole`,
+    `DTSTAMP:${dtStamp}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
     `SUMMARY:${n.title}`,
     `DESCRIPTION:${(n.description || "").replace(/\n/g, "\\n")}`,
+    "STATUS:CONFIRMED",
     
     // Alarma 1: 24 horas antes
     "BEGIN:VALARM",
-    "TRIGGER:-P1D",
     "ACTION:DISPLAY",
+    "TRIGGER;VALUE=DURATION:-P1D",
     `DESCRIPTION:Recordatorio 24h antes: ${n.title}`,
     "END:VALARM",
 
     // Alarma 2: 2 horas antes
     "BEGIN:VALARM",
-    "TRIGGER:-PT2H",
     "ACTION:DISPLAY",
+    "TRIGGER;VALUE=DURATION:-PT2H",
     `DESCRIPTION:Recordatorio 2h antes: ${n.title}`,
     "END:VALARM",
     
