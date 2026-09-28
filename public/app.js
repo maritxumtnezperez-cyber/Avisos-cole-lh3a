@@ -18,16 +18,18 @@ function fmtDate(d) {
   return d;
 }
 
+// Verifica si la sesión actual tiene la contraseña guardada
 function isAdminLoggedIn() {
   return !!sessionStorage.getItem("adminPassword");
 }
 
+// Genera los botones de Admin SOLO si ha iniciado sesión
 function renderAdminControls(n) {
   if (!isAdminLoggedIn()) return "";
   return `
-    <div class="admin-actions" style="margin-top: 10px; display: flex; gap: 8px;">
-      <button type="button" onclick="editNotice('${n.id}')" style="background:#f0ad4e; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:bold;">✏️ Editar</button>
-      <button type="button" onclick="deleteNotice('${n.id}')" style="background:#ef4444; color:white; border:none; padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:bold;">🗑️ Borrar</button>
+    <div class="admin-actions" style="margin-top: 12px; display: flex; gap: 8px; border-top: 1px solid #f0f0f0; padding-top: 10px;">
+      <button type="button" onclick="editNotice('${n.id}')" style="background:#f0ad4e; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:12px;">✏️ Editar</button>
+      <button type="button" onclick="deleteNotice('${n.id}')" style="background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:12px;">🗑️ Borrar</button>
     </div>
   `;
 }
@@ -251,7 +253,10 @@ function resetAdminForm() {
   if ($("#adminMsg")) $("#adminMsg").textContent = "";
 }
 
+// Acción de editar: carga datos en el formulario
 window.editNotice = function (id) {
+  if (!isAdminLoggedIn()) return;
+
   const n = notices.find(x => x.id === id);
   if (!n) return;
 
@@ -269,13 +274,22 @@ window.editNotice = function (id) {
   }, 50);
 };
 
+// Acción de borrar con validación de contraseña
 window.deleteNotice = async function (id) {
+  if (!isAdminLoggedIn()) return;
+
   if (!confirm("¿Seguro que quieres borrar este evento?")) return;
   const r = await fetch(`/api/notices/${id}`, {
     method: "DELETE",
     headers: { "x-admin-password": sessionStorage.getItem("adminPassword") || "" }
   });
-  if (r.ok) { await load(); } else { alert("No se pudo borrar. Revisa la contraseña."); }
+  if (r.ok) { 
+    await load(); 
+  } else { 
+    alert("No se pudo borrar. Revisa la contraseña de administración."); 
+    sessionStorage.removeItem("adminPassword");
+    render();
+  }
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -285,10 +299,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (adminBtn) {
     adminBtn.onclick = () => {
       const p = prompt("Introduce la contraseña de administración:");
-      if (p !== null) {
+      if (p !== null && p.trim() !== "") {
         sessionStorage.setItem("adminPassword", p);
         show("admin");
-        render();
+        render(); // Renderiza de nuevo para mostrar botones de edición/borrado al entrar como admin
       }
     };
   }
@@ -362,6 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (r.status === 401) {
           sessionStorage.removeItem("adminPassword");
           if (msg) msg.textContent = "❌ Contraseña incorrecta. Vuelve a intentarlo.";
+          render();
           return;
         }
 
