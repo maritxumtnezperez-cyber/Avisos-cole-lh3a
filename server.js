@@ -7,7 +7,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234';
 
-// Claves VAPID para Notificaciones
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY || '';
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || '';
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@ejemplo.com';
@@ -16,14 +15,12 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 }
 
-// Aumentamos el límite del cuerpo de las peticiones a 10MB para permitir imágenes en Base64
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const DATA_FILE = path.join(__dirname, 'notices.json');
 const SUBS_FILE = path.join(__dirname, 'subscriptions.json');
 
-// Funciones auxiliares para leer y guardar JSON
 function readJSON(file) {
   if (!fs.existsSync(file)) return [];
   try {
@@ -37,7 +34,6 @@ function writeJSON(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
 }
 
-// Middleware para verificar la contraseña de administración
 function checkAdmin(req, res, next) {
   const pass = req.headers['x-admin-password'];
   if (pass === ADMIN_PASSWORD) {
@@ -47,18 +43,15 @@ function checkAdmin(req, res, next) {
   }
 }
 
-// Configuración pública
 app.get('/api/config', (req, res) => {
   res.json({ vapidPublicKey: VAPID_PUBLIC });
 });
 
-// Obtener avisos
 app.get('/api/notices', (req, res) => {
   const notices = readJSON(DATA_FILE);
   res.json(notices);
 });
 
-// Crear aviso
 app.post('/api/notices', checkAdmin, (req, res) => {
   const notices = readJSON(DATA_FILE);
   const newNotice = {
@@ -70,7 +63,6 @@ app.post('/api/notices', checkAdmin, (req, res) => {
   notices.push(newNotice);
   writeJSON(DATA_FILE, notices);
 
-  // Enviar notificación Push si está configurado VAPID
   if (VAPID_PUBLIC && VAPID_PRIVATE) {
     const subs = readJSON(SUBS_FILE);
     const payload = JSON.stringify({
@@ -85,7 +77,6 @@ app.post('/api/notices', checkAdmin, (req, res) => {
   res.status(201).json(newNotice);
 });
 
-// Editar aviso existente (NUEVO)
 app.put('/api/notices/:id', checkAdmin, (req, res) => {
   const notices = readJSON(DATA_FILE);
   const index = notices.findIndex(n => n.id === req.params.id);
@@ -96,7 +87,6 @@ app.put('/api/notices/:id', checkAdmin, (req, res) => {
   res.json(notices[index]);
 });
 
-// Archivar/Desarchivar aviso (NUEVO)
 app.patch('/api/notices/:id/archive', checkAdmin, (req, res) => {
   const notices = readJSON(DATA_FILE);
   const notice = notices.find(n => n.id === req.params.id);
@@ -107,7 +97,6 @@ app.patch('/api/notices/:id/archive', checkAdmin, (req, res) => {
   res.json(notice);
 });
 
-// Borrar aviso (NUEVO)
 app.delete('/api/notices/:id', checkAdmin, (req, res) => {
   let notices = readJSON(DATA_FILE);
   notices = notices.filter(n => n.id !== req.params.id);
@@ -115,7 +104,6 @@ app.delete('/api/notices/:id', checkAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-// Suscripción a Notificaciones Push
 app.post('/api/push/subscribe', (req, res) => {
   const subs = readJSON(SUBS_FILE);
   const newSub = req.body;
