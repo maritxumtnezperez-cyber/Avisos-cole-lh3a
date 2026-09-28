@@ -39,12 +39,11 @@ window.downloadICS = function(id) {
     return;
   }
 
-  // Parsear fecha y hora local
   const [yearNum, monthNum, dayNum] = n.date.split("-").map(Number);
   const [hoursNum, minutesNum] = (n.time || "09:00").split(":").map(Number);
 
   const startDate = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum, 0);
-  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hora de duración
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
   const formatGoogleDate = (date) => {
     return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
@@ -54,17 +53,14 @@ window.downloadICS = function(id) {
   const details = encodeURIComponent((n.description || "") + "\n\n📌 Recordatorio: Mañana es el evento.");
   const dates = `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`;
 
-  // Detectar si el dispositivo es Android o PC con Google Calendar
   const isAndroid = /Android/i.test(navigator.userAgent);
 
   if (isAndroid) {
-    // Abrir directamente Google Calendar en Android para asignar la alerta automáticamente
     const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&add=1`;
     window.open(googleUrl, "_blank");
     return;
   }
 
-  // Generación de archivo .ics optimizado para iPhone (iOS) y otros clientes
   const dtStart = formatGoogleDate(startDate);
   const dtEnd = formatGoogleDate(endDate);
   const dtStamp = formatGoogleDate(new Date());
@@ -103,6 +99,42 @@ window.downloadICS = function(id) {
   document.body.removeChild(link);
 };
 
+function renderHelp() {
+  const helpContainer = $("#helpContent") || $("#helpScreen") \vert{}\vert{} $("#help");
+  if (!helpContainer) return;
+
+  helpContainer.innerHTML = `
+    <article class="card" style="padding: 16px; line-height: 1.5;">
+      <h2>📲 ¿Cómo añadir los eventos a tu calendario?</h2>
+      <p>Para que no se te olvide ninguna fecha importante, puedes guardar los eventos directamente en la agenda de tu móvil pulsando el botón <strong>"📅 Añadir al calendario"</strong>.</p>
+
+      <hr style="border:0; border-top:1px solid #eee; margin:16px 0;">
+
+      <h3>📱 Dispositivos Android</h3>
+      <p>Al pulsar el botón, se abrirá automáticamente tu aplicación de <strong>Google Calendar</strong> con todos los datos del evento cargados:</p>
+      <ol style="margin-left: 20px; margin-bottom: 12px;">
+        <li>Revisa la fecha y la hora.</li>
+        <li>Si deseas recibir una alerta 24 horas antes, asegúrate de comprobar la sección <strong>"Añadir notificación"</strong> antes de guardar (por defecto, Google aplicará la configuración de avisos de tu cuenta).</li>
+        <li>Pulsa en <strong>Guardar</strong> en la esquina superior derecha.</li>
+      </ol>
+
+      <hr style="border:0; border-top:1px solid #eee; margin:16px 0;">
+
+      <h3>🍏 Dispositivos iPhone (iOS)</h3>
+      <p>Al pulsar el botón, se descargará o abrirá un archivo de evento (<code>.ics</code>):</p>
+      <ol style="margin-left: 20px; margin-bottom: 12px;">
+        <li>Pulsa sobre el archivo descargado para abrir la vista previa del evento.</li>
+        <li>Selecciona <strong>"Añadir todos"</strong> o <strong>"Añadir a Calendario"</strong> en la parte superior derecha.</li>
+        <li>El evento se guardará en la app <em>Calendario</em> de tu iPhone con una <strong>alarma programada automáticamente 1 día antes</strong>.</li>
+      </ol>
+
+      <div style="background:#f9f9f9; padding:12px; border-left:4px solid #2fa866; margin-top:16px; border-radius:4px;">
+        <p style="margin:0;">💡 <strong>Nota:</strong> Si necesitas cambiar el color del evento en tu agenda o añadir notificaciones adicionales, puedes hacerlo directamente desde la pantalla de edición de tu app de calendario justo antes de guardar.</p>
+      </div>
+    </article>
+  `;
+}
+
 function render() {
   const sorted = [...notices].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   
@@ -136,6 +168,7 @@ function render() {
   }
 
   renderCalendar();
+  renderHelp();
 }
 
 function renderCalendar() {
