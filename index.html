@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#2fa866">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/logo.png">
+  <link rel="stylesheet" href="/styles.css">
+  <title>Avisos Cole · LH3A</title>
+</head>
+<body>
+  <header class="top">
+    <img src="/logo.png" class="logo" alt="LH3A">
+    <div><h1>Avisos Cole</h1><p>LH3A</p></div>
+    <button id="installBtn" class="icon" hidden>＋</button>
+  </header>
+
+  <main>
+    <section id="home" class="screen active">
+      <button id="adminBtn" class="admin-link">⚙ Publicar aviso</button>
+      <div id="next" class="next-card"></div>
+      <div class="section-title"><h2>Avisos recientes</h2></div>
+      <div id="noticeList"></div>
+    </section>
+
+    <section id="calendar" class="screen">
+      <div class="section-title"><h2>Calendario</h2></div>
+      <div class="calendar-head">
+        <button id="prevMonth">‹</button><strong id="monthLabel"></strong><button id="nextMonth">›</button>
+      </div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+      <div id="eventList"></div>
+    </section>
+
+    <section id="reminders" class="screen">
+      <div class="section-title"><h2>Recordatorios</h2></div>
+      <div id="reminderList"></div>
+      <button id="notifyBtn" class="primary">🔔 Activar notificaciones</button>
+    </section>
+
+    <section id="admin" class="screen">
+      <div class="section-title"><button id="backBtn">‹</button><h2>Nuevo aviso</h2></div>
+      <div class="form">
+        <div class="types">
+          <button data-type="aviso" class="selected">📢<span>Aviso</span></button>
+          <button data-type="evento">📅<span>Evento</span></button>
+          <button data-type="recordatorio">🔔<span>Recordatorio</span></button>
+        </div>
+        <label>Título<input id="title" placeholder="Ej. Excursión al museo"></label>
+        <label>Descripción<textarea id="description" placeholder="Escribe los detalles..."></textarea></label>
+        <div class="two"><label>Fecha<input id="date" type="date"></label><label>Hora<input id="time" type="time"></label></div>
+        <label class="switchrow"><span>🔴 Aviso importante</span><input id="important" type="checkbox"></label>
+        <button id="publish" class="primary">Publicar aviso</button>
+        <p id="adminMsg" class="msg"></p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom">
+    <button data-screen="home" class="active">⌂<span>Inicio</span></button>
+    <button data-screen="calendar">▦<span>Calendario</span></button>
+    <button data-screen="reminders">♧<span>Recordatorios</span></button>
+  </nav>
+  <script src="/app.js"></script>
+</body>
+</html>
