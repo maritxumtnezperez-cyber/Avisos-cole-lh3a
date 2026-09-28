@@ -1,0 +1,15 @@
+{
+  "name": "avisos-cole-lh3a",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "express": "^4.21.2",
+    "web-push": "^3.6.7"
+  }
+}
