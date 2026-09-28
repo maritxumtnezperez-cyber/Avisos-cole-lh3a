@@ -32,6 +32,68 @@ function renderImage(imageUrl) {
   return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
+// Genera y descarga el archivo .ics para el calendario del usuario
+window.downloadICS = function(id) {
+  const n = notices.find(x => x.id === id);
+  if (!n || !n.date) {
+    alert("Este evento no tiene fecha asignada.");
+    return;
+  }
+
+  const dateStr = n.date.replace(/-/g, ""); // YYYYMMDD
+  const timeStr = n.time ? n.time.replace(":", "") + "00" : "090000"; // HHMMSS
+  
+  // Calcular hora fin (1 hora por defecto)
+  const startDt = new Date(`${n.date}T${n.time || "09:00"}:00`);
+  const endDt = new Date(startDt.getTime() + 60 * 60 * 1000);
+  const endYear = endDt.getFullYear();
+  const endMonth = String(endDt.getMonth() + 1).padStart(2, '0');
+  const endDay = String(endDt.getDate()).padStart(2, '0');
+  const endHours = String(endDt.getHours()).padStart(2, '0');
+  const endMinutes = String(endDt.getMinutes()).padStart(2, '0');
+  const endTimeStr = `${endHours}${endMinutes}00`;
+  const endDateStr = `${endYear}${endMonth}${endDay}`;
+
+  const icsData = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Avisos Cole LH3A//ES",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:event-${n.id}@avisoscole`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
+    `DTSTART:${dateStr}T${timeStr}`,
+    `DTEND:${endDateStr}T${endTimeStr}`,
+    `SUMMARY:${n.title}`,
+    `DESCRIPTION:${(n.description || "").replace(/\n/g, "\\n")}`,
+    
+    // Alarma 1: 24 horas antes
+    "BEGIN:VALARM",
+    "TRIGGER:-P1D",
+    "ACTION:DISPLAY",
+    `DESCRIPTION:Recordatorio 24h: ${n.title}`,
+    "END:VALARM",
+    
+    // Alarma 2: 1 hora y 30 minutos antes (90 minutos)
+    "BEGIN:VALARM",
+    "TRIGGER:-PT1H30M",
+    "ACTION:DISPLAY",
+    `DESCRIPTION:Recordatorio 1h 30m: ${n.title}`,
+    "END:VALARM",
+    
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].join("\r\n");
+
+  const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${n.title.toLowerCase().replace(/\s+/g, "_")}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 function render() {
   const sorted = [...notices].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   
@@ -42,9 +104,10 @@ function render() {
         <h3>${esc(n.title)}</h3>
         <p><strong>${n.date ? fmtDate(n.date) : "Sin fecha"}</strong>${n.time ? " · " + n.time : ""}</p>
         <p>${esc(n.description)}</p>
-        ${n.reminder24h ? `<p style="font-size:0.85em; color:#2fa866; margin-top:4px;">🔔 Recordatorio 24h antes activado</p>` : ""}
-        ${n.reminderSameDay ? `<p style="font-size:0.85em; color:#2fa866; margin-top:2px;">⏰ Recordatorio el día del evento (07:30 AM) activado</p>` : ""}
         ${renderImage(n.imageUrl)}
+        <div style="margin-top:12px;">
+          <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
+        </div>
         ${renderAdminControls(n)}
       </div>
     </article>
@@ -79,6 +142,9 @@ function renderCalendar() {
         <p>${fmtDate(n.date)}${n.time ? " · " + n.time : ""}</p>
         <p>${esc(n.description)}</p>
         ${renderImage(n.imageUrl)}
+        <div style="margin-top:12px;">
+          <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
+        </div>
         ${renderAdminControls(n)}
       </div>
     </article>
@@ -134,8 +200,6 @@ $("#publish").onclick = async () => {
     description: $("#description").value,
     date: $("#date").value || null,
     time: $("#time").value || null,
-    reminder24h: $("#reminder24h").checked,
-    reminderSameDay: $("#reminderSameDay").checked,
     imageUrl: imageUrl
   };
 
@@ -165,8 +229,6 @@ $("#publish").onclick = async () => {
 function resetAdminForm() {
   editingNoticeId = null;
   ["title", "description", "date", "time"].forEach(id => { if ($("#" + id)) $("#" + id).value = ""; });
-  if ($("#reminder24h")) $("#reminder24h").checked = false;
-  if ($("#reminderSameDay")) $("#reminderSameDay").checked = false;
   if ($("#imageFile")) $("#imageFile").value = "";
   if ($("#publish")) $("#publish").textContent = "Publicar evento";
   if ($("#adminMsg")) $("#adminMsg").textContent = "";
@@ -178,20 +240,13 @@ window.editNotice = function (id) {
 
   editingNoticeId = id;
 
-  const adminTabBtn = document.querySelector('.bottom button[data-screen="admin"]');
-  if (adminTabBtn) {
-    adminTabBtn.click();
-  } else {
-    show("admin");
-  }
+  show("admin");
 
   setTimeout(() => {
     if ($("#title")) $("#title").value = n.title || "";
     if ($("#description")) $("#description").value = n.description || "";
     if ($("#date")) $("#date").value = n.date || "";
     if ($("#time")) $("#time").value = n.time || "";
-    if ($("#reminder24h")) $("#reminder24h").checked = !!n.reminder24h;
-    if ($("#reminderSameDay")) $("#reminderSameDay").checked = !!n.reminderSameDay;
 
     if ($("#publish")) $("#publish").textContent = "Guardar Cambios";
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -210,23 +265,4 @@ window.deleteNotice = async function (id) {
 $("#prevMonth").onclick = () => { month--; if (month < 0) { month = 11; year--; } renderCalendar(); };
 $("#nextMonth").onclick = () => { month++; if (month > 11) { month = 0; year++; } renderCalendar(); };
 
-$("#notifyBtn").onclick = async () => {
-  if (!("Notification" in window) || !("serviceWorker" in navigator)) { alert("Este navegador no admite notificaciones web."); return; }
-  const cfg = await fetch("/api/config").then(r => r.json());
-  if (!cfg.vapidPublicKey) { alert("Las notificaciones push se activarán al configurar VAPID en el servidor."); return; }
-  const reg = await navigator.serviceWorker.register("/sw.js");
-  const perm = await Notification.requestPermission();
-  if (perm !== "granted") return;
-  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(cfg.vapidPublicKey) });
-  await fetch("/api/push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub) });
-  alert("Notificaciones activadas ✓");
-};
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = "=".repeat((4 - base64String.length % 4) % 4);
-  const raw = atob((base64String + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-}
-
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js");
 load();
