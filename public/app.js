@@ -39,28 +39,38 @@ window.downloadICS = function(id) {
     return;
   }
 
-  // Parsear fecha y hora
+  // Parsear fecha y hora local
   const [yearNum, monthNum, dayNum] = n.date.split("-").map(Number);
   const [hoursNum, minutesNum] = (n.time || "09:00").split(":").map(Number);
 
-  // Crear fechas en formato local y convertirlas a UTC
   const startDate = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum, 0);
   const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hora de duración
 
-  const formatICSDate = (date) => {
+  const formatGoogleDate = (date) => {
     return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
   };
 
-  const dtStart = formatICSDate(startDate);
-  const dtEnd = formatICSDate(endDate);
-  const dtStamp = formatICSDate(new Date());
+  const title = encodeURIComponent(n.title || "Evento");
+  const details = encodeURIComponent((n.description || "") + "\n\n📌 Recordatorio: Mañana es el evento.");
+  const dates = `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`;
+
+  // Detectar si el dispositivo es Android o PC con Google Calendar
+  const isAndroid = /Android/i.test(navigator.userAgent);
+
+  if (isAndroid) {
+    // Abrir directamente Google Calendar en Android para asignar la alerta automáticamente
+    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&add=1`;
+    window.open(googleUrl, "_blank");
+    return;
+  }
+
+  // Generación de archivo .ics optimizado para iPhone (iOS) y otros clientes
+  const dtStart = formatGoogleDate(startDate);
+  const dtEnd = formatGoogleDate(endDate);
+  const dtStamp = formatGoogleDate(new Date());
   const uid = `event-${n.id}-${Date.now()}@avisoscole`;
 
-  // Limpiar texto para evitar fallos de formato
-  const cleanTitle = (n.title || "Evento").replace(/,/g, "\\,").replace(/;/g, "\\;");
-  const cleanDesc = (n.description || "").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
-
-  const icsLines = [
+  const icsData = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Avisos Cole LH3A//ES",
@@ -72,31 +82,19 @@ window.downloadICS = function(id) {
     `DTSTAMP:${dtStamp}`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
-    `SUMMARY:${cleanTitle}`,
-    `DESCRIPTION:${cleanDesc}`,
+    `SUMMARY:${n.title}`,
+    `DESCRIPTION:${n.description || ""}`,
     "STATUS:CONFIRMED",
-    
-    // Bloque de Alarma Principal (Compatibilidad iOS / macOS)
     "BEGIN:VALARM",
-    `X-WR-ALARMUID:alarm-1-${uid}`,
     "TRIGGER:-P1D",
     "ACTION:DISPLAY",
-    `DESCRIPTION:Recordatorio: ${cleanTitle} es mañana`,
+    `DESCRIPTION:Recordatorio 24h: ${n.title}`,
     "END:VALARM",
-
-    // Bloque de Alarma Secundario (Compatibilidad Android / Google Calendar)
-    "BEGIN:VALARM",
-    `X-WR-ALARMUID:alarm-2-${uid}`,
-    "TRIGGER:-PT24H",
-    "ACTION:DISPLAY",
-    `DESCRIPTION:Recordatorio 24h antes: ${cleanTitle}`,
-    "END:VALARM",
-
     "END:VEVENT",
     "END:VCALENDAR"
-  ];
+  ].join("\r\n");
 
-  const blob = new Blob([icsLines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+  const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
   link.download = `${n.title.toLowerCase().replace(/[^a-z0-9]/g, "_")}.ics`;
