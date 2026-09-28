@@ -34,7 +34,7 @@ function renderAdminControls(n) {
 
 function renderImage(imageUrl) {
   if (!imageUrl) return "";
-  return `<div class="notice-image" style="margin-top:8px;"><img src="${imageUrl}" alt="Adjunto" style="max-width:100%; height:auto; border-radius:8px;"></div>`;
+  return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
 function render() {
@@ -200,7 +200,6 @@ window.editNotice = function (id) {
   editingNoticeId = id;
   currentType = n.type || "aviso";
 
-  // Mostrar la pantalla de administración activando su botón
   const adminTabBtn = document.querySelector('.bottom button[data-screen="admin"]');
   if (adminTabBtn) {
     adminTabBtn.click();
@@ -208,7 +207,6 @@ window.editNotice = function (id) {
     show("admin");
   }
 
-  // Rellenar los valores en el formulario
   setTimeout(() => {
     if ($("#title")) $("#title").value = n.title || "";
     if ($("#description")) $("#description").value = n.description || "";
