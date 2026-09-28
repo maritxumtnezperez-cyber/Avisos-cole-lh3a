@@ -1,7 +1,7 @@
 let notices = [];
 let currentType = "aviso";
 let month = new Date().getMonth(), year = new Date().getFullYear();
-let editingNoticeId = null; // Controla si estamos editando un aviso existente
+let editingNoticeId = null;
 
 const $ = s => document.querySelector(s); const $$ = s => [...document.querySelectorAll(s)];
 
@@ -26,11 +26,11 @@ function renderAdminControls(n) {
   if (!isAdminLoggedIn()) return "";
   return `
     <div class="admin-actions" style="margin-top: 10px; display: flex; gap: 8px;">
-      <button onclick="editNotice('${n.id}')" style="background:#f0ad4e; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">✏️ Editar</button>
-      <button onclick="archiveNotice('${n.id}', ${!n.archived})" style="background:#5bc0de; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">
+      <button type="button" onclick="editNotice('${n.id}')" style="background:#f0ad4e; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">✏️ Editar</button>
+      <button type="button" onclick="archiveNotice('${n.id}', ${!n.archived})" style="background:#5bc0de; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
         ${n.archived ? "📂 Desarchivar" : "📦 Archivar"}
       </button>
-      <button onclick="deleteNotice('${n.id}')" style="background:#d9534f; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">🗑️ Borrar</button>
+      <button type="button" onclick="deleteNotice('${n.id}')" style="background:#d9534f; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">🗑️ Borrar</button>
     </div>
   `;
 }
@@ -41,7 +41,6 @@ function renderImage(imageUrl) {
 }
 
 function render() {
-  // Filtrar avisos no archivados para las vistas activas
   const activeNotices = notices.filter(n => !n.archived);
   const archivedNotices = notices.filter(n => n.archived);
 
@@ -80,7 +79,6 @@ function render() {
     </article>
   `).join("") || "<p>No hay recordatorios.</p>";
 
-  // Renderizar sección de archivados en administración si existe el contenedor
   const archivedContainer = $("#archivedList");
   if (archivedContainer) {
     archivedContainer.innerHTML = archivedNotices.map(n => `
@@ -154,7 +152,6 @@ $$(".types button").forEach(b => b.onclick = () => {   $$
   currentType = b.dataset.type;
 });
 
-// Convertir archivo de imagen a Base64
 function getBase64(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve(null);
@@ -218,17 +215,22 @@ function resetAdminForm() {
   if ($("#publish")) $("#publish").textContent = "Publicar aviso";
 }
 
-// Funciones globales de gestión (Edición, Borrado, Archivado)
 window.editNotice = function (id) {
   const n = notices.find(x => x.id === id);
   if (!n) return;
+
   editingNoticeId = id;
-  $("#title").value = n.title || "";
-  $("#description").value = n.description || "";
-  $("#date").value = n.date || "";
-  $("#time").value = n.time || "";
-  $("#important").checked = !!n.important;
-  $("#publish").textContent = "Guardar Cambios";
+  currentType = n.type || "aviso";
+
+  if ($("#title")) $("#title").value = n.title || "";
+  if ($("#description")) $("#description").value = n.description || "";
+  if ($("#date")) $("#date").value = n.date || "";
+  if ($("#time")) $("#time").value = n.time || "";
+  if ($("#important")) $("#important").checked = !!n.important;    $$(".types button").forEach(b => {
+    b.classList.toggle("selected", b.dataset.type === currentType);
+  });
+
+  if ($("#publish")) $("#publish").textContent = "Guardar Cambios";
   show("admin");
 };
 
