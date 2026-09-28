@@ -42,7 +42,8 @@ function render() {
         <h3>${esc(n.title)}</h3>
         <p><strong>${n.date ? fmtDate(n.date) : "Sin fecha"}</strong>${n.time ? " · " + n.time : ""}</p>
         <p>${esc(n.description)}</p>
-        ${n.reminder24h ? `<p style="font-size:0.85em; color:#2fa866; margin-top:4px;">🔔 Recordatorio programado (24h antes)</p>` : ""}
+        ${n.reminder24h ? `<p style="font-size:0.85em; color:#2fa866; margin-top:4px;">🔔 Recordatorio 24h antes activado</p>` : ""}
+        ${n.reminderSameDay ? `<p style="font-size:0.85em; color:#2fa866; margin-top:2px;">⏰ Recordatorio el día del evento (07:30 AM) activado</p>` : ""}
         ${renderImage(n.imageUrl)}
         ${renderAdminControls(n)}
       </div>
@@ -134,6 +135,7 @@ $("#publish").onclick = async () => {
     date: $("#date").value || null,
     time: $("#time").value || null,
     reminder24h: $("#reminder24h").checked,
+    reminderSameDay: $("#reminderSameDay").checked,
     imageUrl: imageUrl
   };
 
@@ -164,6 +166,7 @@ function resetAdminForm() {
   editingNoticeId = null;
   ["title", "description", "date", "time"].forEach(id => { if ($("#" + id)) $("#" + id).value = ""; });
   if ($("#reminder24h")) $("#reminder24h").checked = false;
+  if ($("#reminderSameDay")) $("#reminderSameDay").checked = false;
   if ($("#imageFile")) $("#imageFile").value = "";
   if ($("#publish")) $("#publish").textContent = "Publicar evento";
   if ($("#adminMsg")) $("#adminMsg").textContent = "";
@@ -188,6 +191,7 @@ window.editNotice = function (id) {
     if ($("#date")) $("#date").value = n.date || "";
     if ($("#time")) $("#time").value = n.time || "";
     if ($("#reminder24h")) $("#reminder24h").checked = !!n.reminder24h;
+    if ($("#reminderSameDay")) $("#reminderSameDay").checked = !!n.reminderSameDay;
 
     if ($("#publish")) $("#publish").textContent = "Guardar Cambios";
     window.scrollTo({ top: 0, behavior: "smooth" });
