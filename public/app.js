@@ -68,14 +68,21 @@ window.downloadICS = function(id) {
     `SUMMARY:${n.title}`,
     `DESCRIPTION:${(n.description || "").replace(/\n/g, "\\n")}`,
     "STATUS:CONFIRMED",
-    "X-APPLE-DEFAULT-ALARM:FALSE",
-    "X-GOOGLE-NO-DEFAULT-REMINDERS:TRUE",
+    
+    // Alarma visual en pantalla (24 horas antes)
     "BEGIN:VALARM",
-    `X-WR-ALARMUID:alarm-${uid}`,
     "ACTION:DISPLAY",
-    "TRIGGER:-P1D",
     `DESCRIPTION:Recordatorio 24h antes: ${n.title}`,
+    "TRIGGER:-P1D",
     "END:VALARM",
+    
+    // Alarma sonora de respaldo (24 horas antes)
+    "BEGIN:VALARM",
+    "ACTION:AUDIO",
+    "TRIGGER:-P1D",
+    "ATTACH;FMTTYPE=audio/basic:procedure",
+    "END:VALARM",
+
     "END:VEVENT",
     "END:VCALENDAR"
   ];
