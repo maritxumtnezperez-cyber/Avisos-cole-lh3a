@@ -39,19 +39,26 @@ window.downloadICS = function(id) {
     return;
   }
 
+  // Parsear fecha y hora
   const [yearNum, monthNum, dayNum] = n.date.split("-").map(Number);
   const [hoursNum, minutesNum] = (n.time || "09:00").split(":").map(Number);
 
-  const startDt = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum, 0);
-  const endDt = new Date(startDt.getTime() + 60 * 60 * 1000);
+  // Crear fechas en formato local y convertirlas a UTC
+  const startDate = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum, 0);
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hora de duración
 
-  const toICSDate = (date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  const formatICSDate = (date) => {
+    return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  };
 
-  const dtStart = toICSDate(startDt);
-  const dtEnd = toICSDate(endDt);
-  const dtStamp = toICSDate(new Date());
-
+  const dtStart = formatICSDate(startDate);
+  const dtEnd = formatICSDate(endDate);
+  const dtStamp = formatICSDate(new Date());
   const uid = `event-${n.id}-${Date.now()}@avisoscole`;
+
+  // Limpiar texto para evitar fallos de formato
+  const cleanTitle = (n.title || "Evento").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  const cleanDesc = (n.description || "").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
 
   const icsLines = [
     "BEGIN:VCALENDAR",
@@ -65,22 +72,24 @@ window.downloadICS = function(id) {
     `DTSTAMP:${dtStamp}`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
-    `SUMMARY:${n.title}`,
-    `DESCRIPTION:${(n.description || "").replace(/\n/g, "\\n")}`,
+    `SUMMARY:${cleanTitle}`,
+    `DESCRIPTION:${cleanDesc}`,
     "STATUS:CONFIRMED",
     
-    // Alarma visual en pantalla (24 horas antes)
+    // Bloque de Alarma Principal (Compatibilidad iOS / macOS)
     "BEGIN:VALARM",
+    `X-WR-ALARMUID:alarm-1-${uid}`,
+    "TRIGGER:-P1D",
     "ACTION:DISPLAY",
-    `DESCRIPTION:Recordatorio 24h antes: ${n.title}`,
-    "TRIGGER:-P1D",
+    `DESCRIPTION:Recordatorio: ${cleanTitle} es mañana`,
     "END:VALARM",
-    
-    // Alarma sonora de respaldo (24 horas antes)
+
+    // Bloque de Alarma Secundario (Compatibilidad Android / Google Calendar)
     "BEGIN:VALARM",
-    "ACTION:AUDIO",
-    "TRIGGER:-P1D",
-    "ATTACH;FMTTYPE=audio/basic:procedure",
+    `X-WR-ALARMUID:alarm-2-${uid}`,
+    "TRIGGER:-PT24H",
+    "ACTION:DISPLAY",
+    `DESCRIPTION:Recordatorio 24h antes: ${cleanTitle}`,
     "END:VALARM",
 
     "END:VEVENT",
@@ -90,7 +99,7 @@ window.downloadICS = function(id) {
   const blob = new Blob([icsLines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `${n.title.toLowerCase().replace(/\s+/g, "_")}.ics`;
+  link.download = `${n.title.toLowerCase().replace(/[^a-z0-9]/g, "_")}.ics`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
