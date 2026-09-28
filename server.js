@@ -57,7 +57,6 @@ app.post('/api/notices', checkAdmin, (req, res) => {
   const newNotice = {
     id: Date.now().toString(),
     created_at: new Date().toISOString(),
-    archived: false,
     ...req.body
   };
   notices.push(newNotice);
@@ -85,16 +84,6 @@ app.put('/api/notices/:id', checkAdmin, (req, res) => {
   notices[index] = { ...notices[index], ...req.body };
   writeJSON(DATA_FILE, notices);
   res.json(notices[index]);
-});
-
-app.patch('/api/notices/:id/archive', checkAdmin, (req, res) => {
-  const notices = readJSON(DATA_FILE);
-  const notice = notices.find(n => n.id === req.params.id);
-  if (!notice) return res.status(404).json({ error: 'Aviso no encontrado' });
-
-  notice.archived = !!req.body.archived;
-  writeJSON(DATA_FILE, notices);
-  res.json(notice);
 });
 
 app.delete('/api/notices/:id', checkAdmin, (req, res) => {
