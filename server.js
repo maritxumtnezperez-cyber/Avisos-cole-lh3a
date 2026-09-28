@@ -4,7 +4,6 @@ import path from 'path';
 import webpush from 'web-push';
 import { fileURLToPath } from 'url';
 
-// Configuración necesaria para obtener __dirname usando ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -48,6 +47,48 @@ function checkAdmin(req, res, next) {
   }
 }
 
+// Función para comprobar y enviar recordatorios 24h antes
+function checkAndSend24hReminders() {
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
+
+  const notices = readJSON(DATA_FILE);
+  const subs = readJSON(SUBS_FILE);
+  if (subs.length === 0) return;
+
+  const now = new Date();
+  let modified = false;
+
+  notices.forEach(notice => {
+    if (notice.reminder24h && notice.date && !notice.reminderSent) {
+      const eventDateTimeStr = notice.time ? `${notice.date}T${notice.time}` : `${notice.date}T09:00:00`;
+      const eventTime = new Date(eventDateTimeStr).getTime();
+      const diffHours = (eventTime - now.getTime()) / (1000 * 60 * 60);
+
+      // Si faltan entre 0 y 24 horas para el evento
+      if (diffHours > 0 && diffHours <= 24) {
+        const payload = JSON.stringify({
+          title: `🔔 Mañana: ${notice.title}`,
+          body: notice.description || 'Recordatorio de evento programado para mañana.'
+        });
+
+        subs.forEach(sub => {
+          webpush.sendNotification(sub, payload).catch(() => {});
+        });
+
+        notice.reminderSent = true;
+        modified = true;
+      }
+    }
+  });
+
+  if (modified) {
+    writeJSON(DATA_FILE, notices);
+  }
+}
+
+// Revisar eventos cada 30 minutos
+setInterval(checkAndSend24hReminders, 30 * 60 * 1000);
+
 app.get('/api/config', (req, res) => {
   res.json({ vapidPublicKey: VAPID_PUBLIC });
 });
@@ -62,21 +103,14 @@ app.post('/api/notices', checkAdmin, (req, res) => {
   const newNotice = {
     id: Date.now().toString(),
     created_at: new Date().toISOString(),
+    reminderSent: false,
     ...req.body
   };
   notices.push(newNotice);
   writeJSON(DATA_FILE, notices);
 
-  if (VAPID_PUBLIC && VAPID_PRIVATE) {
-    const subs = readJSON(SUBS_FILE);
-    const payload = JSON.stringify({
-      title: newNotice.title,
-      body: newNotice.description
-    });
-    subs.forEach(sub => {
-      webpush.sendNotification(sub, payload).catch(() => {});
-    });
-  }
+  // Comprobar inmediatamente por si se crea con menos de 24h de antelación
+  checkAndSend24hReminders();
 
   res.status(201).json(newNotice);
 });
