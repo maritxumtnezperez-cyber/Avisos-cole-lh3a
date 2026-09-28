@@ -17,7 +17,7 @@
   </header>
 
   <main>
-    <!-- EVENTOS FUTUROS (INICIO) -->
+    <!-- PANTALLA INICIO (PRÓXIMOS EVENTOS) -->
     <section id="home" class="screen active">
       <button id="adminBtn" class="admin-link">⚙ Publicar evento</button>
       <div id="next" class="next-card"></div>
@@ -25,13 +25,13 @@
       <div id="noticeList"></div>
     </section>
 
-    <!-- NUEVA SECCIÓN: EVENTOS PASADOS -->
+    <!-- PANTALLA EVENTOS PASADOS -->
     <section id="past" class="screen">
       <div class="section-title"><h2>Eventos pasados</h2></div>
       <div id="pastNoticeList"></div>
     </section>
 
-    <!-- CALENDARIO -->
+    <!-- PANTALLA CALENDARIO -->
     <section id="calendar" class="screen">
       <div class="section-title"><h2>Calendario</h2></div>
       <div class="calendar-head">
@@ -41,7 +41,7 @@
       <div id="eventList"></div>
     </section>
 
-    <!-- AYUDA -->
+    <!-- PANTALLA AYUDA -->
     <section id="reminders" class="screen">
       <div class="section-title"><h2>📲 ¿Cómo añadir eventos a tu agenda?</h2></div>
       <p style="margin-bottom: 15px; color: #555; line-height: 1.5;">
@@ -77,7 +77,7 @@
       </div>
     </section>
 
-    <!-- ADMINISTRACIÓN -->
+    <!-- PANTALLA ADMINISTRACIÓN -->
     <section id="admin" class="screen">
       <div class="section-title"><button id="backBtn">‹</button><h2>Nuevo evento</h2></div>
       <div class="form">
@@ -98,13 +98,14 @@
     </section>
   </main>
 
-  <!-- BARRA INFERIOR CON EL NUEVO BOTÓN "PASADOS" -->
+  <!-- BARRA DE NAVEGACIÓN INFERIOR -->
   <nav class="bottom">
     <button data-screen="home" class="active">⌂<span>Próximos</span></button>
     <button data-screen="past">⌛<span>Pasados</span></button>
     <button data-screen="calendar">▦<span>Calendario</span></button>
     <button data-screen="reminders">♧<span>Ayuda</span></button>
   </nav>
+
   <script src="/app.js"></script>
 </body>
 </html>
