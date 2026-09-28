@@ -1,113 +1,131 @@
-import express from "express";
-import Database from "better-sqlite3";
-import webpush from "web-push";
-import path from "path";
-import { fileURLToPath } from "url";
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const webpush = require('web-push');
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const db = new Database("avisos-cole.db");
+const PORT = process.env.PORT || 3000;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234';
 
-db.exec(`
-CREATE TABLE IF NOT EXISTS notices (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  type TEXT NOT NULL DEFAULT 'aviso',
-  title TEXT NOT NULL,
-  description TEXT NOT NULL,
-  date TEXT,
-  time TEXT,
-  important INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE IF NOT EXISTS subscriptions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  endpoint TEXT UNIQUE NOT NULL,
-  subscription_json TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-`);
+// Claves VAPID para Notificaciones
+const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY || '';
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || '';
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@ejemplo.com';
 
-app.use(express.json({limit:"1mb"}));
-app.use(express.static(path.join(__dirname, "public")));
-
-const adminPassword = process.env.ADMIN_PASSWORD || "demo";
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || "mailto:admin@example.com",
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  );
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE);
 }
 
-function isAdmin(req) {
-  return req.headers["x-admin-password"] === adminPassword;
-}
+// Aumentamos el límite del cuerpo de las peticiones a 10MB para permitir imágenes en Base64
+app.use(express.json({ limit: '10mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.get("/api/config", (_req,res) => {
-  res.json({ vapidPublicKey: process.env.VAPID_PUBLIC_KEY || "" });
-});
+const DATA_FILE = path.join(__dirname, 'notices.json');
+const SUBS_FILE = path.join(__dirname, 'subscriptions.json');
 
-app.get("/api/notices", (_req,res) => {
-  const rows = db.prepare(`
-    SELECT id,type,title,description,date,time,important,created_at
-    FROM notices ORDER BY COALESCE(date,'9999-12-31'), COALESCE(time,'23:59'), id DESC
-  `).all();
-  res.json(rows);
-});
-
-app.post("/api/notices", async (req,res) => {
-  if (!isAdmin(req)) return res.status(401).json({error:"No autorizado"});
-  const {type="aviso",title,description="",date=null,time=null,important=false} = req.body;
-  if (!title?.trim()) return res.status(400).json({error:"Falta el título"});
-  const info = db.prepare(`
-    INSERT INTO notices(type,title,description,date,time,important)
-    VALUES(?,?,?,?,?,?)
-  `).run(type,title.trim(),description.trim(),date,time,important?1:0);
-
-  const notice = db.prepare("SELECT * FROM notices WHERE id=?").get(info.lastInsertRowid);
-  await sendPush({
-    title: "Avisos Cole · LH3A",
-    body: notice.title,
-    url: "/"
-  });
-  res.status(201).json(notice);
-});
-
-app.delete("/api/notices/:id", async (req,res) => {
-  if (!isAdmin(req)) return res.status(401).json({error:"No autorizado"});
-  db.prepare("DELETE FROM notices WHERE id=?").run(req.params.id);
-  res.status(204).end();
-});
-
-app.post("/api/push/subscribe", (req,res) => {
-  const sub=req.body;
-  if (!sub?.endpoint) return res.status(400).json({error:"Suscripción inválida"});
-  db.prepare(`
-    INSERT INTO subscriptions(endpoint,subscription_json)
-    VALUES(?,?)
-    ON CONFLICT(endpoint) DO UPDATE SET subscription_json=excluded.subscription_json
-  `).run(sub.endpoint, JSON.stringify(sub));
-  res.status(201).json({ok:true});
-});
-
-async function sendPush(payload) {
-  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return;
-  const subs=db.prepare("SELECT * FROM subscriptions").all();
-  const message=JSON.stringify(payload);
-  for (const row of subs) {
-    try {
-      await webpush.sendNotification(JSON.parse(row.subscription_json), message);
-    } catch (e) {
-      if (e.statusCode === 404 || e.statusCode === 410) {
-        db.prepare("DELETE FROM subscriptions WHERE id=?").run(row.id);
-      }
-    }
+// Funciones auxiliares para leer y guardar JSON
+function readJSON(file) {
+  if (!fs.existsSync(file)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch (e) {
+    return [];
   }
 }
 
-app.get("*", (_req,res) => {
-  res.sendFile(path.join(__dirname,"public","index.html"));
+function writeJSON(file, data) {
+  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
+}
+
+// Middleware para verificar la contraseña de administración
+function checkAdmin(req, res, next) {
+  const pass = req.headers['x-admin-password'];
+  if (pass === ADMIN_PASSWORD) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Contraseña incorrecta' });
+  }
+}
+
+// Configuración pública
+app.get('/api/config', (req, res) => {
+  res.json({ vapidPublicKey: VAPID_PUBLIC });
 });
 
-const port=Number(process.env.PORT||3000);
-app.listen(port,()=>console.log(`Avisos Cole: http://localhost:${port}`));
+// Obtener avisos
+app.get('/api/notices', (req, res) => {
+  const notices = readJSON(DATA_FILE);
+  res.json(notices);
+});
+
+// Crear aviso
+app.post('/api/notices', checkAdmin, (req, res) => {
+  const notices = readJSON(DATA_FILE);
+  const newNotice = {
+    id: Date.now().toString(),
+    created_at: new Date().toISOString(),
+    archived: false,
+    ...req.body
+  };
+  notices.push(newNotice);
+  writeJSON(DATA_FILE, notices);
+
+  // Enviar notificación Push si está configurado VAPID
+  if (VAPID_PUBLIC && VAPID_PRIVATE) {
+    const subs = readJSON(SUBS_FILE);
+    const payload = JSON.stringify({
+      title: newNotice.title,
+      body: newNotice.description
+    });
+    subs.forEach(sub => {
+      webpush.sendNotification(sub, payload).catch(() => {});
+    });
+  }
+
+  res.status(201).json(newNotice);
+});
+
+// Editar aviso existente (NUEVO)
+app.put('/api/notices/:id', checkAdmin, (req, res) => {
+  const notices = readJSON(DATA_FILE);
+  const index = notices.findIndex(n => n.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Aviso no encontrado' });
+
+  notices[index] = { ...notices[index], ...req.body };
+  writeJSON(DATA_FILE, notices);
+  res.json(notices[index]);
+});
+
+// Archivar/Desarchivar aviso (NUEVO)
+app.patch('/api/notices/:id/archive', checkAdmin, (req, res) => {
+  const notices = readJSON(DATA_FILE);
+  const notice = notices.find(n => n.id === req.params.id);
+  if (!notice) return res.status(404).json({ error: 'Aviso no encontrado' });
+
+  notice.archived = !!req.body.archived;
+  writeJSON(DATA_FILE, notices);
+  res.json(notice);
+});
+
+// Borrar aviso (NUEVO)
+app.delete('/api/notices/:id', checkAdmin, (req, res) => {
+  let notices = readJSON(DATA_FILE);
+  notices = notices.filter(n => n.id !== req.params.id);
+  writeJSON(DATA_FILE, notices);
+  res.json({ success: true });
+});
+
+// Suscripción a Notificaciones Push
+app.post('/api/push/subscribe', (req, res) => {
+  const subs = readJSON(SUBS_FILE);
+  const newSub = req.body;
+  if (!subs.some(s => s.endpoint === newSub.endpoint)) {
+    subs.push(newSub);
+    writeJSON(SUBS_FILE, subs);
+  }
+  res.status(201).json({});
+});
+
+app.listen(PORT, () => {
+  console.log(`Servidor activo en el puerto ${PORT}`);
+});
