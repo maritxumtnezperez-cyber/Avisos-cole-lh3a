@@ -162,7 +162,11 @@ function renderCalendar() {
 async function load() {
   try {
     const r = await fetch("/api/notices");
-    notices = await r.json();
+    if (r.ok) {
+      notices = await r.json();
+    } else {
+      notices = [];
+    }
   } catch (err) {
     console.error("Error al cargar eventos:", err);
     notices = [];
@@ -204,7 +208,7 @@ window.editNotice = function (id) {
     if ($("#title")) $("#title").value = n.title || "";
     if ($("#description")) $("#description").value = n.description || "";
     if ($("#date")) $("#date").value = n.date || "";
-    if ($("#time")) $("#time").value = n.time ||";
+    if ($("#time")) $("#time").value = n.time || "";
 
     if ($("#publish")) $("#publish").textContent = "Guardar Cambios";
     window.scrollTo({ top: 0, behavior: "smooth" });
