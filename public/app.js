@@ -1,3 +1,4 @@
+
 let notices = [];
 let currentType = "aviso";
 let month = new Date().getMonth(), year = new Date().getFullYear();
@@ -27,9 +28,6 @@ function renderAdminControls(n) {
   return `
     <div class="admin-actions" style="margin-top: 10px; display: flex; gap: 8px;">
       <button type="button" onclick="editNotice('${n.id}')" style="background:#f0ad4e; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">✏️ Editar</button>
-      <button type="button" onclick="archiveNotice('${n.id}', ${!n.archived})" style="background:#5bc0de; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">
-        ${n.archived ? "📂 Desarchivar" : "📦 Archivar"}
-      </button>
       <button type="button" onclick="deleteNotice('${n.id}')" style="background:#d9534f; color:white; border:none; padding:6px 10px; border-radius:4px; cursor:pointer;">🗑️ Borrar</button>
     </div>
   `;
@@ -41,10 +39,7 @@ function renderImage(imageUrl) {
 }
 
 function render() {
-  const activeNotices = notices.filter(n => !n.archived);
-  const archivedNotices = notices.filter(n => n.archived);
-
-  const sorted = [...activeNotices].sort((a, b) => String(b.created_at || b.id).localeCompare(String(a.created_at || a.id)));
+  const sorted = [...notices].sort((a, b) => String(b.created_at || b.id).localeCompare(String(a.created_at || a.id)));
   
   $("#noticeList").innerHTML = sorted.map(n => `
     <article class="card ${n.important ? "important" : ""}">
@@ -57,16 +52,16 @@ function render() {
         ${renderAdminControls(n)}
       </div>
     </article>
-  `).join("") || "<p>No hay avisos activos todavía.</p>";
+  `).join("") || "<p>No hay avisos todavía.</p>";
 
-  const future = activeNotices.filter(n => n.date).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
+  const future = notices.filter(n => n.date).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
   $("#next").innerHTML = future ? `
     <strong>🔔 Próximo</strong>
     <h3>${esc(future.title)}</h3>
     <p>${fmtDate(future.date)}${future.time ? " · " + future.time : ""}</p>
   ` : "<strong>📌 Todo al día</strong><p>No hay próximos eventos.</p>";
 
-  $("#reminderList").innerHTML = activeNotices.filter(n => n.type === "recordatorio" || n.important).map(n => `
+  $("#reminderList").innerHTML = notices.filter(n => n.type === "recordatorio" || n.important).map(n => `
     <article class="card">
       <div class="badge">🔔</div>
       <div style="flex:1;">
@@ -79,38 +74,21 @@ function render() {
     </article>
   `).join("") || "<p>No hay recordatorios.</p>";
 
-  const archivedContainer = $("#archivedList");
-  if (archivedContainer) {
-    archivedContainer.innerHTML = archivedNotices.map(n => `
-      <article class="card archived" style="opacity:0.8;">
-        <div class="badge">📦</div>
-        <div style="flex:1;">
-          <h3>${esc(n.title)} (Archivado)</h3>
-          <p>${n.date ? fmtDate(n.date) : ""}${n.time ? " · " + n.time : ""}</p>
-          <p>${esc(n.description)}</p>
-          ${renderImage(n.imageUrl)}
-          ${renderAdminControls(n)}
-        </div>
-      </article>
-    `).join("") || "<p>No hay avisos archivados.</p>";
-  }
-
   renderCalendar();
 }
 
 function renderCalendar() {
-  const activeNotices = notices.filter(n => !n.archived);
   const first = new Date(year, month, 1), days = new Date(year, month + 1, 0).getDate(), offset = (first.getDay() + 6) % 7;
   $("#monthLabel").textContent = new Date(year, month, 1).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
   let html = ["L", "M", "X", "J", "V", "S", "D"].map(x => `<b class="day">${x}</b>`).join("");
   for (let i = 0; i < offset; i++) html += "<span></span>";
   for (let d = 1; d <= days; d++) {
     const iso = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const has = activeNotices.some(n => n.date === iso);
+    const has = notices.some(n => n.date === iso);
     html += `<span class="day ${has ? "event" : ""}">${d}</span>`;
   }
   $("#calendarGrid").innerHTML = html;
-  $("#eventList").innerHTML = activeNotices.filter(n => n.date && new Date(n.date + "T12:00:00").getFullYear() === year && new Date(n.date + "T12:00:00").getMonth() === month).sort((a, b) => a.date.localeCompare(b.date)).map(n => `
+  $("#eventList").innerHTML = notices.filter(n => n.date && new Date(n.date + "T12:00:00").getFullYear() === year && new Date(n.date + "T12:00:00").getMonth() === month).sort((a, b) => a.date.localeCompare(b.date)).map(n => `
     <article class="card">
       <div class="badge">${icon(n)}</div>
       <div style="flex:1;">
@@ -213,6 +191,7 @@ function resetAdminForm() {
   if ($("#important")) $("#important").checked = false;
   if ($("#imageFile")) $("#imageFile").value = "";
   if ($("#publish")) $("#publish").textContent = "Publicar aviso";
+  if ($("#adminMsg")) $("#adminMsg").textContent = "";
 }
 
 window.editNotice = function (id) {
@@ -222,16 +201,27 @@ window.editNotice = function (id) {
   editingNoticeId = id;
   currentType = n.type || "aviso";
 
-  if ($("#title")) $("#title").value = n.title || "";
-  if ($("#description")) $("#description").value = n.description || "";
-  if ($("#date")) $("#date").value = n.date || "";
-  if ($("#time")) $("#time").value = n.time || "";
-  if ($("#important")) $("#important").checked = !!n.important;    $$(".types button").forEach(b => {
-    b.classList.toggle("selected", b.dataset.type === currentType);
-  });
+  // Mostrar la pantalla de administración activando su botón
+  const adminTabBtn = document.querySelector('.bottom button[data-screen="admin"]');
+  if (adminTabBtn) {
+    adminTabBtn.click();
+  } else {
+    show("admin");
+  }
 
-  if ($("#publish")) $("#publish").textContent = "Guardar Cambios";
-  show("admin");
+  // Rellenar los valores en el formulario
+  setTimeout(() => {
+    if ($("#title")) $("#title").value = n.title || "";
+    if ($("#description")) $("#description").value = n.description || "";
+    if ($("#date")) $("#date").value = n.date || "";
+    if ($("#time")) $("#time").value = n.time || "";
+    if ($("#important")) $("#important").checked = !!n.important;      $$(".types button").forEach(b => {
+      b.classList.toggle("selected", b.dataset.type === currentType);
+    });
+
+    if ($("#publish")) $("#publish").textContent = "Guardar Cambios";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, 50);
 };
 
 window.deleteNotice = async function (id) {
@@ -241,18 +231,6 @@ window.deleteNotice = async function (id) {
     headers: { "x-admin-password": sessionStorage.getItem("adminPassword") || "" }
   });
   if (r.ok) { await load(); } else { alert("No se pudo borrar. Revisa la contraseña."); }
-};
-
-window.archiveNotice = async function (id, archivedState) {
-  const r = await fetch(`/api/notices/${id}/archive`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "x-admin-password": sessionStorage.getItem("adminPassword") || ""
-    },
-    body: JSON.stringify({ archived: archivedState })
-  });
-  if (r.ok) { await load(); } else { alert("Error al cambiar estado. Revisa la contraseña."); }
 };
 
 $("#prevMonth").onclick = () => { month--; if (month < 0) { month = 11; year--; } renderCalendar(); };
