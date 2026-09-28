@@ -50,6 +50,12 @@
         <label>Título<input id="title" placeholder="Ej. Excursión al museo"></label>
         <label>Descripción<textarea id="description" placeholder="Escribe los detalles..."></textarea></label>
         <div class="two"><label>Fecha<input id="date" type="date"></label><label>Hora<input id="time" type="time"></label></div>
+        
+        <!-- Campo para adjuntar imágenes -->
+        <label>Imagen adjunta (opcional)
+          <input id="imageFile" type="file" accept="image/*">
+        </label>
+
         <label class="switchrow"><span>🔴 Aviso importante</span><input id="important" type="checkbox"></label>
         <button id="publish" class="primary">Publicar aviso</button>
         <p id="adminMsg" class="msg"></p>
