@@ -32,6 +32,14 @@ function renderImage(imageUrl) {
   return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
+// Comprueba si un evento ya ha pasado en base a su fecha y hora
+function isPastEvent(n) {
+  if (!n.date) return false;
+  const timeStr = n.time || "23:59";
+  const eventDateTime = new Date(`${n.date}T${timeStr}:00`);
+  return eventDateTime < new Date();
+}
+
 window.downloadICS = function(id) {
   const n = notices.find(x => x.id === id);
   if (!n || !n.date) {
@@ -99,76 +107,56 @@ window.downloadICS = function(id) {
   document.body.removeChild(link);
 };
 
-function renderHelp() {
-  const helpContainer = $("#helpContent");
-  if (!helpContainer) return;
-
-  helpContainer.innerHTML = `
-    <article class="card" style="padding: 16px; line-height: 1.5;">
-      <h2>📲 ¿Cómo añadir los eventos a tu calendario?</h2>
-      <p>Para que no se te olvide ninguna fecha importante, puedes guardar los eventos directamente en la agenda de tu móvil pulsando el botón <strong>"📅 Añadir al calendario"</strong>.</p>
-
-      <hr style="border:0; border-top:1px solid #eee; margin:16px 0;">
-
-      <h3>📱 Dispositivos Android</h3>
-      <p>Al pulsar el botón, se abrirá automáticamente tu aplicación de <strong>Google Calendar</strong> con todos los datos del evento cargados:</p>
-      <ol style="margin-left: 20px; margin-bottom: 12px;">
-        <li>Revisa la fecha y la hora.</li>
-        <li>Si deseas recibir una alerta 24 horas antes, asegúrate de comprobar la sección <strong>"Añadir notificación"</strong> antes de guardar.</li>
-        <li>Pulsa en <strong>Guardar</strong> en la esquina superior derecha.</li>
-      </ol>
-
-      <hr style="border:0; border-top:1px solid #eee; margin:16px 0;">
-
-      <h3>🍏 Dispositivos iPhone (iOS)</h3>
-      <p>Al pulsar el botón, se descargará un archivo de evento (<code>.ics</code>):</p>
-      <ol style="margin-left: 20px; margin-bottom: 12px;">
-        <li>Pulsa sobre el archivo descargado para abrir la vista previa.</li>
-        <li>Selecciona <strong>"Añadir todos"</strong> o <strong>"Añadir a Calendario"</strong>.</li>
-        <li>El evento se guardará con una <strong>alarma programada 1 día antes</strong>.</li>
-      </ol>
-
-      <div style="background:#f9f9f9; padding:12px; border-left:4px solid #2fa866; margin-top:16px; border-radius:4px;">
-        <p style="margin:0;">💡 <strong>Nota:</strong> Si necesitas cambiar el color del evento o añadir más avisos, puedes hacerlo antes de guardar en tu app de calendario.</p>
+function renderCard(n, isPast = false) {
+  return `
+    <article class="card">
+      <div class="badge">${isPast ? "⌛" : "📅"}</div>
+      <div style="flex:1;">
+        <!-- TÍTULO EN ROJO Y NEGRITA -->
+        <h3 style="color: #d9534f; font-weight: bold; margin: 0 0 6px 0;">${esc(n.title)}</h3>
+        <p><strong>${n.date ? fmtDate(n.date) : "Sin fecha"}</strong>${n.time ? " · " + n.time : ""}</p>
+        <p>${esc(n.description)}</p>
+        ${renderImage(n.imageUrl)}
+        ${!isPast ? `
+          <div style="margin-top:12px;">
+            <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
+          </div>
+        ` : ""}
+        ${renderAdminControls(n)}
       </div>
     </article>
   `;
 }
 
 function render() {
-  const sorted = [...notices].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
-  
+  // Separar eventos futuros y pasados
+  const futureNotices = notices.filter(n => !isPastEvent(n)).sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+  const pastNotices = notices.filter(n => isPastEvent(n)).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  // Renderizar eventos futuros
   const noticeList = $("#noticeList");
   if (noticeList) {
-    noticeList.innerHTML = sorted.map(n => `
-      <article class="card">
-        <div class="badge">📅</div>
-        <div style="flex:1;">
-          <h3>${esc(n.title)}</h3>
-          <p><strong>${n.date ? fmtDate(n.date) : "Sin fecha"}</strong>${n.time ? " · " + n.time : ""}</p>
-          <p>${esc(n.description)}</p>
-          ${renderImage(n.imageUrl)}
-          <div style="margin-top:12px;">
-            <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
-          </div>
-          ${renderAdminControls(n)}
-        </div>
-      </article>
-    `).join("") || "<p>No hay eventos creados todavía.</p>";
+    noticeList.innerHTML = futureNotices.map(n => renderCard(n, false)).join("") || "<p>No hay eventos próximos.</p>";
   }
 
-  const future = notices.filter(n => n.date).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
+  // Renderizar eventos pasados
+  const pastNoticeList = $("#pastNoticeList");
+  if (pastNoticeList) {
+    pastNoticeList.innerHTML = pastNotices.map(n => renderCard(n, true)).join("") || "<p>No hay eventos pasados registrados.</p>";
+  }
+
+  // Próximo evento destacado
+  const future = futureNotices.filter(n => n.date)[0];
   const nextCard = $("#next");
   if (nextCard) {
     nextCard.innerHTML = future ? `
       <strong>📌 Próximo Evento</strong>
-      <h3>${esc(future.title)}</h3>
+      <h3 style="color: #d9534f; font-weight: bold; margin: 4px 0;">${esc(future.title)}</h3>
       <p>${fmtDate(future.date)}${future.time ? " · " + future.time : ""}</p>
     ` : "<strong>📌 Todo al día</strong><p>No hay eventos próximos.</p>";
   }
 
   renderCalendar();
-  renderHelp();
 }
 
 function renderCalendar() {
@@ -188,21 +176,11 @@ function renderCalendar() {
 
   const eventList = $("#eventList");
   if (eventList) {
-    eventList.innerHTML = notices.filter(n => n.date && new Date(n.date + "T12:00:00").getFullYear() === year && new Date(n.date + "T12:00:00").getMonth() === month).sort((a, b) => a.date.localeCompare(b.date)).map(n => `
-      <article class="card">
-        <div class="badge">📅</div>
-        <div style="flex:1;">
-          <h3>${esc(n.title)}</h3>
-          <p>${fmtDate(n.date)}${n.time ? " · " + n.time : ""}</p>
-          <p>${esc(n.description)}</p>
-          ${renderImage(n.imageUrl)}
-          <div style="margin-top:12px;">
-            <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
-          </div>
-          ${renderAdminControls(n)}
-        </div>
-      </article>
-    `).join("");
+    eventList.innerHTML = notices
+      .filter(n => n.date && new Date(n.date + "T12:00:00").getFullYear() === year && new Date(n.date + "T12:00:00").getMonth() === month)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(n => renderCard(n, isPastEvent(n)))
+      .join("");
   }
 }
 
