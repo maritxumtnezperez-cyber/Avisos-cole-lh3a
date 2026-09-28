@@ -32,7 +32,7 @@ function renderImage(imageUrl) {
   return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
-// Genera y descarga el archivo .ics para el calendario del usuario
+// Genera y descarga el archivo .ics con recordatorios a las 24h y a las 2h antes
 window.downloadICS = function(id) {
   const n = notices.find(x => x.id === id);
   if (!n || !n.date) {
@@ -43,7 +43,7 @@ window.downloadICS = function(id) {
   const dateStr = n.date.replace(/-/g, ""); // YYYYMMDD
   const timeStr = n.time ? n.time.replace(":", "") + "00" : "090000"; // HHMMSS
   
-  // Calcular hora fin (1 hora por defecto)
+  // Calcular hora de fin (1 hora de duración por defecto)
   const startDt = new Date(`${n.date}T${n.time || "09:00"}:00`);
   const endDt = new Date(startDt.getTime() + 60 * 60 * 1000);
   const endYear = endDt.getFullYear();
@@ -71,14 +71,14 @@ window.downloadICS = function(id) {
     "BEGIN:VALARM",
     "TRIGGER:-P1D",
     "ACTION:DISPLAY",
-    `DESCRIPTION:Recordatorio 24h: ${n.title}`,
+    `DESCRIPTION:Recordatorio 24h antes: ${n.title}`,
     "END:VALARM",
-    
-    // Alarma 2: 1 hora y 30 minutos antes (90 minutos)
+
+    // Alarma 2: 2 horas antes
     "BEGIN:VALARM",
-    "TRIGGER:-PT1H30M",
+    "TRIGGER:-PT2H",
     "ACTION:DISPLAY",
-    `DESCRIPTION:Recordatorio 1h 30m: ${n.title}`,
+    `DESCRIPTION:Recordatorio 2h antes: ${n.title}`,
     "END:VALARM",
     
     "END:VEVENT",
