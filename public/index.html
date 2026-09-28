@@ -34,9 +34,12 @@
     </section>
 
     <section id="reminders" class="screen">
-      <div class="section-title"><h2>Notificaciones</h2></div>
-      <p style="margin-bottom: 15px; color: #555;">Activa las notificaciones para recibir alertas programadas de los eventos en tu dispositivo.</p>
-      <button id="notifyBtn" class="primary">🔔 Activar notificaciones push</button>
+      <div class="section-title"><h2>Añadir a tu agenda</h2></div>
+      <p style="margin-bottom: 15px; color: #555;">Haz clic en el botón <strong>"📅 Añadir al calendario"</strong> de cualquier evento para guardar la cita en tu móvil o Google Calendar. Se incluirán automáticamente dos avisos:</p>
+      <ul style="margin-left: 20px; color: #555; line-height: 1.6;">
+        <li>🔔 24 horas antes</li>
+        <li>⏰ 1 hora y 30 minutos antes</li>
+      </ul>
     </section>
 
     <section id="admin" class="screen">
@@ -53,16 +56,6 @@
           <input id="imageFile" type="file" accept="image/*">
         </label>
 
-        <label class="switchrow">
-          <span>🔔 Recordatorio 24h antes</span>
-          <input id="reminder24h" type="checkbox">
-        </label>
-
-        <label class="switchrow">
-          <span>⏰ Recordatorio día del evento (07:30 AM)</span>
-          <input id="reminderSameDay" type="checkbox">
-        </label>
-
         <button id="publish" class="primary">Publicar evento</button>
         <p id="adminMsg" class="msg"></p>
       </div>
@@ -72,7 +65,7 @@
   <nav class="bottom">
     <button data-screen="home" class="active">⌂<span>Inicio</span></button>
     <button data-screen="calendar">▦<span>Calendario</span></button>
-    <button data-screen="reminders">♧<span>Avisos</span></button>
+    <button data-screen="reminders">♧<span>Ayuda</span></button>
   </nav>
   <script src="/app.js"></script>
 </body>
