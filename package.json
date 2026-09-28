@@ -8,8 +8,8 @@
     "dev": "node --watch server.js"
   },
   "dependencies": {
-    "better-sqlite3": "^11.7.0",
     "express": "^4.21.2",
+    "pg": "^8.13.0",
     "web-push": "^3.6.7"
   }
 }
