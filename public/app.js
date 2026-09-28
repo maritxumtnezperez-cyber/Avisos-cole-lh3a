@@ -32,7 +32,7 @@ function renderImage(imageUrl) {
   return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
-// Genera y descarga el archivo .ics formateado únicamente con la alarma de 24 horas antes
+// Genera y descarga el archivo .ics formateado estrictamente para forzar 24h antes y evitar el de 30min por defecto
 window.downloadICS = function(id) {
   const n = notices.find(x => x.id === id);
   if (!n || !n.date) {
@@ -52,14 +52,16 @@ window.downloadICS = function(id) {
   const dtEnd = toICSDate(endDt);
   const dtStamp = toICSDate(new Date());
 
-  const icsData = [
+  const uid = `event-${n.id}-${Date.now()}@avisoscole`;
+
+  const icsLines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Avisos Cole LH3A//ES",
     "CALSCALE:GREGORIAN",
-    "METHOD:REQUEST",
+    "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    `UID:event-${n.id}-${Date.now()}@avisoscole`,
+    `UID:${uid}`,
     `DTSTAMP:${dtStamp}`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
@@ -67,16 +69,19 @@ window.downloadICS = function(id) {
     `DESCRIPTION:${(n.description || "").replace(/\n/g, "\\n")}`,
     "STATUS:CONFIRMED",
     
-    // Única alarma: 24 horas antes (-P1D = 1 día antes)
+    // Alarma estrictamente formateada para sobrescribir alertas por defecto
     "BEGIN:VALARM",
+    `X-WR-ALARMUID:alarm-${uid}`,
     "ACTION:DISPLAY",
-    "TRIGGER:-P1D",
+    "TRIGGER;VALUE=DURATION:-P1D",
     `DESCRIPTION:Recordatorio 24h antes: ${n.title}`,
     "END:VALARM",
     
     "END:VEVENT",
     "END:VCALENDAR"
-  ].join("\r\n");
+  ];
+
+  const icsData = icsLines.join("\r\n");
 
   const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
   const link = document.createElement("a");
