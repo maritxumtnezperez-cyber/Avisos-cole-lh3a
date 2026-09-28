@@ -35,7 +35,7 @@
 
     <section id="reminders" class="screen">
       <div class="section-title"><h2>Notificaciones</h2></div>
-      <p style="margin-bottom: 15px; color: #555;">Activa las notificaciones para recibir un aviso en tu móvil u ordenador 24 horas antes de cada evento configurado.</p>
+      <p style="margin-bottom: 15px; color: #555;">Activa las notificaciones para recibir alertas programadas de los eventos en tu dispositivo.</p>
       <button id="notifyBtn" class="primary">🔔 Activar notificaciones push</button>
     </section>
 
@@ -56,6 +56,11 @@
         <label class="switchrow">
           <span>🔔 Recordatorio 24h antes</span>
           <input id="reminder24h" type="checkbox">
+        </label>
+
+        <label class="switchrow">
+          <span>⏰ Recordatorio día del evento (07:30 AM)</span>
+          <input id="reminderSameDay" type="checkbox">
         </label>
 
         <button id="publish" class="primary">Publicar evento</button>
