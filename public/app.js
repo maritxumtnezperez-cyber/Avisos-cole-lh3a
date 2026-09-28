@@ -32,13 +32,19 @@ function renderImage(imageUrl) {
   return `<div class="notice-image" style="margin-top:10px;"><img src="${imageUrl}" alt="Imagen adjunta" style="max-width:100%; border-radius:8px; display:block; height:auto;"></div>`;
 }
 
-// Genera el archivo .ics anulando notificaciones predeterminadas y dejando SOLO la de 24 horas
+// Genera el archivo .ics con un aviso 24 horas antes
 window.downloadICS = function(id) {
   const n = notices.find(x => x.id === id);
   if (!n || !n.date) {
     alert("Este evento no tiene fecha asignada.");
     return;
   }
+
+  const escICS = s => String(s ?? "")
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
 
   const [yearNum, monthNum, dayNum] = n.date.split("-").map(Number);
   const [hoursNum, minutesNum] = (n.time || "09:00").split(":").map(Number);
@@ -66,22 +72,17 @@ window.downloadICS = function(id) {
     `DTSTAMP:${dtStamp}`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
-    `SUMMARY:${n.title}`,
-    `DESCRIPTION:${(n.description || "").replace(/\n/g, "\\n")}`,
+    `SUMMARY:${escICS(n.title)}`,
+    `DESCRIPTION:${escICS(n.description)}`,
     "STATUS:CONFIRMED",
-    
-    // Anula notificaciones por defecto de la app del teléfono o Google Calendar
     "X-APPLE-DEFAULT-ALARM:FALSE",
     "X-GOOGLE-NO-DEFAULT-REMINDERS:TRUE",
-    
-    // Única alarma permitida: 24 horas antes
     "BEGIN:VALARM",
     `X-WR-ALARMUID:alarm-${uid}`,
     "ACTION:DISPLAY",
     "TRIGGER:-P1D",
-    `DESCRIPTION:Recordatorio 24h antes: ${n.title}`,
+    `DESCRIPTION:${escICS("Recordatorio 24h antes: " + n.title)}`,
     "END:VALARM",
-    
     "END:VEVENT",
     "END:VCALENDAR"
   ];
@@ -91,7 +92,7 @@ window.downloadICS = function(id) {
   const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = `${n.title.toLowerCase().replace(/\s+/g, "_")}.ics`;
+  link.download = `${n.title.toLowerCase().replace(/[^a-z0-9áéíóúñü]+/gi, "_")}.ics`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -119,7 +120,7 @@ function render() {
     `).join("") || "<p>No hay eventos creados todavía.</p>";
   }
 
-  const future = notices.filter(n => n.date).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
+  const future = notices.filter(n => n.date).sort((a, b) => (a.date + (a.time || "")).localeCompare(b.date + (b.time || "")))[0];
   const nextCard = $("#next");
   if (nextCard) {
     nextCard.innerHTML = future ? `
@@ -154,170 +155,4 @@ function renderCalendar() {
         <div class="badge">📅</div>
         <div style="flex:1;">
           <h3>${esc(n.title)}</h3>
-          <p>${fmtDate(n.date)}${n.time ? " · " + n.time : ""}</p>
-          <p>${esc(n.description)}</p>
-          ${renderImage(n.imageUrl)}
-          <div style="margin-top:12px;">
-            <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
-          </div>
-          ${renderAdminControls(n)}
-        </div>
-      </article>
-    `).join("");
-  }
-}
-
-async function load() {
-  try {
-    const r = await fetch("/api/notices");
-    notices = await r.json();
-  } catch (err) {
-    console.error("Error al cargar eventos:", err);
-    notices = [];
-  }
-  render();
-}
-
-function show(screen) {
-  $$(".screen").forEach(x => x.classList.toggle("active", x.id === screen));   $$
-(".bottom button").forEach(x => x.classList.toggle("active", x.dataset.screen === screen));
-}
-
-function getBase64(file) {
-  return new Promise((resolve, reject) => {
-    if (!file) return resolve(null);
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-  });
-}
-
-function resetAdminForm() {
-  editingNoticeId = null;
-  ["title", "description", "date", "time"].forEach(id => { if ($("#" + id)) $("#" + id).value = ""; });
-  if ($("#imageFile")) $("#imageFile").value = "";
-  if ($("#publish")) $("#publish").textContent = "Publicar evento";
-  if ($("#adminMsg")) $("#adminMsg").textContent = "";
-}
-
-window.editNotice = function (id) {
-  const n = notices.find(x => x.id === id);
-  if (!n) return;
-
-  editingNoticeId = id;
-
-  show("admin");
-
-  setTimeout(() => {
-    if ($("#title")) $("#title").value = n.title || "";
-    if ($("#description")) $("#description").value = n.description || "";
-    if ($("#date")) $("#date").value = n.date || "";
-    if ($("#time")) $("#time").value = n.time || "";
-
-    if ($("#publish")) $("#publish").textContent = "Guardar Cambios";
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, 50);
-};
-
-window.deleteNotice = async function (id) {
-  if (!confirm("¿Seguro que quieres borrar este evento?")) return;
-  const r = await fetch(`/api/notices/${id}`, {
-    method: "DELETE",
-    headers: { "x-admin-password": sessionStorage.getItem("adminPassword") || "" }
-  });
-  if (r.ok) { await load(); } else { alert("No se pudo borrar. Revisa la contraseña."); }
-};
-
-document.addEventListener("DOMContentLoaded", () => {
-  $$(".bottom button").forEach(b => b.onclick = () => show(b.dataset.screen));
-
-  const adminBtn = $("#adminBtn");
-  if (adminBtn) {
-    adminBtn.onclick = () => {
-      const p = prompt("Contraseña de administración");
-      if (p) sessionStorage.setItem("adminPassword", p);
-      show("admin");
-      render();
-    };
-  }
-
-  const backBtn = $("#backBtn");
-  if (backBtn) {
-    backBtn.onclick = () => {
-      resetAdminForm();
-      show("home");
-    };
-  }
-
-  const publishBtn = $("#publish");
-  if (publishBtn) {
-    publishBtn.onclick = async (e) => {
-      e.preventDefault();
-      
-      const titleInput = $("#title");
-      if (!titleInput || !titleInput.value.trim()) {
-        const msg = $("#adminMsg");
-        if (msg) msg.textContent = "Debes escribir un título para el evento.";
-        return;
-      }
-
-      const fileInput = $("#imageFile");
-      const file = fileInput ? fileInput.files[0] : null;
-      let imageUrl = null;
-
-      if (file) {
-        imageUrl = await getBase64(file);
-      } else if (editingNoticeId) {
-        const existing = notices.find(n => n.id === editingNoticeId);
-        if (existing) imageUrl = existing.imageUrl;
-      }
-
-      const payload = {
-        title: titleInput.value.trim(),
-        description: $("#description") ? $("#description").value : "",
-        date: $("#date") ? $("#date").value || null : null,
-        time: $("#time") ? $("#time").value || null : null,
-        imageUrl: imageUrl
-      };
-
-      const method = editingNoticeId ? "PUT" : "POST";
-      const url = editingNoticeId ? `/api/notices/${editingNoticeId}` : "/api/notices";
-
-      try {
-        const r = await fetch(url, {
-          method: method,
-          headers: {
-            "Content-Type": "application/json",
-            "x-admin-password": sessionStorage.getItem("adminPassword") || ""
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (!r.ok) {
-          const msg = $("#adminMsg");
-          if (msg) msg.textContent = "Error al guardar. Comprueba la contraseña de administración.";
-          return;
-        }
-
-        const msg = $("#adminMsg");
-        if (msg) msg.textContent = editingNoticeId ? "Evento actualizado ✓" : "Publicado ✓";
-        resetAdminForm();
-        await load();
-        show("home");
-      } catch (err) {
-        console.error("Error en petición fetch:", err);
-        const msg = $("#adminMsg");
-        if (msg) msg.textContent = "Error de conexión con el servidor.";
-      }
-    };
-  }
-
-  const prevMonth = $("#prevMonth");
-  if (prevMonth) prevMonth.onclick = () => { month--; if (month < 0) { month = 11; year--; } renderCalendar(); };
-  
-  const nextMonth = $("#nextMonth");
-  if (nextMonth) nextMonth.onclick = () => { month++; if (month > 11) { month = 0; year++; } renderCalendar(); };
-
-  load();
-});
+          <p>${fmtDate(n.date)}${n.time ? " · " + n.time : ""}</p
