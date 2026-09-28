@@ -1,4 +1,3 @@
-
 let notices = [];
 let currentType = "aviso";
 let month = new Date().getMonth(), year = new Date().getFullYear();
