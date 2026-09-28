@@ -2,7 +2,7 @@ let notices = [];
 let month = new Date().getMonth(), year = new Date().getFullYear();
 let editingNoticeId = null;
 
-const $ = s => document.querySelector(s); const $$ = s => [...documentquerySelectorAll(s)];
+const $ = s => document.querySelector(s); const $$ = s => [...document.querySelectorAll(s)];
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
@@ -97,35 +97,43 @@ window.downloadICS = function(id) {
 function render() {
   const sorted = [...notices].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
   
-  $("#noticeList").innerHTML = sorted.map(n => `
-    <article class="card">
-      <div class="badge">📅</div>
-      <div style="flex:1;">
-        <h3>${esc(n.title)}</h3>
-        <p><strong>${n.date ? fmtDate(n.date) : "Sin fecha"}</strong>${n.time ? " · " + n.time : ""}</p>
-        <p>${esc(n.description)}</p>
-        ${renderImage(n.imageUrl)}
-        <div style="margin-top:12px;">
-          <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
+  const noticeList = $("#noticeList");
+  if (noticeList) {
+    noticeList.innerHTML = sorted.map(n => `
+      <article class="card">
+        <div class="badge">📅</div>
+        <div style="flex:1;">
+          <h3>${esc(n.title)}</h3>
+          <p><strong>${n.date ? fmtDate(n.date) : "Sin fecha"}</strong>${n.time ? " · " + n.time : ""}</p>
+          <p>${esc(n.description)}</p>
+          ${renderImage(n.imageUrl)}
+          <div style="margin-top:12px;">
+            <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
+          </div>
+          ${renderAdminControls(n)}
         </div>
-        ${renderAdminControls(n)}
-      </div>
-    </article>
-  `).join("") || "<p>No hay eventos creados todavía.</p>";
+      </article>
+    `).join("") || "<p>No hay eventos creados todavía.</p>";
+  }
 
   const future = notices.filter(n => n.date).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))[0];
-  $("#next").innerHTML = future ? `
-    <strong>📌 Próximo Evento</strong>
-    <h3>${esc(future.title)}</h3>
-    <p>${fmtDate(future.date)}${future.time ? " · " + future.time : ""}</p>
-  ` : "<strong>📌 Todo al día</strong><p>No hay eventos próximos.</p>";
+  const nextCard = $("#next");
+  if (nextCard) {
+    nextCard.innerHTML = future ? `
+      <strong>📌 Próximo Evento</strong>
+      <h3>${esc(future.title)}</h3>
+      <p>${fmtDate(future.date)}${future.time ? " · " + future.time : ""}</p>
+    ` : "<strong>📌 Todo al día</strong><p>No hay eventos próximos.</p>";
+  }
 
   renderCalendar();
 }
 
 function renderCalendar() {
   const first = new Date(year, month, 1), days = new Date(year, month + 1, 0).getDate(), offset = (first.getDay() + 6) % 7;
-  $("#monthLabel").textContent = new Date(year, month, 1).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+  const monthLabel = $("#monthLabel");
+  if (monthLabel) monthLabel.textContent = new Date(year, month, 1).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+  
   let html = ["L", "M", "X", "J", "V", "S", "D"].map(x => `<b class="day">${x}</b>`).join("");
   for (let i = 0; i < offset; i++) html += "<span></span>";
   for (let d = 1; d <= days; d++) {
@@ -133,45 +141,44 @@ function renderCalendar() {
     const has = notices.some(n => n.date === iso);
     html += `<span class="day ${has ? "event" : ""}">${d}</span>`;
   }
-  $("#calendarGrid").innerHTML = html;
-  $("#eventList").innerHTML = notices.filter(n => n.date && new Date(n.date + "T12:00:00").getFullYear() === year && new Date(n.date + "T12:00:00").getMonth() === month).sort((a, b) => a.date.localeCompare(b.date)).map(n => `
-    <article class="card">
-      <div class="badge">📅</div>
-      <div style="flex:1;">
-        <h3>${esc(n.title)}</h3>
-        <p>${fmtDate(n.date)}${n.time ? " · " + n.time : ""}</p>
-        <p>${esc(n.description)}</p>
-        ${renderImage(n.imageUrl)}
-        <div style="margin-top:12px;">
-          <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
+  const calendarGrid = $("#calendarGrid");
+  if (calendarGrid) calendarGrid.innerHTML = html;
+
+  const eventList = $("#eventList");
+  if (eventList) {
+    eventList.innerHTML = notices.filter(n => n.date && new Date(n.date + "T12:00:00").getFullYear() === year && new Date(n.date + "T12:00:00").getMonth() === month).sort((a, b) => a.date.localeCompare(b.date)).map(n => `
+      <article class="card">
+        <div class="badge">📅</div>
+        <div style="flex:1;">
+          <h3>${esc(n.title)}</h3>
+          <p>${fmtDate(n.date)}${n.time ? " · " + n.time : ""}</p>
+          <p>${esc(n.description)}</p>
+          ${renderImage(n.imageUrl)}
+          <div style="margin-top:12px;">
+            <button type="button" onclick="downloadICS('${n.id}')" style="background:#2fa866; color:white; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">📅 Añadir al calendario</button>
+          </div>
+          ${renderAdminControls(n)}
         </div>
-        ${renderAdminControls(n)}
-      </div>
-    </article>
-  `).join("");
+      </article>
+    `).join("");
+  }
 }
 
 async function load() {
-  notices = await fetch("/api/notices").then(r => r.json());
+  try {
+    const r = await fetch("/api/notices");
+    notices = await r.json();
+  } catch (err) {
+    console.error("Error al cargar eventos:", err);
+    notices = [];
+  }
   render();
 }
 
 function show(screen) {
-  $$(".screen").forEach(x => x.classList.toggle("active", x.id === screen));
-  $$(".bottom button").forEach(x => x.classList.toggle("active", x.dataset.screen === screen)); }  $$
-(".bottom button").forEach(b => b.onclick = () => show(b.dataset.screen));
-
-$("#adminBtn").onclick = () => {
-  const p = prompt("Contraseña de administración");
-  if (p) sessionStorage.setItem("adminPassword", p);
-  show("admin");
-  render();
-};
-
-$("#backBtn").onclick = () => {
-  resetAdminForm();
-  show("home");
-};
+  $$(".screen").forEach(x => x.classList.toggle("active", x.id === screen));   $$
+(".bottom button").forEach(x => x.classList.toggle("active", x.dataset.screen === screen));
+}
 
 function getBase64(file) {
   return new Promise((resolve, reject) => {
@@ -182,49 +189,6 @@ function getBase64(file) {
     reader.onerror = error => reject(error);
   });
 }
-
-$("#publish").onclick = async () => {
-  const fileInput = $("#imageFile");
-  const file = fileInput ? fileInput.files[0] : null;
-  let imageUrl = null;
-
-  if (file) {
-    imageUrl = await getBase64(file);
-  } else if (editingNoticeId) {
-    const existing = notices.find(n => n.id === editingNoticeId);
-    if (existing) imageUrl = existing.imageUrl;
-  }
-
-  const payload = {
-    title: $("#title").value,
-    description: $("#description").value,
-    date: $("#date").value || null,
-    time: $("#time").value || null,
-    imageUrl: imageUrl
-  };
-
-  const method = editingNoticeId ? "PUT" : "POST";
-  const url = editingNoticeId ? `/api/notices/${editingNoticeId}` : "/api/notices";
-
-  const r = await fetch(url, {
-    method: method,
-    headers: {
-      "Content-Type": "application/json",
-      "x-admin-password": sessionStorage.getItem("adminPassword") || ""
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!r.ok) {
-    $("#adminMsg").textContent = "Error al guardar. Comprueba la contraseña.";
-    return;
-  }
-
-  $("#adminMsg").textContent = editingNoticeId ? "Evento actualizado ✓" : "Publicado ✓";
-  resetAdminForm();
-  await load();
-  show("home");
-};
 
 function resetAdminForm() {
   editingNoticeId = null;
@@ -262,7 +226,96 @@ window.deleteNotice = async function (id) {
   if (r.ok) { await load(); } else { alert("No se pudo borrar. Revisa la contraseña."); }
 };
 
-$("#prevMonth").onclick = () => { month--; if (month < 0) { month = 11; year--; } renderCalendar(); };
-$("#nextMonth").onclick = () => { month++; if (month > 11) { month = 0; year++; } renderCalendar(); };
+// Inicialización de escuchadores de eventos al cargar el DOM
+document.addEventListener("DOMContentLoaded", () => {
+  $$(".bottom button").forEach(b => b.onclick = () => show(b.dataset.screen));
 
-load();
+  const adminBtn = $("#adminBtn");
+  if (adminBtn) {
+    adminBtn.onclick = () => {
+      const p = prompt("Contraseña de administración");
+      if (p) sessionStorage.setItem("adminPassword", p);
+      show("admin");
+      render();
+    };
+  }
+
+  const backBtn = $("#backBtn");
+  if (backBtn) {
+    backBtn.onclick = () => {
+      resetAdminForm();
+      show("home");
+    };
+  }
+
+  const publishBtn = $("#publish");
+  if (publishBtn) {
+    publishBtn.onclick = async (e) => {
+      e.preventDefault();
+      
+      const titleInput = $("#title");
+      if (!titleInput || !titleInput.value.trim()) {
+        const msg = $("#adminMsg");
+        if (msg) msg.textContent = "Debes escribir un título para el evento.";
+        return;
+      }
+
+      const fileInput = $("#imageFile");
+      const file = fileInput ? fileInput.files[0] : null;
+      let imageUrl = null;
+
+      if (file) {
+        imageUrl = await getBase64(file);
+      } else if (editingNoticeId) {
+        const existing = notices.find(n => n.id === editingNoticeId);
+        if (existing) imageUrl = existing.imageUrl;
+      }
+
+      const payload = {
+        title: titleInput.value.trim(),
+        description: $("#description") ? $("#description").value : "",
+        date: $("#date") ? $("#date").value || null : null,
+        time: $("#time") ? $("#time").value || null : null,
+        imageUrl: imageUrl
+      };
+
+      const method = editingNoticeId ? "PUT" : "POST";
+      const url = editingNoticeId ? `/api/notices/${editingNoticeId}` : "/api/notices";
+
+      try {
+        const r = await fetch(url, {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": sessionStorage.getItem("adminPassword") || ""
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!r.ok) {
+          const msg = $("#adminMsg");
+          if (msg) msg.textContent = "Error al guardar. Comprueba la contraseña de administración.";
+          return;
+        }
+
+        const msg = $("#adminMsg");
+        if (msg) msg.textContent = editingNoticeId ? "Evento actualizado ✓" : "Publicado ✓";
+        resetAdminForm();
+        await load();
+        show("home");
+      } catch (err) {
+        console.error("Error en petición fetch:", err);
+        const msg = $("#adminMsg");
+        if (msg) msg.textContent = "Error de conexión con el servidor.";
+      }
+    };
+  }
+
+  const prevMonth = $("#prevMonth");
+  if (prevMonth) prevMonth.onclick = () => { month--; if (month < 0) { month = 11; year--; } renderCalendar(); };
+  
+  const nextMonth = $("#nextMonth");
+  if (nextMonth) nextMonth.onclick = () => { month++; if (month > 11) { month = 0; year++; } renderCalendar(); };
+
+  load();
+});
