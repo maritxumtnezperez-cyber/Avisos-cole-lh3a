@@ -47,8 +47,8 @@ function checkAdmin(req, res, next) {
   }
 }
 
-// Función para comprobar y enviar recordatorios 24h antes
-function checkAndSend24hReminders() {
+// Función para verificar y lanzar las notificaciones automáticas
+function checkAndSendReminders() {
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
 
   const notices = readJSON(DATA_FILE);
@@ -59,23 +59,38 @@ function checkAndSend24hReminders() {
   let modified = false;
 
   notices.forEach(notice => {
-    if (notice.reminder24h && notice.date && !notice.reminderSent) {
+    if (!notice.date) return;
+
+    // 1. Recordatorio 24 horas antes
+    if (notice.reminder24h && !notice.reminderSent24h) {
       const eventDateTimeStr = notice.time ? `${notice.date}T${notice.time}` : `${notice.date}T09:00:00`;
       const eventTime = new Date(eventDateTimeStr).getTime();
       const diffHours = (eventTime - now.getTime()) / (1000 * 60 * 60);
 
-      // Si faltan entre 0 y 24 horas para el evento
       if (diffHours > 0 && diffHours <= 24) {
         const payload = JSON.stringify({
           title: `🔔 Mañana: ${notice.title}`,
           body: notice.description || 'Recordatorio de evento programado para mañana.'
         });
 
-        subs.forEach(sub => {
-          webpush.sendNotification(sub, payload).catch(() => {});
+        subs.forEach(sub => webpush.sendNotification(sub, payload).catch(() => {}));
+        notice.reminderSent24h = true;
+        modified = true;
+      }
+    }
+
+    // 2. Recordatorio el día del evento a las 07:30 AM
+    if (notice.reminderSameDay && !notice.reminderSentSameDay) {
+      const targetDate = new Date(`${notice.date}T07:30:00`).getTime();
+      // Se evalúa si el momento actual ha alcanzado o superado las 7:30 AM del día programado
+      if (now.getTime() >= targetDate) {
+        const payload = JSON.stringify({
+          title: `⏰ HOY: ${notice.title}`,
+          body: notice.time ? `Hoy a las ${notice.time}. ${notice.description || ''}` : (notice.description || 'Evento programado para el día de hoy.')
         });
 
-        notice.reminderSent = true;
+        subs.forEach(sub => webpush.sendNotification(sub, payload).catch(() => {}));
+        notice.reminderSentSameDay = true;
         modified = true;
       }
     }
@@ -86,8 +101,8 @@ function checkAndSend24hReminders() {
   }
 }
 
-// Revisar eventos cada 30 minutos
-setInterval(checkAndSend24hReminders, 30 * 60 * 1000);
+// Revisar la programación cada 10 minutos
+setInterval(checkAndSendReminders, 10 * 60 * 1000);
 
 app.get('/api/config', (req, res) => {
   res.json({ vapidPublicKey: VAPID_PUBLIC });
@@ -103,14 +118,14 @@ app.post('/api/notices', checkAdmin, (req, res) => {
   const newNotice = {
     id: Date.now().toString(),
     created_at: new Date().toISOString(),
-    reminderSent: false,
+    reminderSent24h: false,
+    reminderSentSameDay: false,
     ...req.body
   };
   notices.push(newNotice);
   writeJSON(DATA_FILE, notices);
 
-  // Comprobar inmediatamente por si se crea con menos de 24h de antelación
-  checkAndSend24hReminders();
+  checkAndSendReminders();
 
   res.status(201).json(newNotice);
 });
