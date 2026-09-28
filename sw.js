@@ -1,0 +1,2 @@
+self.addEventListener("push",e=>{const d=e.data?.json()||{title:"Avisos Cole",body:"Tienes un nuevo aviso"};e.waitUntil(self.registration.showNotification(d.title,{body:d.body,icon:"/logo.png",badge:"/logo.png",data:{url:d.url||"/"}}))});
+self.addEventListener("notificationclick",e=>{e.notification.close();e.waitUntil(clients.openWindow(e.notification.data?.url||"/"))});
