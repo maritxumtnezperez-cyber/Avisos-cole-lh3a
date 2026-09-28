@@ -1,1 +1,58 @@
 *{box-sizing:border-box}body{margin:0;background:#f6faf7;color:#17201b;font-family:system-ui,-apple-system,Segoe UI,sans-serif}.top{background:#39aa6a;color:#fff;padding:22px 18px 18px;display:flex;align-items:center;gap:14px;border-radius:0 0 24px 24px}.logo{width:68px;height:68px;border-radius:18px;object-fit:cover;border:3px solid #fff}.top h1{font-size:24px;margin:0}.top p{margin:3px 0 0;opacity:.9}.icon{margin-left:auto;border:0;background:#fff2;color:#fff;font-size:25px}.screen{display:none;padding:18px 16px 92px;max-width:650px;margin:auto}.screen.active{display:block}.admin-link{width:100%;padding:15px;border:0;border-radius:16px;background:#209b59;color:white;font-size:17px;font-weight:700;margin-bottom:18px}.next-card,.card{background:white;border-radius:17px;padding:16px;margin:10px 0;box-shadow:0 2px 12px #1231  }.next-card{border-left:5px solid #ef4444}.section-title{display:flex;align-items:center;gap:10px;margin:18px 0 10px}.section-title h2{font-size:20px;margin:0}.card{display:flex;gap:12px;align-items:flex-start}.badge{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:#e7f7ee;font-size:22px}.card h3{margin:0 0 4px;font-size:16px}.card p{margin:2px 0;color:#59645e;font-size:14px}.important{border-left:4px solid #ef4444}.calendar-head{display:flex;justify-content:space-between;align-items:center;background:white;border-radius:16px;padding:12px;margin-bottom:10px}.calendar-head button{border:0;background:none;font-size:28px}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;background:white;padding:10px;border-radius:16px}.day{min-height:38px;display:grid;place-items:center;border-radius:50%}.day.event{background:#d9f3e4;font-weight:700}.day.today{outline:2px solid #209b59}.form{background:white;padding:18px;border-radius:18px}.types{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}.types button{padding:12px 5px;border:1px solid #ddd;border-radius:13px;background:#fff}.types button.selected{border:2px solid #209b59;background:#e8f8ef}.types span{display:block;font-size:12px;margin-top:5px}label{display:block;font-weight:700;margin:14px 0}input,textarea{display:block;width:100%;margin-top:7px;padding:13px;border:1px solid #d6ded9;border-radius:12px;font:inherit}textarea{min-height:110px}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.switchrow{display:flex;justify-content:space-between;align-items:center}.primary{width:100%;border:0;background:#209b59;color:white;border-radius:14px;padding:15px;font-size:16px;font-weight:700}.msg{text-align:center}.bottom{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #ddd;display:flex;justify-content:center;gap:8px;padding:8px 5px calc(8px + env(safe-area-inset-bottom));z-index:10}.bottom button{flex:1;max-width:180px;border:0;background:none;color:#59645e;font-size:21px}.bottom button span{display:block;font-size:11px}.bottom button.active{color:#209b59;font-weight:700}@media(min-width:700px){main{padding-bottom:30px}.bottom{position:static;max-width:650px;margin:auto;border:0;border-radius:18px}.screen{padding-bottom:20px}}
+
+/* ESTILOS DE LA TABLA DEL HORARIO */
+.schedule-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 17px;
+  padding: 10px;
+  box-shadow: 0 2px 12px #1231;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 12px;
+}
+
+.schedule-table th {
+  background: #209b59;
+  color: white;
+  padding: 8px 4px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.schedule-table td {
+  padding: 8px 4px;
+  border: 1px solid #eef3f0;
+  border-radius: 4px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.time-col {
+  background: #f6faf7;
+  color: #17201b;
+  font-weight: 700 !important;
+}
+
+.break-row td {
+  background: #eef3f0;
+  color: #59645e;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Colores de las asignaturas asignados según la foto */
+.sub-mate { background: #c6dbef; color: #1c3d5a; }
+.sub-euskera { background: #fdd0a2; color: #7c3a1d; }
+.sub-ingurune { background: #c7e9c0; color: #1e4720; }
+.sub-musika { background: #fbb4ae; color: #6e1a24; }
+.sub-gazte { background: #fbb4ae; color: #6e1a24; }
+.sub-ingelesa { background: #ffffcc; color: #5c5c00; }
+.sub-plastika { background: #e5d8bd; color: #4a3b2c; }
+.sub-tutoretza { background: #decbe4; color: #4a235a; }
+.sub-ef { background: #bcbddc; color: #2c2a5a; }
+.sub-kzp { background: #fbb4ae; color: #6e1a24; }
