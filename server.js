@@ -1,6 +1,6 @@
 import express from 'express';
-import fs from 'fs';
 import path from 'path';
+import pg from 'pg';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,20 +14,20 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-const DATA_FILE = path.join(__dirname, 'notices.json');
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
-function readJSON(file) {
-  if (!fs.existsSync(file)) return [];
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch (e) {
-    return [];
-  }
-}
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS notices (
+    id TEXT PRIMARY KEY,
+    data JSONB NOT NULL
+  )
+`);
 
-function writeJSON(file, data) {
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
-}
+const wrap = fn => (req, res, next) =>
+  fn(req, res, next).catch(err => {
+    console.error(err);
+    res.status(500).json({ error: 'Error del servidor' });
+  });
 
 function checkAdmin(req, res, next) {
   const pass = req.headers['x-admin-password'];
@@ -38,39 +38,43 @@ function checkAdmin(req, res, next) {
   }
 }
 
-app.get('/api/notices', (req, res) => {
-  const notices = readJSON(DATA_FILE);
-  res.json(notices);
-});
+app.get('/api/notices', wrap(async (req, res) => {
+  const { rows } = await pool.query('SELECT data FROM notices');
+  res.json(rows.map(r => r.data));
+}));
 
-app.post('/api/notices', checkAdmin, (req, res) => {
-  const notices = readJSON(DATA_FILE);
+app.post('/api/notices', checkAdmin, wrap(async (req, res) => {
   const newNotice = {
     id: Date.now().toString(),
     created_at: new Date().toISOString(),
     ...req.body
   };
-  notices.push(newNotice);
-  writeJSON(DATA_FILE, notices);
+  newNotice.id = newNotice.id.toString();
+  await pool.query(
+    'INSERT INTO notices (id, data) VALUES ($1, $2)',
+    [newNotice.id, newNotice]
+  );
   res.status(201).json(newNotice);
-});
+}));
 
-app.put('/api/notices/:id', checkAdmin, (req, res) => {
-  const notices = readJSON(DATA_FILE);
-  const index = notices.findIndex(n => n.id === req.params.id);
-  if (index === -1) return res.status(404).json({ error: 'Aviso no encontrado' });
+app.put('/api/notices/:id', checkAdmin, wrap(async (req, res) => {
+  const { rows } = await pool.query(
+    'SELECT data FROM notices WHERE id = $1',
+    [req.params.id]
+  );
+  if (!rows.length) return res.status(404).json({ error: 'Aviso no encontrado' });
+  const updated = { ...rows[0].data, ...req.body, id: req.params.id };
+  await pool.query(
+    'UPDATE notices SET data = $2 WHERE id = $1',
+    [req.params.id, updated]
+  );
+  res.json(updated);
+}));
 
-  notices[index] = { ...notices[index], ...req.body };
-  writeJSON(DATA_FILE, notices);
-  res.json(notices[index]);
-});
-
-app.delete('/api/notices/:id', checkAdmin, (req, res) => {
-  let notices = readJSON(DATA_FILE);
-  notices = notices.filter(n => n.id !== req.params.id);
-  writeJSON(DATA_FILE, notices);
+app.delete('/api/notices/:id', checkAdmin, wrap(async (req, res) => {
+  await pool.query('DELETE FROM notices WHERE id = $1', [req.params.id]);
   res.json({ success: true });
-});
+}));
 
 app.listen(PORT, () => {
   console.log(`Servidor activo en el puerto ${PORT}`);
