@@ -153,12 +153,13 @@ main {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+/* Tarjeta de próximo evento en verde claro */
 .next-card {
-  border: 2px solid #ef4444;
-  background-color: #fffaf0;
+  border: 2px solid #22c55e;
+  background-color: #f0fdf4;
 }
 
-.next-tag { color: #dc2626; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; }
+.next-tag { color: #16a34a; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; }
 .event-title-red { color: #dc2626; font-size: 1.1rem; margin-bottom: 6px; }
 .event-datetime-info { font-size: 0.85rem; color: #4b5563; margin-bottom: 8px; display: flex; gap: 12px; }
 .event-desc { font-size: 0.9rem; color: #4b5563; margin-bottom: 12px; }
@@ -175,7 +176,16 @@ main {
   font-size: 0.9rem;
 }
 
-.btn-add-cal { background-color: #2563eb; color: #ffffff !important; }
+/* Botón Añadir a Google Calendar en verde */
+.btn-add-cal { 
+  background-color: #16a34a; 
+  color: #ffffff !important; 
+}
+
+.btn-add-cal:hover {
+  background-color: #15803d;
+}
+
 .card-actions-row { display: flex; gap: 8px; margin-top: 10px; }
 .btn-edit { background-color: #e5e7eb; color: #374151; }
 .btn-delete { background-color: #fee2e2; color: #dc2626; }
