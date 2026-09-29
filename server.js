@@ -10,12 +10,25 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configuración de contraseñas
-const APP_PASSWORD = process.env.APP_PASSWORD || "78875879";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";
+const APP_PASSWORD = process.env.APP_PASSWORD || "78875879";      // Contraseña para acceder a la app
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";  // Contraseña para publicar/editar/borrar
 
 app.use(express.json({ limit: '10mb' }));
 
-// Servir archivos estáticos desde la carpeta public
+// Servir la imagen del logo directamente si está en la raíz o en public
+app.get('/logo.jpg', (req, res) => {
+  const rootLogo = path.join(__dirname, 'logo.jpg');
+  const publicLogo = path.join(__dirname, 'public', 'logo.jpg');
+
+  if (fs.existsSync(rootLogo)) {
+    return res.sendFile(rootLogo);
+  } else if (fs.existsSync(publicLogo)) {
+    return res.sendFile(publicLogo);
+  }
+  res.status(404).send('Logo no encontrado');
+});
+
+// Servir archivos estáticos de la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware para verificar la contraseña de la App en la API
@@ -69,7 +82,7 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// Rutas de la API protegidas
+// Rutas de la API protegidas con contraseña de la App
 app.get('/api/notices', checkAppPassword, (req, res) => {
   res.json(getNotices());
 });
