@@ -41,22 +41,37 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   document.getElementById('home').classList.add('active');
 });
 
+// Generar URL directa para Google Calendar
+function generateGoogleCalendarUrl(notice) {
+  if (!notice.date) return '#';
+
+  const title = encodeURIComponent(notice.title || 'Evento');
+  const details = encodeURIComponent(notice.description || '');
+  
+  const timeStr = notice.time && notice.time.trim() !== '' ? notice.time : '09:00';
+  const [year, month, day] = notice.date.split('-');
+  const [hours, minutes] = timeStr.split(':');
+
+  // Formato UTC/Local para Google: YYYYMMDDTHHMMSS
+  const startDateStr = `${year}${month}${day}T${hours.padStart(2, '0')}${minutes.padStart(2, '0')}00`;
+  
+  // Calcular hora final (+1 hora por defecto)
+  const endHours = String((parseInt(hours, 10) + 1) % 24).padStart(2, '0');
+  const endDateStr = `${year}${month}${day}T${endHours}${minutes.padStart(2, '0')}00`;
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateStr}/${endDateStr}&details=${details}`;
+}
+
 // Comprobar si un evento ya ha pasado (fecha y hora exactas)
 function isEventPast(notice) {
   if (!notice.date) return false;
   
   const now = new Date();
-  
-  // Si no hay hora especificada, asumimos el final del día (23:59)
   const timeStr = notice.time && notice.time.trim() !== '' ? notice.time : '23:59';
-  
-  // Desglosar fecha (YYYY-MM-DD) y hora (HH:mm) manualmente para evitar fallos de formato
   const [year, month, day] = notice.date.split('-').map(Number);
   const [hours, minutes] = timeStr.split(':').map(Number);
   
-  // Los meses en JavaScript se cuentan de 0 a 11
   const eventDate = new Date(year, month - 1, day, hours, minutes, 59);
-  
   return eventDate < now;
 }
 
@@ -90,7 +105,6 @@ function renderHomeNotices() {
   noticeList.innerHTML = '';
   if (nextCard) nextCard.innerHTML = '';
 
-  // Filtrar eventos futuros y ordenarlos del más cercano al más lejano
   const upcoming = notices
     .filter(n => !isEventPast(n))
     .sort((a, b) => {
@@ -104,9 +118,10 @@ function renderHomeNotices() {
     return;
   }
 
-  // Tarjeta Destacada "Próximo Evento" (primer evento futuro)
+  // Tarjeta Destacada "Próximo Evento"
   const nextEvent = upcoming[0];
   if (nextCard) {
+    const googleCalUrl = generateGoogleCalendarUrl(nextEvent);
     nextCard.innerHTML = `
       <div class="next-tag">📌 Próximo Evento</div>
       <h3 class="event-title-red">${nextEvent.title}</h3>
@@ -115,18 +130,24 @@ function renderHomeNotices() {
         ${nextEvent.time ? `<span>🕑 ${nextEvent.time}</span>` : ''}
       </p>
       ${nextEvent.imageUrl ? `<div class="img-container-full"><img src="${nextEvent.imageUrl}" alt="Imagen del evento"></div>` : ''}
+      
+      <a href="${googleCalUrl}" target="_blank" rel="noopener noreferrer" class="btn-action btn-add-cal" style="display: block; text-align: center; text-decoration: none; box-sizing: border-box; margin-top: 10px;">
+        📅 Añadir a Google Calendar
+      </a>
+      
       <div class="card-actions-row" style="margin-top: 10px;">
         <button class="btn-action btn-delete" onclick="deleteNotice('${nextEvent.id}')">🗑️ Borrar</button>
       </div>
     `;
   }
 
-  // Lista general de los siguientes eventos futuros
+  // Lista general de siguientes eventos futuros
   const listEvents = nextCard ? upcoming.slice(1) : upcoming;
 
   listEvents.forEach(notice => {
     const card = document.createElement('div');
     card.className = 'notice-card';
+    const googleCalUrl = generateGoogleCalendarUrl(notice);
     
     card.innerHTML = `
       <h3 class="event-title-red">${notice.title}</h3>
@@ -138,7 +159,9 @@ function renderHomeNotices() {
       ${notice.description ? `<p class="event-desc">${notice.description}</p>` : ''}
       ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen del evento"></div>` : ''}
       
-      <button class="btn-action btn-add-cal">📅 Añadir al calendario</button>
+      <a href="${googleCalUrl}" target="_blank" rel="noopener noreferrer" class="btn-action btn-add-cal" style="display: block; text-align: center; text-decoration: none; box-sizing: border-box;">
+        📅 Añadir a Google Calendar
+      </a>
       
       <div class="card-actions-row">
         <button class="btn-action btn-edit" onclick="editNotice('${notice.id}')">✏️ Editar</button>
@@ -149,14 +172,13 @@ function renderHomeNotices() {
   });
 }
 
-// Renderizar Eventos Pasados (Pestaña "Eventos pasados")
+// Renderizar Eventos Pasados
 function renderPastNotices() {
   const pastList = document.getElementById('pastNoticeList') || document.getElementById('pastNotices');
   if (!pastList) return;
 
   pastList.innerHTML = '';
 
-  // Filtrar eventos pasados y ordenarlos del más reciente al más antiguo
   const pastEvents = notices
     .filter(n => isEventPast(n))
     .sort((a, b) => {
