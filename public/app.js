@@ -1,20 +1,3 @@
-// DÍAS FESTIVOS Y VACACIONES REGISTRADOS EN EL CALENDARIO ESCOLAR (2026/2027)
-const HOLIDAYS_2026_2027 = [
-  // 2026
-  '2026-10-12',
-  '2026-11-02',
-  '2026-12-03', '2026-12-04', '2026-12-05', '2026-12-06', '2026-12-07', '2026-12-08',
-  '2026-12-24', '2026-12-25', '2026-12-26', '2026-12-27', '2026-12-28', '2026-12-29', '2026-12-30', '2026-12-31',
-  
-  // 2027
-  '2027-01-01', '2027-01-02', '2027-01-03', '2027-01-04', '2027-01-05', '2027-01-06',
-  '2027-02-08', '2027-02-09', '2027-02-10', '2027-02-11', '2027-02-12',
-  '2027-03-19',
-  '2027-03-22', '2027-03-23', '2027-03-24', '2027-03-25', '2027-03-26', '2027-03-27', '2027-03-28', '2027-03-29', '2027-03-30', '2027-03-31',
-  '2027-04-01', '2027-04-02',
-  '2027-05-01'
-];
-
 let currentDate = new Date();
 let currentMonth = currentDate.getMonth();
 let currentYear = currentDate.getFullYear();
@@ -138,7 +121,7 @@ function renderPastNotices() {
   });
 }
 
-// Renderizar Calendario Mensual con Festivos Marcados
+// Renderizar Calendario Mensual
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   const monthLabel = document.getElementById('monthLabel');
@@ -183,11 +166,6 @@ function renderCalendar() {
     const formattedMonth = String(currentMonth + 1).padStart(2, '0');
     const formattedDay = String(day).padStart(2, '0');
     const dateStr = `${currentYear}-${formattedMonth}-${formattedDay}`;
-
-    // Resaltar festivos o vacaciones en rojo
-    if (HOLIDAYS_2026_2027.includes(dateStr)) {
-      dayEl.classList.add('holiday');
-    }
 
     if (dateStr === todayStr) {
       dayEl.classList.add('today');
