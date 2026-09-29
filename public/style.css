@@ -81,10 +81,28 @@ main {
   display: block;
 }
 
+.section-title {
+  margin-bottom: 12px;
+}
+
+.section-title.filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .section-title h2 {
   font-size: 1.1rem;
   color: #374151;
-  margin-bottom: 12px;
+}
+
+.filter-select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background-color: #ffffff;
+  color: #374151;
 }
 
 .empty-msg {
@@ -203,7 +221,14 @@ main {
 .event-title-red { color: #dc2626; font-size: 1.1rem; margin-bottom: 6px; }
 .event-datetime-info { font-size: 0.85rem; color: #4b5563; margin-bottom: 8px; display: flex; gap: 12px; }
 .event-desc { font-size: 0.9rem; color: #4b5563; margin-bottom: 12px; }
-.img-container-full img { width: 100%; border-radius: 8px; margin: 10px 0; }
+
+.img-container-full img {
+  width: 100%;
+  max-height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 10px 0;
+}
 
 /* BOTONES Y ACCIONES */
 .btn-action {
@@ -216,17 +241,7 @@ main {
   font-size: 0.9rem;
 }
 
-.btn-add-cal { 
-  background-color: #16a34a; 
-  color: #ffffff !important; 
-}
-
-.btn-add-cal:hover {
-  background-color: #15803d;
-}
-
 .card-actions-row { display: flex; gap: 8px; margin-top: 10px; }
-.btn-edit { background-color: #e5e7eb; color: #374151; }
 .btn-delete { background-color: #fee2e2; color: #dc2626; }
 .btn-publish { background-color: #16a34a; color: #ffffff; margin-top: 12px; }
 
