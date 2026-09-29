@@ -1,166 +1,148 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#39aa6a">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" href="/logo.jpg?v=1">
-  <link rel="stylesheet" href="/styles.css">
-  <title>Avisos Cole · LH3A</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Avisos Cole - LH3A</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="top">
-    <img src="/logo.jpg?v=1" class="logo" alt="LH3A">
-    <div>
-      <h1>Avisos Cole</h1>
-      <p>LH3A</p>
-    </div>
-    <button id="installBtn" class="icon" hidden>＋</button>
-  </header>
 
   <main>
-    <!-- PANTALLA INICIO (PRÓXIMOS EVENTOS) -->
+    <!-- PANTALLA: PRÓXIMOS EVENTOS -->
     <section id="home" class="screen active">
       <button id="adminBtn" class="admin-link">⚙ Publicar evento</button>
+
+      <!-- Tarjeta Destacada Próximo Evento -->
       <div id="next" class="next-card"></div>
-      <div class="section-title"><h2>Próximos eventos</h2></div>
+
+      <div class="section-title">
+        <h2>Próximos eventos</h2>
+      </div>
+
+      <!-- Lista de Próximos Eventos -->
       <div id="noticeList"></div>
     </section>
 
-    <!-- PANTALLA EVENTOS PASADOS -->
+    <!-- PANTALLA: PASADOS -->
     <section id="past" class="screen">
-      <div class="section-title"><h2>Eventos pasados</h2></div>
+      <div class="section-title">
+        <h2>Eventos pasados</h2>
+      </div>
       <div id="pastNoticeList"></div>
     </section>
 
-    <!-- PANTALLA HORARIO DE CLASES Y CALENDARIO DE INGLÉS -->
+    <!-- PANTALLA: HORARIO -->
     <section id="schedule" class="screen">
-      <div class="section-title"><h2>Horario de Clases (Ordutegia)</h2></div>
+      <div class="section-title">
+        <h2>Horario Escolar / Calendario</h2>
+      </div>
       <div class="schedule-container">
-        <table class="schedule-table">
+        <!-- Ejemplo de visualización de imagen del horario adaptada al ancho de pantalla -->
+        <img id="scheduleImg" src="horario.jpg" alt="Horario Escolar" class="english-cal-img" onerror="this.style.display='none'; document.getElementById('scheduleTableFallback').style.display='table';">
+        
+        <!-- Tabla de contingencia/ejemplo con estilos por asignatura -->
+        <table id="scheduleTableFallback" class="schedule-table" style="display:none;">
           <thead>
             <tr>
-              <th>Ordua</th>
-              <th>Astelehena</th>
-              <th>Asteartea</th>
-              <th>Asteazkena</th>
-              <th>Osteguna</th>
-              <th>Ostirala</th>
+              <th>Hora</th>
+              <th>Lunes</th>
+              <th>Martes</th>
+              <th>Miércoles</th>
+              <th>Jueves</th>
+              <th>Viernes</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="time-col">9:00 - 9:50</td>
-              <td class="sub-mate">MATEMATIKA</td>
-              <td class="sub-euskera">EUSKERA</td>
-              <td class="sub-ingurune" rowspan="2">INGURUNE</td>
-              <td class="sub-euskera">EUSKERA</td>
-              <td class="sub-euskera">EUSKERA</td>
+              <td>09:00 - 10:00</td>
+              <td class="subject-euskera">Euskera</td>
+              <td class="subject-matematika">Matematika</td>
+              <td class="subject-ingelera">Ingelesa</td>
+              <td class="subject-euskera">Euskera</td>
+              <td class="subject-matematika">Matematika</td>
             </tr>
             <tr>
-              <td class="time-col">9:50 - 10:40</td>
-              <td class="sub-ingurune">INGURUNE</td>
-              <td class="sub-mate">MATEMATIKA</td>
-              <td class="sub-musika">MUSIKA</td>
-              <td class="sub-mate">MATEMATIKA</td>
-            </tr>
-            <tr class="break-row">
-              <td class="time-col">10:40 - 11:10</td>
-              <td colspan="5">JOLASTORDUA</td>
+              <td>10:00 - 11:00</td>
+              <td class="subject-ingurune">Ingurune</td>
+              <td class="subject-gaztelania">Gaztelania</td>
+              <td class="subject-euskera">Euskera</td>
+              <td class="subject-ingurune">Ingurune</td>
+              <td class="subject-gorputz">Gorputz H.</td>
             </tr>
             <tr>
-              <td class="time-col">11:10 - 11:55</td>
-              <td class="sub-gazte">GAZTELANIA</td>
-              <td class="sub-ingelesa">INGELESA</td>
-              <td class="sub-euskera">EUSKERA</td>
-              <td class="sub-mate">MATEMATIKA</td>
-              <td class="sub-tutoretza">TUTORETZA</td>
+              <td>11:00 - 11:30</td>
+              <td colspan="5" class="subject-jolastordua">Jolastordua (Recreo)</td>
             </tr>
             <tr>
-              <td class="time-col">11:55 - 12:45</td>
-              <td class="sub-euskera">EUSKERA</td>
-              <td class="sub-plastika">PLASTIKA</td>
-              <td class="sub-gazte">GAZTELANIA</td>
-              <td class="sub-ingurune">INGURUNE</td>
-              <td class="sub-ingelesa">INGELESA</td>
-            </tr>
-            <tr class="break-row">
-              <td class="time-col">12:45 - 13:25</td>
-              <td colspan="5">BAZKALORDUA</td>
+              <td>11:30 - 12:30</td>
+              <td class="subject-matematika">Matematika</td>
+              <td class="subject-ingelera">Ingelesa</td>
+              <td class="subject-gaztelania">Gaztelania</td>
+              <td class="subject-matematika">Matematika</td>
+              <td class="subject-euskera">Euskera</td>
             </tr>
             <tr>
-              <td class="time-col">13:25 - 15:00</td>
-              <td class="sub-ingelesa">INGELESA</td>
-              <td class="sub-ef">HEZIKETA FISIKOA</td>
-              <td class="sub-kzp">K.Z.P.</td>
-              <td class="sub-gazte">GAZTELANIA</td>
-              <td class="sub-ef">HEZIKETA FISIKOA</td>
+              <td>12:30 - 14:30</td>
+              <td colspan="5" class="subject-bazkalordua">Bazkalordua (Comedor / Salida)</td>
+            </tr>
+            <tr>
+              <td>14:30 - 16:00</td>
+              <td class="subject-gaztelania">Gaztelania</td>
+              <td class="subject-ingurune">Ingurune</td>
+              <td class="subject-jolastordua">-</td>
+              <td class="subject-gorputz">Gorputz H.</td>
+              <td class="subject-ingelera">Ingelesa</td>
             </tr>
           </tbody>
         </table>
       </div>
-
-      <!-- CALENDARIO DE INGLÉS -->
-      <div class="section-title" style="margin-top: 28px;">
-        <h2>🇬🇧 Calendario Inglés 2026/2027</h2>
-      </div>
-
-      <div class="english-calendar-card">
-        <div class="legend-grid">
-          <div class="legend-item"><span class="color-dot leg-start"></span> Inicio / Fin de curso</div>
-          <div class="legend-item"><span class="color-dot leg-festivo"></span> Festivo</div>
-          <div class="legend-item"><span class="color-dot leg-navidad"></span> Navidad</div>
-          <div class="legend-item"><span class="color-dot leg-carnaval"></span> Carnaval</div>
-          <div class="legend-item"><span class="color-dot leg-santa"></span> Semana Santa</div>
-          <div class="legend-item"><span class="color-dot leg-v-lx"></span> Viernes (Lunes y Miércoles)</div>
-          <div class="legend-item"><span class="color-dot leg-v-mj"></span> Viernes (Martes y Jueves)</div>
-        </div>
-
-        <div class="eng-info-box">
-          📌 <strong>Viernes Primaria:</strong> Alterna según grupo (Verde: L/X | Rosa: M/J).
-        </div>
-
-        <div class="english-calendar-img-wrapper">
-          <img src="/calendario-ingles.jpg" alt="Calendario Curso 2026/2027 Bilbao College / Elsa and Friends" class="eng-cal-img">
-        </div>
-      </div>
     </section>
 
-    <!-- PANTALLA CALENDARIO -->
+    <!-- PANTALLA: CALENDARIO -->
     <section id="calendar" class="screen">
-      <div class="section-title"><h2>Calendario</h2></div>
       <div class="calendar-head">
-        <button id="prevMonth">‹</button>
-        <strong id="monthLabel"></strong>
-        <button id="nextMonth">›</button>
+        <button id="prevMonth">&lt;</button>
+        <span id="monthLabel"></span>
+        <button id="nextMonth">&gt;</button>
       </div>
       <div id="calendarGrid" class="calendar-grid"></div>
-      <div id="eventList"></div>
     </section>
 
-    <!-- PANTALLA ADMINISTRACIÓN -->
+    <!-- PANTALLA: PUBLICAR EVENTO (ADMIN) -->
     <section id="admin" class="screen">
-      <div class="section-title"><button id="backBtn">‹</button><h2>Nuevo evento</h2></div>
+      <button id="backBtn" class="btn-action" style="background:#6b7280; color:#fff; padding:8px 16px; margin-bottom:12px;">← Volver</button>
       <div class="form">
-        <label>Título<input id="title" placeholder="Ej. Excursión al museo"></label>
-        <label>Descripción<textarea id="description" placeholder="Escribe los detalles..."></textarea></label>
-        <div class="two">
-          <label>Fecha<input id="date" type="date"></label>
-          <label>Hora<input id="time" type="time"></label>
-        </div>
-        
-        <label>Imagen adjunta (opcional)
-          <input id="imageFile" type="file" accept="image/*">
+        <h3>Publicar nuevo evento</h3>
+        <label>
+          Título del evento *
+          <input type="text" id="title" placeholder="Ej: Excursión Gorbea" required>
         </label>
-
-        <button id="publish" class="primary">Publicar evento</button>
-        <p id="adminMsg" class="msg"></p>
+        <label>
+          Descripción
+          <textarea id="description" placeholder="Añade detalles sobre la reunión o salida..."></textarea>
+        </label>
+        <div class="two">
+          <label>
+            Fecha
+            <input type="date" id="date">
+          </label>
+          <label>
+            Hora
+            <input type="time" id="time">
+          </label>
+        </div>
+        <label>
+          Imagen o documento adjunto
+          <input type="file" id="imageFile" accept="image/*">
+        </label>
+        <button id="publish" class="primary">Publicar Evento</button>
+        <p id="adminMsg" style="color:red; margin-top:10px; font-weight:bold;"></p>
       </div>
     </section>
   </main>
 
-  <!-- BARRA DE NAVEGACIÓN INFERIOR (4 PESTAÑAS) -->
+  <!-- NAVEGACIÓN INFERIOR -->
   <nav class="bottom">
     <button data-screen="home" class="active">⌂<span>Próximos</span></button>
     <button data-screen="past">⌛<span>Pasados</span></button>
@@ -168,6 +150,6 @@
     <button data-screen="calendar">▦<span>Calendario</span></button>
   </nav>
 
-  <script src="/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
