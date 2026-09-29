@@ -292,7 +292,7 @@ main {
 .calendar-day.empty { background: transparent; }
 .calendar-day.today { border: 2px solid #2563eb; font-weight: bold; }
 .calendar-day.holiday { background-color: #fee2e2; color: #dc2626; }
-.calendar-day.has-event { background-color: #dbeafe; font-weight: bold; color: #1e40af; }
+.calendar-day.has-event { background-color: #dbeafe; font-weight: bold; color: #1e40af; border: 1px solid #3b82f6; }
 
 /* FORMULARIOS (ADMIN) */
 .form-group { margin-bottom: 12px; }
