@@ -150,12 +150,13 @@ main {
 .subject-efi { background-color: #6366f1; color: #ffffff; }
 .subject-kzp { background-color: #881337; color: #ffffff; }
 
-/* CALENDARIO ANUAL (IMAGEN) */
+/* CALENDARIO ANUAL (IMÁGENES) */
 .annual-calendar-card {
   background: #ffffff;
   border-radius: 12px;
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
 }
 
 .img-responsive-calendar {
@@ -173,7 +174,7 @@ main {
   line-height: 1.5;
 }
 
-/* TARJETAS DE EVENTOS */
+/* TARJETAS DE EVENTOS Y ETIQUETA DE CATEGORÍA */
 .notice-card, .next-card {
   background: #ffffff;
   border-radius: 12px;
@@ -182,10 +183,20 @@ main {
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* Tarjeta de próximo evento en verde claro */
 .next-card {
   border: 2px solid #22c55e;
   background-color: #f0fdf4;
+}
+
+.category-tag {
+  display: inline-block;
+  background-color: #e5e7eb;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-bottom: 8px;
 }
 
 .next-tag { color: #16a34a; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; }
@@ -205,7 +216,6 @@ main {
   font-size: 0.9rem;
 }
 
-/* Botón Añadir a Google Calendar en verde */
 .btn-add-cal { 
   background-color: #16a34a; 
   color: #ffffff !important; 
@@ -220,7 +230,7 @@ main {
 .btn-delete { background-color: #fee2e2; color: #dc2626; }
 .btn-publish { background-color: #16a34a; color: #ffffff; margin-top: 12px; }
 
-/* CALENDARIO MENSUAL (GRID DE 7 COLUMNAS) */
+/* CALENDARIO MENSUAL */
 .calendar-head {
   display: flex;
   justify-content: space-between;
@@ -272,7 +282,18 @@ main {
 /* FORMULARIOS (ADMIN) */
 .form-group { margin-bottom: 12px; }
 .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: #374151; }
-.form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; }
+.form-group input, 
+.form-group textarea, 
+.form-group select { 
+  width: 100%; 
+  padding: 10px; 
+  border: 1px solid #d1d5db; 
+  border-radius: 6px; 
+  font-size: 0.9rem; 
+  background-color: #ffffff;
+  color: #374151;
+}
+
 .admin-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .admin-header button { width: auto; }
 
