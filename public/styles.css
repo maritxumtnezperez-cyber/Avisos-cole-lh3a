@@ -35,7 +35,7 @@ main {
   display: block;
 }
 
-/* BOTÓN SUPERIOR "PUBLICAR EVENTO" */
+/* BOTÓN SUPERIOR PUBLICAR EVENTO */
 .admin-link {
   width: 100%;
   background-color: var(--primary-green);
@@ -53,7 +53,7 @@ main {
   gap: 8px;
 }
 
-/* TARJETA PRÓXIMO EVENTO */
+/* TARJETA DESTACADA PRÓXIMO EVENTO */
 .next-card {
   background: #ffffff;
   border-radius: var(--border-radius);
@@ -61,6 +61,7 @@ main {
   margin-bottom: 24px;
   border-left: 6px solid var(--red-accent);
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  overflow: hidden;
 }
 
 .next-tag {
@@ -72,18 +73,18 @@ main {
 
 /* TÍTULOS DE EVENTO EN NEGRITA Y ROJO */
 .event-title-red {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: var(--red-accent);
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  color: var(--red-accent) !important;
   margin-bottom: 6px;
   line-height: 1.3;
 }
 
 /* FECHA CON 📅 Y HORA CON 🕑 */
 .event-datetime-info {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: #374151;
+  color: #4b5563;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
@@ -91,7 +92,7 @@ main {
   flex-wrap: wrap;
 }
 
-/* TÍTULO DE SECCIÓN */
+/* SECCIÓN PRÓXIMOS EVENTOS */
 .section-title h2 {
   font-size: 1.3rem;
   font-weight: 800;
@@ -107,6 +108,7 @@ main {
   margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   border: 1px solid #f0f0f0;
+  overflow: hidden; /* Evita que los elementos internos sobresalgan */
 }
 
 .event-desc {
@@ -116,22 +118,24 @@ main {
   line-height: 1.4;
 }
 
-/* IMAGEN EN VISTA COMPLETA (SIN RECORTE) */
+/* AJUSTE DE IMAGEN EN VISTA COMPLETA Y DENTRO DEL PANTALLA MÓVIL */
 .img-container-full {
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box;
   margin: 12px 0 16px 0;
   border-radius: 12px;
   overflow: hidden;
-  background-color: #fafafa;
-  border: 1px solid #eaeaea;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
 }
 
 .img-container-full img {
-  width: 100%;
-  height: auto;
-  max-height: none;
-  object-fit: contain; /* Vista completa sin recortar */
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
   display: block;
+  object-fit: contain; /* Vista completa sin recortar ni sobresalir */
 }
 
 /* BOTONES DE LA TARJETA */
@@ -172,7 +176,7 @@ main {
   font-size: 0.95rem;
 }
 
-/* PANTALLA HORARIO Y ADAPTACIÓN DE IMÁGENES */
+/* PANTALLA HORARIO Y CALENDARIO DE INGLÉS */
 .schedule-container {
   width: 100%;
   max-width: 100%;
@@ -212,12 +216,12 @@ main {
   color: #ffffff;
 }
 
-.subject-euskera { background-color: #dbeafe; color: #1e40af; }      /* Azul */
-.subject-matematika { background-color: #fef3c7; color: #92400e; }   /* Amarillo */
-.subject-ingelera { background-color: #fce7f3; color: #9d174d; }     /* Rosa */
-.subject-ingurune { background-color: #dcfce7; color: #166534; }     /* Verde */
-.subject-gaztelania { background-color: #ffedd5; color: #9a3412; }   /* Naranja */
-.subject-gorputz { background-color: #e0e7ff; color: #3730a3; }      /* Morado */
+.subject-euskera { background-color: #dbeafe; color: #1e40af; }
+.subject-matematika { background-color: #fef3c7; color: #92400e; }
+.subject-ingelera { background-color: #fce7f3; color: #9d174d; }
+.subject-ingurune { background-color: #dcfce7; color: #166534; }
+.subject-gaztelania { background-color: #ffedd5; color: #9a3412; }
+.subject-gorputz { background-color: #e0e7ff; color: #3730a3; }
 .subject-jolastordua { background-color: #f3f4f6; color: #4b5563; font-style: italic; }
 .subject-bazkalordua { background-color: #fee2e2; color: #991b1b; font-weight: bold; }
 
