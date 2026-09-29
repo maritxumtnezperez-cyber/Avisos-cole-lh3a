@@ -25,8 +25,15 @@
     <section id="home" class="screen active">
       <div id="next" class="next-card"></div>
       
-      <div class="section-title">
+      <div class="section-title filter-row">
         <h2>Próximos eventos</h2>
+        <!-- FILTRO DE CATEGORÍAS -->
+        <select id="filterCategory" class="filter-select">
+          <option value="TODAS">Todas las categorías</option>
+          <option value="Reunión 📅">Reunión 📅</option>
+          <option value="Excursión 🚌">Excursión 🚌</option>
+          <option value="Médico 🏥">Médico 🏥</option>
+        </select>
       </div>
       
       <div id="noticeList" class="notice-list"></div>
@@ -199,14 +206,14 @@
     </section>
   </main>
 
-  <!-- NAVEGACIÓN INFERIOR -->
+  <!-- NAVEGACIÓN INFERIOR (CORREGIDO PESTAÑA PASADOS) -->
   <nav class="bottom">
     <button data-screen="home" class="active">
       <span class="nav-icon">📌</span>
       <span class="nav-label">Próximos</span>
     </button>
     <button data-screen="past">
-      <span class="nav-icon">Publicar⏳️</span>
+      <span class="nav-icon">⏳️</span>
       <span class="nav-label">Pasados</span>
     </button>
     <button data-screen="calendar">
