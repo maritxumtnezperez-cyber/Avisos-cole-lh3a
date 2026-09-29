@@ -162,7 +162,16 @@
 
       <div class="form-group">
         <label for="title">Título del evento *</label>
-        <input type="text" id="title" placeholder="Ej. Excursión al museo" required>
+        <input type="text" id="title" placeholder="Ej. Salida al teatro" required>
+      </div>
+
+      <div class="form-group">
+        <label for="category">Categoría *</label>
+        <select id="category" required>
+          <option value="Reunión 📅">Reunión 📅</option>
+          <option value="Excursión 🚌">Excursión 🚌</option>
+          <option value="Médico 🏥">Médico 🏥</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -197,7 +206,7 @@
       <span class="nav-label">Próximos</span>
     </button>
     <button data-screen="past">
-      <span class="nav-icon">⏳️</span>
+      <span class="nav-icon">Publicar⏳️</span>
       <span class="nav-label">Pasados</span>
     </button>
     <button data-screen="calendar">
