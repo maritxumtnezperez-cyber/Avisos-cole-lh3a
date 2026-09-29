@@ -15,6 +15,11 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+html, body {
+  width: 100%;
+  overflow-x: hidden; /* Garantiza que nada fuerce scroll horizontal global */
+}
+
 body {
   background-color: var(--bg-color);
   color: var(--text-dark);
@@ -25,10 +30,15 @@ body {
 
 main {
   padding: 16px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .screen {
   display: none;
+  width: 100%;
+  max-width: 100%;
 }
 
 .screen.active {
@@ -53,15 +63,23 @@ main {
   gap: 8px;
 }
 
+/* CONTENEDORES CONTRA DESBORDAMIENTO */
+#home, #noticeList, .next-card, .notice-card {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  min-width: 0; /* Previene fallos de cálculo flexbox/grid */
+}
+
 /* TARJETA DESTACADA PRÓXIMO EVENTO */
 .next-card {
   background: #ffffff;
   border-radius: var(--border-radius);
-  padding: 20px;
+  padding: 16px;
   margin-bottom: 24px;
   border-left: 6px solid var(--red-accent);
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-  overflow: hidden;
 }
 
 .next-tag {
@@ -78,6 +96,7 @@ main {
   color: var(--red-accent) !important;
   margin-bottom: 6px;
   line-height: 1.3;
+  word-break: break-word;
 }
 
 /* FECHA CON 📅 Y HORA CON 🕑 */
@@ -104,11 +123,10 @@ main {
 .notice-card {
   background: #ffffff;
   border-radius: var(--border-radius);
-  padding: 20px;
+  padding: 16px;
   margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
   border: 1px solid #f0f0f0;
-  overflow: hidden; /* Evita que los elementos internos sobresalgan */
 }
 
 .event-desc {
@@ -116,26 +134,30 @@ main {
   color: #333;
   margin-bottom: 12px;
   line-height: 1.4;
+  word-break: break-word;
 }
 
-/* AJUSTE DE IMAGEN EN VISTA COMPLETA Y DENTRO DEL PANTALLA MÓVIL */
+/* CONTENEDOR E IMAGEN STRICT MATCH (AJUSTE MÓVIL) */
 .img-container-full {
+  display: block;
   width: 100% !important;
   max-width: 100% !important;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   margin: 12px 0 16px 0;
   border-radius: 12px;
   overflow: hidden;
   background-color: #f3f4f6;
   border: 1px solid #e5e7eb;
+  contain: paint;
 }
 
 .img-container-full img {
+  display: block;
   width: 100% !important;
   max-width: 100% !important;
+  min-width: 0 !important;
   height: auto !important;
-  display: block;
-  object-fit: contain; /* Vista completa sin recortar ni sobresalir */
+  object-fit: contain;
 }
 
 /* BOTONES DE LA TARJETA */
