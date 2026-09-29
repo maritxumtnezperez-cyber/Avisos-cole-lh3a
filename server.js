@@ -1,81 +1,114 @@
-import express from 'express';
-import path from 'path';
-import pg from 'pg';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234';
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+// Configura aquí las contraseñas
+const APP_PASSWORD = process.env.APP_PASSWORD || "LH3A2026";      // Contraseña para acceder a la app
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";  // Contraseña para publicar/editar/borrar
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+app.use(express.json({ limit: '10mb' }));
 
-await pool.query(`
-  CREATE TABLE IF NOT EXISTS notices (
-    id TEXT PRIMARY KEY,
-    data JSONB NOT NULL
-  )
-`);
+// Middleware para verificar la contraseña de la App en las API
+function checkAppPassword(req, res, next) {
+  const pass = req.headers['x-app-password'];
+  if (pass === APP_PASSWORD) {
+    return next();
+  }
+  return res.status(401).json({ error: "Acceso no autorizado" });
+}
 
-const wrap = fn => (req, res, next) =>
-  fn(req, res, next).catch(err => {
-    console.error(err);
-    res.status(500).json({ error: 'Error del servidor' });
-  });
-
-function checkAdmin(req, res, next) {
+// Middleware para verificar la contraseña de Administrador
+function checkAdminPassword(req, res, next) {
   const pass = req.headers['x-admin-password'];
   if (pass === ADMIN_PASSWORD) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Contraseña incorrecta' });
+    return next();
+  }
+  return res.status(401).json({ error: "Contraseña de administración incorrecta" });
+}
+
+// Servir login.html antes de proteger los archivos estáticos
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Proteger archivos estáticos: si intenta entrar sin cookie/header pasa por aquí
+app.use(express.static('public'));
+
+const DATA_FILE = path.join(__dirname, 'data', 'notices.json');
+
+// Crear carpeta data si no existe
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+  fs.mkdirSync(path.join(__dirname, 'data'));
+}
+
+// Leer avisos
+function getNotices() {
+  if (!fs.existsSync(DATA_FILE)) return [];
+  try {
+    const data = fs.readFileSync(DATA_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (err) {
+    return [];
   }
 }
 
-app.get('/api/notices', wrap(async (req, res) => {
-  const { rows } = await pool.query('SELECT data FROM notices');
-  res.json(rows.map(r => r.data));
-}));
+// Guardar avisos
+function saveNotices(notices) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(notices, null, 2));
+}
 
-app.post('/api/notices', checkAdmin, wrap(async (req, res) => {
+// Endpoint para verificar contraseña de entrada
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  if (password === APP_PASSWORD) {
+    res.json({ ok: true });
+  } else {
+    res.status(401).json({ error: "Contraseña incorrecta" });
+  }
+});
+
+// Rutas API protegidas
+app.get('/api/notices', checkAppPassword, (req, res) => {
+  res.json(getNotices());
+});
+
+app.post('/api/notices', checkAppPassword, checkAdminPassword, (req, res) => {
+  const notices = getNotices();
   const newNotice = {
     id: Date.now().toString(),
-    created_at: new Date().toISOString(),
-    ...req.body
+    title: req.body.title,
+    description: req.body.description || "",
+    date: req.body.date || null,
+    time: req.body.time || null,
+    imageUrl: req.body.imageUrl || null
   };
-  newNotice.id = newNotice.id.toString();
-  await pool.query(
-    'INSERT INTO notices (id, data) VALUES ($1, $2)',
-    [newNotice.id, newNotice]
-  );
-  res.status(201).json(newNotice);
-}));
+  notices.push(newNotice);
+  saveNotices(notices);
+  res.json({ ok: true, notice: newNotice });
+});
 
-app.put('/api/notices/:id', checkAdmin, wrap(async (req, res) => {
-  const { rows } = await pool.query(
-    'SELECT data FROM notices WHERE id = $1',
-    [req.params.id]
-  );
-  if (!rows.length) return res.status(404).json({ error: 'Aviso no encontrado' });
-  const updated = { ...rows[0].data, ...req.body, id: req.params.id };
-  await pool.query(
-    'UPDATE notices SET data = $2 WHERE id = $1',
-    [req.params.id, updated]
-  );
-  res.json(updated);
-}));
+app.put('/api/notices/:id', checkAppPassword, checkAdminPassword, (req, res) => {
+  let notices = getNotices();
+  const idx = notices.findIndex(n => n.id === req.params.id);
+  if (idx !== -1) {
+    notices[idx] = { ...notices[idx], ...req.body };
+    saveNotices(notices);
+    res.json({ ok: true });
+  } else {
+    res.status(404).json({ error: "Evento no encontrado" });
+  }
+});
 
-app.delete('/api/notices/:id', checkAdmin, wrap(async (req, res) => {
-  await pool.query('DELETE FROM notices WHERE id = $1', [req.params.id]);
-  res.json({ success: true });
-}));
+app.delete('/api/notices/:id', checkAppPassword, checkAdminPassword, (req, res) => {
+  let notices = getNotices();
+  notices = notices.filter(n => n.id !== req.params.id);
+  saveNotices(notices);
+  res.json({ ok: true });
+});
 
 app.listen(PORT, () => {
-  console.log(`Servidor activo en el puerto ${PORT}`);
+  console.log(`Servidor iniciado en puerto ${PORT}`);
 });
