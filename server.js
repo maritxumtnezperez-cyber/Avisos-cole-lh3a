@@ -15,7 +15,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";  // Contraseñ
 
 app.use(express.json({ limit: '10mb' }));
 
-// Servir archivos estáticos de la carpeta public (incluye login.html)
+// Servir archivos estáticos de la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware para verificar la contraseña de la App en la API
