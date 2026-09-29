@@ -1,3 +1,5 @@
+let currentCalendarDate = new Date();
+
 // CONTROL DE NAVEGACIÓN ENTRE PANTALLAS
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(screen => {
@@ -12,6 +14,10 @@ function showScreen(screenId) {
   document.querySelectorAll('nav.bottom button').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-screen') === screenId);
   });
+
+  if (screenId === 'calendar') {
+    renderCalendar();
+  }
 }
 
 // EVENTOS DE NAVEGACIÓN
@@ -31,9 +37,12 @@ document.getElementById('backBtn').addEventListener('click', () => {
 });
 
 // EVENTO PARA FILTRAR EVENTOS PRÓXIMOS POR CATEGORÍA
-document.getElementById('filterCategory').addEventListener('change', () => {
-  renderNotices();
-});
+const filterCategory = document.getElementById('filterCategory');
+if (filterCategory) {
+  filterCategory.addEventListener('change', () => {
+    renderNotices();
+  });
+}
 
 // OBTENER Y GUARDAR DE LOCALSTORAGE
 function getNotices() {
@@ -44,13 +53,14 @@ function saveNotices(notices) {
   localStorage.setItem('notices', JSON.stringify(notices));
 }
 
-// RENDERIZAR LISTAS DE EVENTOS
+// RENDERIZAR LISTAS DE EVENTOS (PRÓXIMOS Y PASADOS)
 function renderNotices() {
   const notices = getNotices();
   const noticeList = document.getElementById('noticeList');
   const pastNoticeList = document.getElementById('pastNoticeList');
   const nextContainer = document.getElementById('next');
-  const selectedFilter = document.getElementById('filterCategory').value;
+  const filterElem = document.getElementById('filterCategory');
+  const selectedFilter = filterElem ? filterElem.value : 'TODAS';
 
   if (!noticeList) return;
 
@@ -59,17 +69,24 @@ function renderNotices() {
   if (nextContainer) nextContainer.innerHTML = '';
 
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
 
   // Filtrar eventos futuros y por categoría seleccionada
-  let futureNotices = notices.filter(n => new Date(n.date) >= now || !n.date)
-                             .sort((a, b) => new Date(a.date) - new Date(b.date));
+  let futureNotices = notices.filter(n => {
+    if (!n.date) return true;
+    const noticeDate = new Date(n.date + 'T00:00:00');
+    return noticeDate >= now;
+  }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
   if (selectedFilter !== 'TODAS') {
     futureNotices = futureNotices.filter(n => n.category === selectedFilter);
   }
 
-  const pastNotices = notices.filter(n => new Date(n.date) < now && n.date)
-                             .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const pastNotices = notices.filter(n => {
+    if (!n.date) return false;
+    const noticeDate = new Date(n.date + 'T00:00:00');
+    return noticeDate < now;
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
   // Tarjeta de Próximo Evento Destacado
   if (futureNotices.length > 0 && nextContainer) {
@@ -138,6 +155,124 @@ function renderNotices() {
   }
 }
 
+// LÓGICA Y DIBUJO DEL CALENDARIO MENSUAL
+function renderCalendar() {
+  const monthLabel = document.getElementById('monthLabel');
+  const calendarGrid = document.getElementById('calendarGrid');
+  const monthEventsList = document.getElementById('monthEventsList');
+
+  if (!calendarGrid) return;
+
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+
+  const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  if (monthLabel) {
+    monthLabel.textContent = `${monthNames[month]} ${year}`;
+  }
+
+  calendarGrid.innerHTML = '';
+
+  // Días de la semana en la cabecera del calendario
+  const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  weekDays.forEach(day => {
+    const headerCell = document.createElement('div');
+    headerCell.className = 'calendar-day-header';
+    headerCell.textContent = day;
+    calendarGrid.appendChild(headerCell);
+  });
+
+  const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Lunes = 0
+  const totalDays = new Date(year, month + 1, 0).getDate();
+
+  const notices = getNotices();
+  const today = new Date();
+
+  // Celdas vacías al principio del mes
+  for (let i = 0; i < firstDayIndex; i++) {
+    const emptyCell = document.createElement('div');
+    emptyCell.className = 'calendar-day empty';
+    calendarGrid.appendChild(emptyCell);
+  }
+
+  // Días del mes
+  for (let day = 1; day <= totalDays; day++) {
+    const dayCell = document.createElement('div');
+    dayCell.className = 'calendar-day';
+    dayCell.textContent = day;
+
+    const formattedDay = day < 10 ? `0${day}` : day;
+    const formattedMonth = (month + 1) < 10 ? `0${month + 1}` : (month + 1);
+    const dateString = `${year}-${formattedMonth}-${formattedDay}`;
+
+    // Resaltar si es hoy
+    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+      dayCell.classList.add('today');
+    }
+
+    // Comprobar si hay eventos en esta fecha
+    const hasEvent = notices.some(n => n.date === dateString);
+    if (hasEvent) {
+      dayCell.classList.add('has-event');
+    }
+
+    calendarGrid.appendChild(dayCell);
+  }
+
+  // Cargar lista de eventos correspondientes al mes visible
+  if (monthEventsList) {
+    monthEventsList.innerHTML = '';
+    const monthNotices = notices.filter(n => {
+      if (!n.date) return false;
+      const d = new Date(n.date + 'T00:00:00');
+      return d.getFullYear() === year && d.getMonth() === month;
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (monthNotices.length === 0) {
+      monthEventsList.innerHTML = '<p class="empty-msg">No hay eventos en este mes.</p>';
+    } else {
+      monthNotices.forEach(notice => {
+        const card = document.createElement('div');
+        card.className = 'notice-card';
+        const imageHtml = notice.image ? `<div class="img-container-full"><img src="${notice.image}" alt="Imagen de evento"></div>` : '';
+        card.innerHTML = `
+          <span class="category-tag">${notice.category || 'General'}</span>
+          <h3 class="event-title-red">${notice.title}</h3>
+          <div class="event-datetime-info">
+            <span>📅 ${notice.date}</span>
+            <span>🕒 ${notice.time || 'Sin hora'}</span>
+          </div>
+          <p class="event-desc">${notice.description || ''}</p>
+          ${imageHtml}
+        `;
+        monthEventsList.appendChild(card);
+      });
+    }
+  }
+}
+
+// Botones para avanzar/retroceder mes en el calendario
+const prevMonthBtn = document.getElementById('prevMonth');
+const nextMonthBtn = document.getElementById('nextMonth');
+
+if (prevMonthBtn) {
+  prevMonthBtn.addEventListener('click', () => {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+    renderCalendar();
+  });
+}
+
+if (nextMonthBtn) {
+  nextMonthBtn.addEventListener('click', () => {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+    renderCalendar();
+  });
+}
+
 // PUBLICAR EVENTO CON LECTURA DE IMAGEN (BASE64)
 document.getElementById('publish').addEventListener('click', () => {
   const titleInput = document.getElementById('title');
@@ -183,6 +318,7 @@ document.getElementById('publish').addEventListener('click', () => {
 
     alert('Evento publicado con éxito');
     renderNotices();
+    renderCalendar();
     showScreen('home');
   };
 
@@ -204,10 +340,12 @@ function deleteNotice(id) {
     notices = notices.filter(n => n.id !== id);
     saveNotices(notices);
     renderNotices();
+    renderCalendar();
   }
 }
 
 // INICIALIZACIÓN
 document.addEventListener('DOMContentLoaded', () => {
   renderNotices();
+  renderCalendar();
 });
