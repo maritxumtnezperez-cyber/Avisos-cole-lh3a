@@ -1,421 +1,182 @@
-// FESTIVOS Y VACACIONES CURSO 2026/2027
-const HOLIDAYS_2026_2027 = [
-  '2026-10-12', '2026-11-02', '2026-12-03', '2026-12-04', '2026-12-05', '2026-12-06', '2026-12-07', '2026-12-08',
-  '2026-12-24', '2026-12-25', '2026-12-26', '2026-12-27', '2026-12-28', '2026-12-29', '2026-12-30', '2026-12-31',
-  '2027-01-01', '2027-01-02', '2027-01-03', '2027-01-04', '2027-01-05', '2027-01-06',
-  '2027-02-08', '2027-02-09', '2027-02-10', '2027-02-11', '2027-02-12', '2027-03-19',
-  '2027-03-22', '2027-03-23', '2027-03-24', '2027-03-25', '2027-03-26', '2027-03-27', '2027-03-28', '2027-03-29', '2027-03-30', '2027-03-31',
-  '2027-04-01', '2027-04-02', '2027-05-01'
-];
+// CONTROL DE NAVEGACIÓN ENTRE PANTALLAS
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(screen => {
+    screen.classList.remove('active');
+  });
+  
+  const targetScreen = document.getElementById(screenId);
+  if (targetScreen) {
+    targetScreen.classList.add('active');
+  }
 
-let currentDate = new Date();
-let currentMonth = currentDate.getMonth();
-let currentYear = currentDate.getFullYear();
-let notices = [];
-
-const appPassword = sessionStorage.getItem("appPassword");
-if (!appPassword) {
-  window.location.href = "/login.html";
+  // Actualizar estados de botones de navegación inferior
+  document.querySelectorAll('nav.bottom button').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-screen') === screenId);
+  });
 }
 
-// Navegación de pestañas inferiores
-document.querySelectorAll('nav.bottom button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('nav.bottom button').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    
-    btn.classList.add('active');
-    const screenId = btn.getAttribute('data-screen');
-    const targetScreen = document.getElementById(screenId);
-    if (targetScreen) targetScreen.classList.add('active');
+// ASIGNACIÓN DE EVENTOS DE NAVEGACIÓN
+document.querySelectorAll('nav.bottom button').forEach(button => {
+  button.addEventListener('click', () => {
+    const screen = button.getAttribute('data-screen');
+    showScreen(screen);
   });
 });
 
-document.getElementById('adminBtn')?.addEventListener('click', () => {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('admin').classList.add('active');
+document.getElementById('adminBtn').addEventListener('click', () => {
+  showScreen('admin');
 });
 
-document.getElementById('backBtn')?.addEventListener('click', () => {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('home').classList.add('active');
+document.getElementById('backBtn').addEventListener('click', () => {
+  showScreen('home');
 });
 
-// Generar URL directa para Google Calendar
-function generateGoogleCalendarUrl(notice) {
-  if (!notice.date) return '#';
-
-  const title = encodeURIComponent(notice.title || 'Evento');
-  const details = encodeURIComponent(notice.description || '');
-  
-  const timeStr = notice.time && notice.time.trim() !== '' ? notice.time : '09:00';
-  const [year, month, day] = notice.date.split('-');
-  const [hours, minutes] = timeStr.split(':');
-
-  // Formato UTC/Local para Google: YYYYMMDDTHHMMSS
-  const startDateStr = `${year}${month}${day}T${hours.padStart(2, '0')}${minutes.padStart(2, '0')}00`;
-  
-  // Calcular hora final (+1 hora por defecto)
-  const endHours = String((parseInt(hours, 10) + 1) % 24).padStart(2, '0');
-  const endDateStr = `${year}${month}${day}T${endHours}${minutes.padStart(2, '0')}00`;
-
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateStr}/${endDateStr}&details=${details}`;
+// OBTENER NOTICIAS / EVENTOS DE LOCALSTORAGE
+function getNotices() {
+  return JSON.parse(localStorage.getItem('notices') || '[]');
 }
 
-// Comprobar si un evento ya ha pasado (fecha y hora exactas)
-function isEventPast(notice) {
-  if (!notice.date) return false;
-  
-  const now = new Date();
-  const timeStr = notice.time && notice.time.trim() !== '' ? notice.time : '23:59';
-  const [year, month, day] = notice.date.split('-').map(Number);
-  const [hours, minutes] = timeStr.split(':').map(Number);
-  
-  const eventDate = new Date(year, month - 1, day, hours, minutes, 59);
-  return eventDate < now;
+function saveNotices(notices) {
+  localStorage.setItem('notices', JSON.stringify(notices));
 }
 
-// Cargar eventos desde el servidor
-async function loadNotices() {
-  try {
-    const res = await fetch('/api/notices', {
-      headers: { 'x-app-password': appPassword }
-    });
-    if (res.ok) {
-      notices = await res.json();
-      renderAll();
-    }
-  } catch (err) {
-    console.error("Error al cargar eventos:", err);
-  }
-}
-
-function renderAll() {
-  renderHomeNotices();
-  renderPastNotices();
-  renderCalendar();
-}
-
-// Renderizar Eventos Futuros / Próximos
-function renderHomeNotices() {
+// RENDERIZAR LISTA DE EVENTOS
+function renderNotices() {
+  const notices = getNotices();
   const noticeList = document.getElementById('noticeList');
-  const nextCard = document.getElementById('next');
+  const pastNoticeList = document.getElementById('pastNoticeList');
+  const nextContainer = document.getElementById('next');
+
   if (!noticeList) return;
 
   noticeList.innerHTML = '';
-  if (nextCard) nextCard.innerHTML = '';
+  if (pastNoticeList) pastNoticeList.innerHTML = '';
+  if (nextContainer) nextContainer.innerHTML = '';
 
-  const upcoming = notices
-    .filter(n => !isEventPast(n))
-    .sort((a, b) => {
-      const dateA = new Date(`${a.date || '9999-12-31'}T${a.time || '00:00'}`);
-      const dateB = new Date(`${b.date || '9999-12-31'}T${b.time || '00:00'}`);
-      return dateA - dateB;
-    });
+  const now = new Date();
 
-  if (upcoming.length === 0) {
+  // Filtrar y ordenar eventos futuros
+  const futureNotices = notices.filter(n => new Date(n.date) >= now || !n.date)
+                               .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  const pastNotices = notices.filter(n => new Date(n.date) < now && n.date)
+                             .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // Tarjeta de próximo evento
+  if (futureNotices.length > 0 && nextContainer) {
+    const next = futureNotices[0];
+    nextContainer.innerHTML = `
+      <div class="next-tag">Próximo evento destacado</div>
+      <span class="category-tag">${next.category || 'General'}</span>
+      <h3 class="event-title-red">${next.title}</h3>
+      <div class="event-datetime-info">
+        <span>📅 ${next.date || 'Sin fecha'}</span>
+        <span>🕒 ${next.time || 'Sin hora'}</span>
+      </div>
+      <p class="event-desc">${next.description || ''}</p>
+    `;
+  }
+
+  // Renderizar lista completa de próximos
+  if (futureNotices.length === 0) {
     noticeList.innerHTML = '<p class="empty-msg">No hay próximos eventos programados.</p>';
-    return;
-  }
-
-  // Tarjeta Destacada "Próximo Evento"
-  const nextEvent = upcoming[0];
-  if (nextCard) {
-    const googleCalUrl = generateGoogleCalendarUrl(nextEvent);
-    nextCard.innerHTML = `
-      <div class="next-tag">📌 Próximo Evento</div>
-      <h3 class="event-title-red">${nextEvent.title}</h3>
-      <p class="event-datetime-info">
-        <span>📅 ${nextEvent.date || ''}</span>
-        ${nextEvent.time ? `<span>🕑 ${nextEvent.time}</span>` : ''}
-      </p>
-      ${nextEvent.description ? `<p class="event-desc">${nextEvent.description}</p>` : ''}
-      ${nextEvent.imageUrl ? `<div class="img-container-full"><img src="${nextEvent.imageUrl}" alt="Imagen del evento"></div>` : ''}
-      
-      <a href="${googleCalUrl}" target="_blank" rel="noopener noreferrer" class="btn-action btn-add-cal" style="display: block; text-align: center; text-decoration: none; box-sizing: border-box; margin-top: 10px;">
-        📅 Añadir a Google Calendar
-      </a>
-      
-      <div class="card-actions-row" style="margin-top: 10px;">
-        <button class="btn-action btn-delete" onclick="deleteNotice('${nextEvent.id}')">🗑️ Borrar</button>
-      </div>
-    `;
-  }
-
-  // Lista general de siguientes eventos futuros
-  const listEvents = nextCard ? upcoming.slice(1) : upcoming;
-
-  listEvents.forEach(notice => {
-    const card = document.createElement('div');
-    card.className = 'notice-card';
-    const googleCalUrl = generateGoogleCalendarUrl(notice);
-    
-    card.innerHTML = `
-      <h3 class="event-title-red">${notice.title}</h3>
-      <p class="event-datetime-info">
-        <span>📅 ${notice.date || ''}</span>
-        ${notice.time ? `<span>🕑 ${notice.time}</span>` : ''}
-      </p>
-      
-      ${notice.description ? `<p class="event-desc">${notice.description}</p>` : ''}
-      ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen del evento"></div>` : ''}
-      
-      <a href="${googleCalUrl}" target="_blank" rel="noopener noreferrer" class="btn-action btn-add-cal" style="display: block; text-align: center; text-decoration: none; box-sizing: border-box;">
-        📅 Añadir a Google Calendar
-      </a>
-      
-      <div class="card-actions-row">
-        <button class="btn-action btn-edit" onclick="editNotice('${notice.id}')">✏️️ Editar</button>
-        <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">🗑️ Borrar</button>
-      </div>
-    `;
-    noticeList.appendChild(card);
-  });
-}
-
-// Renderizar Eventos Pasados
-function renderPastNotices() {
-  const pastList = document.getElementById('pastNoticeList') || document.getElementById('pastNotices');
-  if (!pastList) return;
-
-  pastList.innerHTML = '';
-
-  const pastEvents = notices
-    .filter(n => isEventPast(n))
-    .sort((a, b) => {
-      const dateA = new Date(`${a.date}T${a.time || '23:59'}`);
-      const dateB = new Date(`${b.date}T${b.time || '23:59'}`);
-      return dateB - dateA;
+  } else {
+    futureNotices.forEach((notice, index) => {
+      const card = document.createElement('div');
+      card.className = 'notice-card';
+      card.innerHTML = `
+        <span class="category-tag">${notice.category || 'General'}</span>
+        <h3 class="event-title-red">${notice.title}</h3>
+        <div class="event-datetime-info">
+          <span>📅 ${notice.date || 'Sin fecha'}</span>
+          <span>🕒 ${notice.time || 'Sin hora'}</span>
+        </div>
+        <p class="event-desc">${notice.description || ''}</p>
+        <div class="card-actions-row">
+          <button class="btn-action btn-delete" onclick="deleteNotice(${index})">Eliminar</button>
+        </div>
+      `;
+      noticeList.appendChild(card);
     });
-
-  if (pastEvents.length === 0) {
-    pastList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
-    return;
   }
 
-  pastEvents.forEach(notice => {
-    const card = document.createElement('div');
-    card.className = 'notice-card past-card';
-    
-    card.innerHTML = `
-      <h3 class="event-title-red" style="color: #6b7280 !important;">${notice.title}</h3>
-      <p class="event-datetime-info">
-        <span>📅 ${notice.date || ''}</span>
-        ${notice.time ? `<span>🕑 ${notice.time}</span>` : ''}
-      </p>
-      
-      ${notice.description ? `<p class="event-desc">${notice.description}</p>` : ''}
-      ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen del evento"></div>` : ''}
-      
-      <div class="card-actions-row">
-        <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">🗑️ Borrar</button>
-      </div>
-    `;
-    pastList.appendChild(card);
-  });
-}
-
-// Renderizar Calendario y Eventos del Mes
-function renderCalendar() {
-  const grid = document.getElementById('calendarGrid');
-  const monthLabel = document.getElementById('monthLabel');
-  if (!grid || !monthLabel) return;
-
-  grid.innerHTML = '';
-  const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-  monthLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-
-  const dayHeaders = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  dayHeaders.forEach(dh => {
-    const headerEl = document.createElement('div');
-    headerEl.className = 'calendar-day-header';
-    headerEl.textContent = dh;
-    grid.appendChild(headerEl);
-  });
-
-  const firstDay = new Date(currentYear, currentMonth, 1);
-  const lastDay = new Date(currentYear, currentMonth + 1, 0);
-
-  let startingDay = firstDay.getDay() - 1;
-  if (startingDay === -1) startingDay = 6;
-
-  for (let i = 0; i < startingDay; i++) {
-    const emptyEl = document.createElement('div');
-    emptyEl.className = 'calendar-day empty';
-    grid.appendChild(emptyEl);
-  }
-
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  for (let day = 1; day <= lastDay.getDate(); day++) {
-    const dayEl = document.createElement('div');
-    dayEl.className = 'calendar-day';
-    dayEl.textContent = day;
-
-    const formattedMonth = String(currentMonth + 1).padStart(2, '0');
-    const formattedDay = String(day).padStart(2, '0');
-    const dateStr = `${currentYear}-${formattedMonth}-${formattedDay}`;
-
-    if (HOLIDAYS_2026_2027.includes(dateStr)) {
-      dayEl.classList.add('holiday');
-    }
-    if (dateStr === todayStr) {
-      dayEl.classList.add('today');
-    }
-    if (notices.some(n => n.date === dateStr)) {
-      dayEl.classList.add('has-event');
-    }
-
-    grid.appendChild(dayEl);
-  }
-
-  // Carga los eventos del mes en curso en la lista inferior
-  renderMonthEvents();
-}
-
-// Mostrar lista de eventos del mes activo en el calendario
-function renderMonthEvents() {
-  const container = document.getElementById('monthEventsList');
-  if (!container) return;
-
-  container.innerHTML = '';
-
-  const monthEvents = notices.filter(n => {
-    if (!n.date) return false;
-    const [y, m] = n.date.split('-').map(Number);
-    return y === currentYear && (m - 1) === currentMonth;
-  }).sort((a, b) => new Date(`${a.date}T${a.time || '00:00'}`) - new Date(`${b.date}T${b.time || '00:00'}`));
-
-  if (monthEvents.length === 0) {
-    container.innerHTML = '<p class="empty-msg">No hay eventos programados para este mes.</p>';
-    return;
-  }
-
-  monthEvents.forEach(notice => {
-    const card = document.createElement('div');
-    card.className = 'notice-card';
-    const googleCalUrl = generateGoogleCalendarUrl(notice);
-
-    card.innerHTML = `
-      <h3 class="event-title-red">${notice.title}</h3>
-      <p class="event-datetime-info">
-        <span>📅 ${notice.date || ''}</span>
-        ${notice.time ? `<span>🕑 ${notice.time}</span>` : ''}
-      </p>
-      
-      ${notice.description ? `<p class="event-desc">${notice.description}</p>` : ''}
-      ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen del evento"></div>` : ''}
-      
-      <a href="${googleCalUrl}" target="_blank" rel="noopener noreferrer" class="btn-action btn-add-cal" style="display: block; text-align: center; text-decoration: none; box-sizing: border-box;">
-        📅 Añadir a Google Calendar
-      </a>
-      
-      <div class="card-actions-row">
-        <button class="btn-action btn-edit" onclick="editNotice('${notice.id}')">✏️ Editar</button>
-        <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">🗑️ Borrar</button>
-      </div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-document.getElementById('prevMonth')?.addEventListener('click', () => {
-  currentMonth--;
-  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-  renderCalendar();
-});
-
-document.getElementById('nextMonth')?.addEventListener('click', () => {
-  currentMonth++;
-  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-  renderCalendar();
-});
-
-// Borrar Evento
-window.deleteNotice = async function(id) {
-  const adminPass = prompt("Introduce la contraseña de administrador para borrar:");
-  if (!adminPass) return;
-
-  try {
-    const res = await fetch(`/api/notices/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'x-app-password': appPassword,
-        'x-admin-password': adminPass
-      }
-    });
-    if (res.ok) {
-      loadNotices();
+  // Renderizar eventos pasados
+  if (pastNoticeList) {
+    if (pastNotices.length === 0) {
+      pastNoticeList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
     } else {
-      alert("Contraseña de administrador incorrecta");
+      pastNotices.forEach(notice => {
+        const card = document.createElement('div');
+        card.className = 'notice-card';
+        card.innerHTML = `
+          <span class="category-tag">${notice.category || 'General'}</span>
+          <h3>${notice.title}</h3>
+          <div class="event-datetime-info">
+            <span>📅 ${notice.date}</span>
+            <span>🕒 ${notice.time || ''}</span>
+          </div>
+          <p class="event-desc">${notice.description || ''}</p>
+        `;
+        pastNoticeList.appendChild(card);
+      });
     }
-  } catch (err) {
-    alert("Error al eliminar el evento");
   }
-};
-
-window.editNotice = function(id) {
-  alert("Para editar, modifica los datos y vuelve a publicar o elimina y vuelve a crearlo.");
-};
-
-// Publicar Evento
-const publishBtn = document.getElementById('publish');
-if (publishBtn) {
-  publishBtn.onclick = async () => {
-    const title = document.getElementById('title').value;
-    const description = document.getElementById('description').value;
-    const date = document.getElementById('date').value;
-    const time = document.getElementById('time').value;
-    const imageInput = document.getElementById('imageFile');
-    const msgEl = document.getElementById('adminMsg');
-
-    if (!title) {
-      if (msgEl) msgEl.textContent = "El título es obligatorio.";
-      return;
-    }
-
-    const adminPass = prompt("Introduce la contraseña de administrador:");
-    if (!adminPass) return;
-
-    publishBtn.disabled = true;
-
-    let imageUrl = null;
-    if (imageInput && imageInput.files[0]) {
-      const reader = new FileReader();
-      imageUrl = await new Promise((resolve) => {
-        reader.onload = e => resolve(e.target.result);
-        reader.readAsDataURL(imageInput.files[0]);
-      });
-    }
-
-    try {
-      const res = await fetch('/api/notices', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-app-password': appPassword,
-          'x-admin-password': adminPass
-        },
-        body: JSON.stringify({ title, description, date, time, imageUrl })
-      });
-
-      if (res.ok) {
-        document.getElementById('title').value = '';
-        document.getElementById('description').value = '';
-        if (imageInput) imageInput.value = '';
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('home').classList.add('active');
-        await loadNotices();
-      } else {
-        alert("Contraseña de administrador incorrecta");
-      }
-    } catch (err) {
-      alert("Error de conexión");
-    } finally {
-      publishBtn.disabled = false;
-    }
-  };
 }
 
-// Carga inicial
-loadNotices();
+// PUBLICAR NUEVO EVENTO
+document.getElementById('publish').addEventListener('click', () => {
+  const titleInput = document.getElementById('title');
+  const categoryInput = document.getElementById('category');
+  const dateInput = document.getElementById('date');
+  const timeInput = document.getElementById('time');
+  const descriptionInput = document.getElementById('description');
+
+  const title = titleInput.value.trim();
+  const category = categoryInput.value;
+  const date = dateInput.value;
+  const time = timeInput.value;
+  const description = descriptionInput.value.trim();
+
+  if (!title) {
+    alert('Por favor, introduce un título para el evento.');
+    return;
+  }
+
+  const newNotice = {
+    title: title,
+    category: category,
+    date: date,
+    time: time,
+    description: description,
+    id: Date.now()
+  };
+
+  const notices = getNotices();
+  notices.push(newNotice);
+  saveNotices(notices);
+
+  // Limpiar campos del formulario
+  titleInput.value = '';
+  dateInput.value = '';
+  timeInput.value = '';
+  descriptionInput.value = '';
+
+  alert('Evento publicado con éxito');
+  renderNotices();
+  showScreen('home');
+});
+
+// ELIMINAR EVENTO
+function deleteNotice(index) {
+  if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
+    const notices = getNotices();
+    notices.splice(index, 1);
+    saveNotices(notices);
+    renderNotices();
+  }
+}
+
+// INICIALIZACIÓN
+document.addEventListener('DOMContentLoaded', () => {
+  renderNotices();
+});
