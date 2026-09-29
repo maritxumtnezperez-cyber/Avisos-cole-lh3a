@@ -12,22 +12,50 @@ body {
   padding-bottom: 70px;
 }
 
-/* CABECERA */
-header {
-  background-color: #ffffff;
+/* CABECERA VERDE CON LOGO */
+header.main-header {
+  background-color: #279f5f;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 16px;
   position: sticky;
   top: 0;
   z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-header h1 {
-  font-size: 1.25rem;
-  color: #111827;
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  background-color: #ffffff;
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+header.main-header h1 {
+  font-size: 1.15rem;
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.header-subtitle {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 400;
 }
 
 .icon-btn {
@@ -35,6 +63,7 @@ header h1 {
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
+  filter: brightness(0) invert(1);
 }
 
 /* PANTALLAS */
@@ -272,5 +301,5 @@ nav.bottom button {
   cursor: pointer;
 }
 
-nav.bottom button.active { color: #2563eb; }
+nav.bottom button.active { color: #279f5f; }
 .nav-icon { font-size: 1.2rem; }
