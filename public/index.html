@@ -139,42 +139,6 @@
       <div id="eventList"></div>
     </section>
 
-    <!-- PANTALLA AYUDA -->
-    <section id="reminders" class="screen">
-      <div class="section-title"><h2>📲 ¿Cómo añadir eventos a tu agenda?</h2></div>
-      <p style="margin-bottom: 15px; color: #59645e; line-height: 1.5;">
-        Para guardar las fechas importantes en tu móvil, pulsa el botón <strong>"📅 Añadir al calendario"</strong> situado en la tarjeta de cualquier evento.
-      </p>
-
-      <hr style="border:0; border-top:1px solid #d6ded9; margin:16px 0;">
-
-      <h3 style="margin-bottom: 8px; color: #17201b;">📱 Dispositivos Android</h3>
-      <p style="color: #59645e; margin-bottom: 8px; line-height: 1.4;">
-        Se abrirá directamente tu aplicación de <strong>Google Calendar</strong> con la información del evento:
-      </p>
-      <ol style="margin-left: 20px; color: #59645e; line-height: 1.6; margin-bottom: 12px;">
-        <li>Comprueba la fecha y la hora.</li>
-        <li>Verifica la sección <strong>"Añadir notificación"</strong> para confirmar la alerta 24h antes.</li>
-        <li>Pulsa <strong>Guardar</strong> en la parte superior.</li>
-      </ol>
-
-      <hr style="border:0; border-top:1px solid #d6ded9; margin:16px 0;">
-
-      <h3 style="margin-bottom: 8px; color: #17201b;">🍏 Dispositivos iPhone (iOS)</h3>
-      <p style="color: #59645e; margin-bottom: 8px; line-height: 1.4;">
-        Se descargará un archivo de calendario (<code>.ics</code>):
-      </p>
-      <ol style="margin-left: 20px; color: #59645e; line-height: 1.6; margin-bottom: 12px;">
-        <li>Abre el archivo descargado para ver la vista previa.</li>
-        <li>Pulsa en <strong>"Añadir todos"</strong> o <strong>"Añadir a Calendario"</strong>.</li>
-        <li>El evento se guardará con la <strong>alarma programada 1 día antes</strong>.</li>
-      </ol>
-
-      <div style="background:#e8f8ef; padding:12px; border-left:4px solid #209b59; margin-top:16px; border-radius:12px; color:#17201b; font-size: 0.9em;">
-        💡 <strong>Nota:</strong> Puedes personalizar los avisos o el color del evento desde la pantalla de edición de tu propio calendario antes de guardarlo.
-      </div>
-    </section>
-
     <!-- PANTALLA ADMINISTRACIÓN -->
     <section id="admin" class="screen">
       <div class="section-title"><button id="backBtn">‹</button><h2>Nuevo evento</h2></div>
@@ -196,13 +160,12 @@
     </section>
   </main>
 
-  <!-- BARRA DE NAVEGACIÓN INFERIOR -->
+  <!-- BARRA DE NAVEGACIÓN INFERIOR (AHORA CON 4 PESTAÑAS) -->
   <nav class="bottom">
     <button data-screen="home" class="active">⌂<span>Próximos</span></button>
     <button data-screen="past">⌛<span>Pasados</span></button>
     <button data-screen="schedule">🕒<span>Horario</span></button>
     <button data-screen="calendar">▦<span>Calendario</span></button>
-    <button data-screen="reminders">♧<span>Ayuda</span></button>
   </nav>
 
   <script src="/app.js"></script>
