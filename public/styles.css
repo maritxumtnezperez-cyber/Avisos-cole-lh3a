@@ -64,7 +64,7 @@ main {
 }
 
 /* CONTENEDORES CONTRA DESBORDAMIENTO */
-#home, #noticeList, .next-card, .notice-card {
+#home, #noticeList, #pastNoticeList, .next-card, .notice-card {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -111,7 +111,7 @@ main {
   flex-wrap: wrap;
 }
 
-/* SECCIÓN PRÓXIMOS EVENTOS */
+/* SECCIÓN PRÓXIMOS EVENTOS Y TÍTULOS */
 .section-title h2 {
   font-size: 1.3rem;
   font-weight: 800;
@@ -129,6 +129,24 @@ main {
   border: 1px solid #f0f0f0;
 }
 
+/* TARJETAS PASADAS */
+.notice-card.past-card {
+  opacity: 0.85;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.notice-card.past-card .event-title-red {
+  color: #4b5563 !important;
+}
+
+.empty-msg {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.95rem;
+  padding: 24px 0;
+}
+
 .event-desc {
   font-size: 0.95rem;
   color: #333;
@@ -137,7 +155,7 @@ main {
   word-break: break-word;
 }
 
-/* CONTENEDOR E IMAGEN STRICT MATCH (AJUSTE MÓVIL) */
+/* CONTENEDOR E IMAGEN */
 .img-container-full {
   display: block;
   width: 100% !important;
@@ -216,7 +234,7 @@ main {
   border: 1px solid #e5e7eb;
 }
 
-/* TABLA DE HORARIO CON COLORES */
+/* TABLA DE HORARIO */
 .schedule-table {
   width: 100%;
   border-collapse: collapse;
@@ -385,3 +403,4 @@ button.primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
