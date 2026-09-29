@@ -41,7 +41,7 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   document.getElementById('home').classList.add('active');
 });
 
-// Cargar eventos desde servidor
+// Cargar eventos desde el servidor
 async function loadNotices() {
   try {
     const res = await fetch('/api/notices', {
