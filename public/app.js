@@ -78,16 +78,17 @@ function renderHomeNotices() {
     return;
   }
 
-  // Tarjeta Destacada de Próximo Evento
+  // Tarjeta Destacada "Próximo Evento"
   if (nextCard && upcoming[0]) {
     const nextEvent = upcoming[0];
     nextCard.innerHTML = `
       <div class="next-tag">📌 Próximo Evento</div>
       <h3 class="event-title-red">${nextEvent.title}</h3>
       <p class="event-datetime-info">
-        📅 ${nextEvent.date || ''} ${nextEvent.time ? '🕑 ' + nextEvent.time : ''}
+        <span>📅 ${nextEvent.date || ''}</span>
+        ${nextEvent.time ? `<span>🕑 ${nextEvent.time}</span>` : ''}
       </p>
-      ${nextEvent.imageUrl ? `<div class="img-container-full"><img src="${nextEvent.imageUrl}" alt="Imagen de ${nextEvent.title}"></div>` : ''}
+      ${nextEvent.imageUrl ? `<div class="img-container-full"><img src="${nextEvent.imageUrl}" alt="Imagen del evento"></div>` : ''}
     `;
   }
 
@@ -99,11 +100,12 @@ function renderHomeNotices() {
     card.innerHTML = `
       <h3 class="event-title-red">${notice.title}</h3>
       <p class="event-datetime-info">
-        📅 ${notice.date || ''} ${notice.time ? '🕑 ' + notice.time : ''}
+        <span>📅 ${notice.date || ''}</span>
+        ${notice.time ? `<span>🕑 ${notice.time}</span>` : ''}
       </p>
       
       ${notice.description ? `<p class="event-desc">${notice.description}</p>` : ''}
-      ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen de ${notice.title}"></div>` : ''}
+      ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen del evento"></div>` : ''}
       
       <button class="btn-action btn-add-cal">📅 Añadir al calendario</button>
       
