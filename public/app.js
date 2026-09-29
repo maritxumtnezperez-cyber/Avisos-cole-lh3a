@@ -41,15 +41,23 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   document.getElementById('home').classList.add('active');
 });
 
-// Comprobar si un evento ya ha pasado (fecha y hora exacta)
+// Comprobar si un evento ya ha pasado (fecha y hora exactas)
 function isEventPast(notice) {
   if (!notice.date) return false;
   
   const now = new Date();
-  const timeStr = notice.time ? notice.time : '23:59';
-  const eventDateTime = new Date(`${notice.date}T${timeStr}:00`);
   
-  return eventDateTime < now;
+  // Si no hay hora especificada, asumimos el final del día (23:59)
+  const timeStr = notice.time && notice.time.trim() !== '' ? notice.time : '23:59';
+  
+  // Desglosar fecha (YYYY-MM-DD) y hora (HH:mm) manualmente para evitar fallos de formato
+  const [year, month, day] = notice.date.split('-').map(Number);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  
+  // Los meses en JavaScript se cuentan de 0 a 11
+  const eventDate = new Date(year, month - 1, day, hours, minutes, 59);
+  
+  return eventDate < now;
 }
 
 // Cargar eventos desde el servidor
@@ -82,17 +90,21 @@ function renderHomeNotices() {
   noticeList.innerHTML = '';
   if (nextCard) nextCard.innerHTML = '';
 
-  // Filtrar eventos que AÚN NO han pasado y ordenarlos cronológicamente
+  // Filtrar eventos futuros y ordenarlos del más cercano al más lejano
   const upcoming = notices
     .filter(n => !isEventPast(n))
-    .sort((a, b) => new Date(`${a.date || '9999-12-31'}T${a.time || '00:00'}`) - new Date(`${b.date || '9999-12-31'}T${b.time || '00:00'}`));
+    .sort((a, b) => {
+      const dateA = new Date(`${a.date || '9999-12-31'}T${a.time || '00:00'}`);
+      const dateB = new Date(`${b.date || '9999-12-31'}T${b.time || '00:00'}`);
+      return dateA - dateB;
+    });
 
   if (upcoming.length === 0) {
     noticeList.innerHTML = '<p class="empty-msg">No hay próximos eventos programados.</p>';
     return;
   }
 
-  // Tarjeta Destacada "Próximo Evento"
+  // Tarjeta Destacada "Próximo Evento" (primer evento futuro)
   const nextEvent = upcoming[0];
   if (nextCard) {
     nextCard.innerHTML = `
@@ -103,6 +115,9 @@ function renderHomeNotices() {
         ${nextEvent.time ? `<span>🕑 ${nextEvent.time}</span>` : ''}
       </p>
       ${nextEvent.imageUrl ? `<div class="img-container-full"><img src="${nextEvent.imageUrl}" alt="Imagen del evento"></div>` : ''}
+      <div class="card-actions-row" style="margin-top: 10px;">
+        <button class="btn-action btn-delete" onclick="deleteNotice('${nextEvent.id}')">🗑️ Borrar</button>
+      </div>
     `;
   }
 
@@ -134,17 +149,21 @@ function renderHomeNotices() {
   });
 }
 
-// Renderizar Eventos Pasados (Pestaña "Pasados")
+// Renderizar Eventos Pasados (Pestaña "Eventos pasados")
 function renderPastNotices() {
   const pastList = document.getElementById('pastNoticeList') || document.getElementById('pastNotices');
   if (!pastList) return;
 
   pastList.innerHTML = '';
 
-  // Filtrar eventos que YA HAN PASADO y ordenarlos de más reciente a más antiguo
+  // Filtrar eventos pasados y ordenarlos del más reciente al más antiguo
   const pastEvents = notices
     .filter(n => isEventPast(n))
-    .sort((a, b) => new Date(`${b.date}T${b.time || '23:59'}`) - new Date(`${a.date}T${a.time || '23:59'}`));
+    .sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.time || '23:59'}`);
+      const dateB = new Date(`${b.date}T${b.time || '23:59'}`);
+      return dateB - dateA;
+    });
 
   if (pastEvents.length === 0) {
     pastList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
@@ -267,7 +286,7 @@ document.getElementById('nextMonth')?.addEventListener('click', () => {
   renderCalendar();
 });
 
-// Publicar Evento (Control de doble envío)
+// Publicar Evento
 const publishBtn = document.getElementById('publish');
 if (publishBtn) {
   publishBtn.onclick = async () => {
