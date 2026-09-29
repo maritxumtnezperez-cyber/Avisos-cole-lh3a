@@ -1,53 +1,186 @@
-/* --- ESTILOS EN PANTALLA PRÓXIMOS --- */
-
-/* Título en negrita y color rojo */
-.event-title-red {
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: #dc2626; /* Color rojo */
-  margin-bottom: 6px;
+:root {
+  --primary-green: #229954;
+  --bg-color: #f6f8f7;
+  --card-bg: #ffffff;
+  --text-dark: #111111;
+  --text-gray: #666666;
+  --border-radius: 20px;
+  --red-accent: #dc2626;
 }
 
-/* Fecha con 📅 y Hora con 🕑 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-dark);
+  padding-bottom: 80px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+main {
+  padding: 16px;
+}
+
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* BOTÓN SUPERIOR "PUBLICAR EVENTO" */
+.admin-link {
+  width: 100%;
+  background-color: var(--primary-green);
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* TARJETA PRÓXIMO EVENTO */
+.next-card {
+  background: #ffffff;
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 24px;
+  border-left: 6px solid var(--red-accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.next-tag {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 12px;
+}
+
+/* TÍTULOS DE EVENTO EN NEGRITA Y ROJO */
+.event-title-red {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--red-accent);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+
+/* FECHA CON 📅 Y HORA CON 🕑 */
 .event-datetime-info {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 600;
   color: #374151;
   margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
-/* Imagen en vista completa dentro del evento */
+/* TÍTULO DE SECCIÓN */
+.section-title h2 {
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: #111;
+}
+
+/* TARJETAS DE EVENTO (LISTA) */
+.notice-card {
+  background: #ffffff;
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  border: 1px solid #f0f0f0;
+}
+
+.event-desc {
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+/* IMAGEN EN VISTA COMPLETA (SIN RECORTE) */
 .img-container-full {
   width: 100%;
   margin: 12px 0 16px 0;
   border-radius: 12px;
   overflow: hidden;
-  background-color: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background-color: #fafafa;
+  border: 1px solid #eaeaea;
 }
 
 .img-container-full img {
   width: 100%;
   height: auto;
   max-height: none;
-  object-fit: contain; /* Vista completa sin cortes */
+  object-fit: contain; /* Vista completa sin recortar */
   display: block;
 }
 
-/* --- ESTILOS PANTALLA HORARIO Y CALENDARIO DE INGLÉS --- */
+/* BOTONES DE LA TARJETA */
+.btn-action {
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 10px;
+}
 
-/* Adaptación de imagen/tabla al tamaño de la pantalla */
+.btn-add-cal {
+  width: 100%;
+  background-color: var(--primary-green);
+  color: #ffffff;
+  padding: 10px;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.card-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-edit {
+  flex: 1;
+  background-color: #f39c12;
+  color: #ffffff;
+  padding: 8px;
+  font-size: 0.95rem;
+}
+
+.btn-delete {
+  flex: 1;
+  background-color: #e74c3c;
+  color: #ffffff;
+  padding: 8px;
+  font-size: 0.95rem;
+}
+
+/* PANTALLA HORARIO Y ADAPTACIÓN DE IMÁGENES */
 .schedule-container {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
-.schedule-img, .english-cal-img {
+.english-cal-img {
   width: 100%;
   max-width: 100%;
   height: auto;
@@ -57,7 +190,7 @@
   border: 1px solid #e5e7eb;
 }
 
-/* Estilos de la tabla de horario con bloques de colores */
+/* TABLA DE HORARIO CON COLORES */
 .schedule-table {
   width: 100%;
   border-collapse: collapse;
@@ -75,16 +208,149 @@
 }
 
 .schedule-table th {
-  background-color: #229954;
+  background-color: var(--primary-green);
   color: #ffffff;
 }
 
-/* Clases de colores según asignatura/actividad */
 .subject-euskera { background-color: #dbeafe; color: #1e40af; }      /* Azul */
 .subject-matematika { background-color: #fef3c7; color: #92400e; }   /* Amarillo */
 .subject-ingelera { background-color: #fce7f3; color: #9d174d; }     /* Rosa */
 .subject-ingurune { background-color: #dcfce7; color: #166534; }     /* Verde */
 .subject-gaztelania { background-color: #ffedd5; color: #9a3412; }   /* Naranja */
 .subject-gorputz { background-color: #e0e7ff; color: #3730a3; }      /* Morado */
-.subject-jolastordua { background-color: #f3f4f6; color: #4b5563; font-style: italic; } /* Recreo */
-.subject-bazkalordua { background-color: #fee2e2; color: #991b1b; font-weight: bold; }   /* Comedor */
+.subject-jolastordua { background-color: #f3f4f6; color: #4b5563; font-style: italic; }
+.subject-bazkalordua { background-color: #fee2e2; color: #991b1b; font-weight: bold; }
+
+/* BARRA DE NAVEGACIÓN INFERIOR */
+nav.bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 500px;
+  margin: 0 auto;
+  height: 65px;
+  background: #ffffff;
+  display: flex;
+  border-top: 1px solid #eeeeee;
+  z-index: 1000;
+}
+
+nav.bottom button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #888888;
+  cursor: pointer;
+}
+
+nav.bottom button span {
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+nav.bottom button.active {
+  color: var(--primary-green);
+  font-weight: 700;
+}
+
+/* CALENDARIO INTERACTIVO */
+.calendar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.calendar-head button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--primary-green);
+  cursor: pointer;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.calendar-day-header {
+  font-size: 12px;
+  font-weight: bold;
+  color: #888;
+}
+
+.calendar-day {
+  padding: 10px 0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.calendar-day.today {
+  border: 2px solid var(--primary-green);
+  font-weight: bold;
+}
+
+.calendar-day.holiday {
+  background-color: #fee2e2 !important;
+  color: #dc2626 !important;
+  font-weight: bold;
+}
+
+/* FORMULARIO */
+.form {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 20px;
+}
+
+.form label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.form input, .form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 4px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.form .two {
+  display: flex;
+  gap: 10px;
+}
+
+.form .two label {
+  flex: 1;
+}
+
+button.primary {
+  width: 100%;
+  background: var(--primary-green);
+  color: #fff;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
