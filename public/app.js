@@ -18,7 +18,7 @@ if (!appPassword) {
   window.location.href = "/login.html";
 }
 
-// Navegación
+// Navegación de pestañas inferiores
 document.querySelectorAll('nav.bottom button').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('nav.bottom button').forEach(b => b.classList.remove('active'));
@@ -41,7 +41,7 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   document.getElementById('home').classList.add('active');
 });
 
-// Cargar datos
+// Cargar eventos desde servidor
 async function loadNotices() {
   try {
     const res = await fetch('/api/notices', {
@@ -61,21 +61,7 @@ function renderAll() {
   renderCalendar();
 }
 
-// Formatear fechas en formato legible (ej: 30 de septiembre · 16:00)
-function formatDateText(dateStr, timeStr) {
-  if (!dateStr) return '';
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return dateStr;
-  
-  const months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-  const day = parseInt(parts[2], 10);
-  const monthName = months[parseInt(parts[1], 10) - 1];
-  
-  let formatted = `${day} de ${monthName}`;
-  if (timeStr) formatted += ` · ${timeStr}`;
-  return formatted;
-}
-
+// Renderizar Eventos en la Pantalla 'Próximos'
 function renderHomeNotices() {
   const noticeList = document.getElementById('noticeList');
   const nextCard = document.getElementById('next');
@@ -92,37 +78,34 @@ function renderHomeNotices() {
     return;
   }
 
-  // Tarjeta de PRÓXIMO EVENTO (Con la tachuela roja)
+  // Tarjeta Destacada de Próximo Evento
   if (nextCard && upcoming[0]) {
     const nextEvent = upcoming[0];
     nextCard.innerHTML = `
       <div class="next-tag">📌 Próximo Evento</div>
-      <h3>${nextEvent.title}</h3>
-      <p class="next-date">${formatDateText(nextEvent.date, nextEvent.time)}</p>
+      <h3 class="event-title-red">${nextEvent.title}</h3>
+      <p class="event-datetime-info">
+        📅 ${nextEvent.date || ''} ${nextEvent.time ? '🕑 ' + nextEvent.time : ''}
+      </p>
+      ${nextEvent.imageUrl ? `<div class="img-container-full"><img src="${nextEvent.imageUrl}" alt="Imagen de ${nextEvent.title}"></div>` : ''}
     `;
   }
 
-  // Lista de eventos (con el icono del calendario a la izquierda)
+  // Lista General de Próximos Eventos
   upcoming.forEach(notice => {
     const card = document.createElement('div');
     card.className = 'notice-card';
     
     card.innerHTML = `
-      <div class="card-header">
-        <div class="cal-icon-box">
-          <span class="cal-icon-top"></span>
-          <span class="cal-icon-num">17</span>
-        </div>
-        <div class="card-header-info">
-          <h3>${notice.title}</h3>
-          <p class="event-date">${formatDateText(notice.date, notice.time)}</p>
-        </div>
-      </div>
+      <h3 class="event-title-red">${notice.title}</h3>
+      <p class="event-datetime-info">
+        📅 ${notice.date || ''} ${notice.time ? '🕑 ' + notice.time : ''}
+      </p>
       
       ${notice.description ? `<p class="event-desc">${notice.description}</p>` : ''}
-      ${notice.imageUrl ? `<div class="img-container"><img src="${notice.imageUrl}" alt="Adjunto"></div>` : ''}
+      ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen de ${notice.title}"></div>` : ''}
       
-      <button class="btn-action btn-add-cal">📅 17 Añadir al calendario</button>
+      <button class="btn-action btn-add-cal">📅 Añadir al calendario</button>
       
       <div class="card-actions-row">
         <button class="btn-action btn-edit" onclick="editNotice('${notice.id}')">✏️ Editar</button>
@@ -133,7 +116,7 @@ function renderHomeNotices() {
   });
 }
 
-// Funciones para Editar y Borrar
+// Borrar Evento
 window.deleteNotice = async function(id) {
   const adminPass = prompt("Introduce la contraseña de administrador para borrar:");
   if (!adminPass) return;
@@ -152,7 +135,7 @@ window.deleteNotice = async function(id) {
       alert("Contraseña de administrador incorrecta");
     }
   } catch (err) {
-    alert("Error al eliminar evento");
+    alert("Error al eliminar el evento");
   }
 };
 
@@ -271,7 +254,7 @@ document.getElementById('publish')?.addEventListener('click', async () => {
       document.getElementById('home').classList.add('active');
       loadNotices();
     } else {
-      alert("Contraseña incorrecta");
+      alert("Contraseña de administrador incorrecta");
     }
   } catch (err) {
     alert("Error de conexión");
