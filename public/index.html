@@ -3,151 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Avisos Cole - LH3A</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Agenda Escolar</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+  <!-- CABECERA -->
+  <header>
+    <h1>Agenda Escolar</h1>
+    <button id="adminBtn" class="icon-btn" title="Administración">⚙️</button>
+  </header>
+
   <main>
-    <!-- PANTALLA: PRÓXIMOS EVENTOS -->
+    <!-- PANTALLA: INICIO / EVENTOS PRÓXIMOS -->
     <section id="home" class="screen active">
-      <button id="adminBtn" class="admin-link">⚙ Publicar evento</button>
-
-      <!-- Tarjeta Destacada Próximo Evento -->
       <div id="next" class="next-card"></div>
-
+      
       <div class="section-title">
         <h2>Próximos eventos</h2>
       </div>
-
-      <!-- Lista de Próximos Eventos -->
-      <div id="noticeList"></div>
+      
+      <div id="noticeList" class="notice-list"></div>
     </section>
 
-    <!-- PANTALLA: PASADOS -->
+    <!-- PANTALLA: EVENTOS PASADOS -->
     <section id="past" class="screen">
       <div class="section-title">
         <h2>Eventos pasados</h2>
       </div>
-      <div id="pastNoticeList"></div>
-    </section>
-
-    <!-- PANTALLA: HORARIO -->
-    <section id="schedule" class="screen">
-      <div class="section-title">
-        <h2>Horario Escolar / Calendario</h2>
-      </div>
-      <div class="schedule-container">
-        <!-- Ejemplo de visualización de imagen del horario adaptada al ancho de pantalla -->
-        <img id="scheduleImg" src="horario.jpg" alt="Horario Escolar" class="english-cal-img" onerror="this.style.display='none'; document.getElementById('scheduleTableFallback').style.display='table';">
-        
-        <!-- Tabla de contingencia/ejemplo con estilos por asignatura -->
-        <table id="scheduleTableFallback" class="schedule-table" style="display:none;">
-          <thead>
-            <tr>
-              <th>Hora</th>
-              <th>Lunes</th>
-              <th>Martes</th>
-              <th>Miércoles</th>
-              <th>Jueves</th>
-              <th>Viernes</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>09:00 - 10:00</td>
-              <td class="subject-euskera">Euskera</td>
-              <td class="subject-matematika">Matematika</td>
-              <td class="subject-ingelera">Ingelesa</td>
-              <td class="subject-euskera">Euskera</td>
-              <td class="subject-matematika">Matematika</td>
-            </tr>
-            <tr>
-              <td>10:00 - 11:00</td>
-              <td class="subject-ingurune">Ingurune</td>
-              <td class="subject-gaztelania">Gaztelania</td>
-              <td class="subject-euskera">Euskera</td>
-              <td class="subject-ingurune">Ingurune</td>
-              <td class="subject-gorputz">Gorputz H.</td>
-            </tr>
-            <tr>
-              <td>11:00 - 11:30</td>
-              <td colspan="5" class="subject-jolastordua">Jolastordua (Recreo)</td>
-            </tr>
-            <tr>
-              <td>11:30 - 12:30</td>
-              <td class="subject-matematika">Matematika</td>
-              <td class="subject-ingelera">Ingelesa</td>
-              <td class="subject-gaztelania">Gaztelania</td>
-              <td class="subject-matematika">Matematika</td>
-              <td class="subject-euskera">Euskera</td>
-            </tr>
-            <tr>
-              <td>12:30 - 14:30</td>
-              <td colspan="5" class="subject-bazkalordua">Bazkalordua (Comedor / Salida)</td>
-            </tr>
-            <tr>
-              <td>14:30 - 16:00</td>
-              <td class="subject-gaztelania">Gaztelania</td>
-              <td class="subject-ingurune">Ingurune</td>
-              <td class="subject-jolastordua">-</td>
-              <td class="subject-gorputz">Gorputz H.</td>
-              <td class="subject-ingelera">Ingelesa</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      
+      <div id="pastNoticeList" class="notice-list"></div>
     </section>
 
     <!-- PANTALLA: CALENDARIO -->
     <section id="calendar" class="screen">
-      <div class="calendar-head">
-        <button id="prevMonth">&lt;</button>
-        <span id="monthLabel"></span>
-        <button id="nextMonth">&gt;</button>
+      <div class="section-title">
+        <h2>Calendario escolar</h2>
       </div>
+      
+      <div class="calendar-head">
+        <button id="prevMonth">❮</button>
+        <span id="monthLabel"></span>
+        <button id="nextMonth">❯</button>
+      </div>
+      
       <div id="calendarGrid" class="calendar-grid"></div>
+
+      <!-- LISTA DE EVENTOS DEL MES SELECCIONADO -->
+      <div class="section-title" style="margin-top: 24px;">
+        <h2>Eventos de este mes</h2>
+      </div>
+      <div id="monthEventsList" class="notice-list"></div>
     </section>
 
-    <!-- PANTALLA: PUBLICAR EVENTO (ADMIN) -->
+    <!-- PANTALLA: ADMINISTRACIÓN / CREAR EVENTO -->
     <section id="admin" class="screen">
-      <button id="backBtn" class="btn-action" style="background:#6b7280; color:#fff; padding:8px 16px; margin-bottom:12px;">← Volver</button>
-      <div class="form">
-        <h3>Publicar nuevo evento</h3>
-        <label>
-          Título del evento *
-          <input type="text" id="title" placeholder="Ej: Excursión Gorbea" required>
-        </label>
-        <label>
-          Descripción
-          <textarea id="description" placeholder="Añade detalles sobre la reunión o salida..."></textarea>
-        </label>
-        <div class="two">
-          <label>
-            Fecha
-            <input type="date" id="date">
-          </label>
-          <label>
-            Hora
-            <input type="time" id="time">
-          </label>
-        </div>
-        <label>
-          Imagen o documento adjunto
-          <input type="file" id="imageFile" accept="image/*">
-        </label>
-        <button id="publish" class="primary">Publicar Evento</button>
-        <p id="adminMsg" style="color:red; margin-top:10px; font-weight:bold;"></p>
+      <div class="admin-header">
+        <button id="backBtn" class="btn-action">← Volver</button>
+        <h2>Publicar nuevo evento</h2>
       </div>
+
+      <div class="form-group">
+        <label for="title">Título del evento *</label>
+        <input type="text" id="title" placeholder="Ej. Excursión al museo" required>
+      </div>
+
+      <div class="form-group">
+        <label for="date">Fecha</label>
+        <input type="date" id="date">
+      </div>
+
+      <div class="form-group">
+        <label for="time">Hora</label>
+        <input type="time" id="time">
+      </div>
+
+      <div class="form-group">
+        <label for="description">Descripción</label>
+        <textarea id="description" rows="4" placeholder="Detalles del evento..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="imageFile">Imagen (Opcional)</label>
+        <input type="file" id="imageFile" accept="image/*">
+      </div>
+
+      <button id="publish" class="btn-action btn-publish">Publicar Evento</button>
+      <p id="adminMsg" class="admin-msg"></p>
     </section>
   </main>
 
   <!-- NAVEGACIÓN INFERIOR -->
   <nav class="bottom">
-    <button data-screen="home" class="active">⌂<span>Próximos</span></button>
-    <button data-screen="past">⌛<span>Pasados</span></button>
-    <button data-screen="schedule">🕒<span>Horario</span></button>
-    <button data-screen="calendar">▦<span>Calendario</span></button>
+    <button data-screen="home" class="active">
+      <span class="nav-icon">📌</span>
+      <span class="nav-label">Próximos</span>
+    </button>
+    <button data-screen="past">
+      <span class="nav-icon">📜</span>
+      <span class="nav-label">Pasados</span>
+    </button>
+    <button data-screen="calendar">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">Calendario</span>
+    </button>
   </nav>
 
   <script src="app.js"></script>
