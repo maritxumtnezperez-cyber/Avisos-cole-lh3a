@@ -121,34 +121,20 @@ main {
 .subject-efi { background-color: #6366f1; color: #ffffff; }
 .subject-kzp { background-color: #881337; color: #ffffff; }
 
-/* CALENDARIO ANUAL Y LEYENDA */
+/* CALENDARIO ANUAL (IMAGEN) */
 .annual-calendar-card {
   background: #ffffff;
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.calendar-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+.img-responsive-calendar {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
 }
-
-.legend-item {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #ffffff;
-}
-
-.leg-start { background-color: #eab308; color: #000; }
-.leg-navidad { background-color: #a855f7; }
-.leg-carnaval { background-color: #06b6d4; }
-.leg-santa { background-color: #8b5cf6; }
-.leg-festivo { background-color: #ef4444; }
 
 .school-info-box {
   background: #f9fafb;
