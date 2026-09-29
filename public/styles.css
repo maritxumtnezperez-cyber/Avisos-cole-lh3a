@@ -1,14 +1,11 @@
-/* ESTILOS GENERALES DE LA APP */
 :root {
-  --primary-color: #39aa6a;
-  --primary-dark: #209b59;
-  --bg-color: #f4f6f5;
+  --primary: #39aa6a;
+  --primary-dark: #2d8a54;
+  --bg-color: #f4f6f8;
   --card-bg: #ffffff;
-  --text-color: #1a2f23;
-  --text-muted: #59645e;
-  --border-radius: 16px;
-  --danger-color: #dc2626;
-  --danger-bg: #fee2e2;
+  --text-main: #222222;
+  --text-muted: #666666;
+  --border-color: #e0e0e0;
 }
 
 * {
@@ -20,45 +17,102 @@
 
 body {
   background-color: var(--bg-color);
-  color: var(--text-color);
+  color: var(--text-main);
+  padding-top: 60px;
   padding-bottom: 70px;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-/* CABECERA */
+/* HEADER TOP */
 header.top {
-  background: var(--card-bg);
-  padding: 12px 16px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  height: 60px;
+  background-color: var(--primary);
+  color: #ffffff;
   display: flex;
   align-items: center;
-  gap: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  padding: 0 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }
 
 header.top .logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
   object-fit: cover;
+  background-color: #fff;
 }
 
 header.top h1 {
-  font-size: 18px;
+  font-size: 1.1rem;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 header.top p {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  opacity: 0.9;
 }
 
-/* NAVEGACIÓN Y SECCIONES */
-main {
-  padding: 16px;
+header.top .icon {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* NAVEGACIÓN INFERIOR */
+nav.bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   max-width: 600px;
   margin: 0 auto;
+  height: 60px;
+  background-color: #ffffff;
+  display: flex;
+  border-top: 1px solid var(--border-color);
+  z-index: 1000;
+}
+
+nav.bottom button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+nav.bottom button span {
+  font-size: 0.7rem;
+  margin-top: 2px;
+}
+
+nav.bottom button.active {
+  color: var(--primary);
+  font-weight: bold;
+}
+
+/* PANTALLAS Y CONTENIDO */
+main {
+  padding: 16px;
 }
 
 .screen {
@@ -69,158 +123,363 @@ main {
   display: block;
 }
 
+/* TARJETAS DE AVISOS */
+.admin-link {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.next-card {
+  background: linear-gradient(135deg, #39aa6a, #2d8a54);
+  color: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.next-card .tag {
+  font-size: 0.7rem;
+  font-weight: bold;
+  background: rgba(255, 255, 255, 0.2);
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.next-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+}
+
+.next-card small {
+  display: block;
+  margin-top: 10px;
+  opacity: 0.9;
+}
+
 .section-title {
-  margin: 20px 0 12px 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  margin-bottom: 12px;
 }
 
 .section-title h2 {
-  font-size: 18px;
-  color: var(--text-color);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
 }
 
-/* CALENDARIO Y DÍAS FESTIVOS */
+.notice-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+}
+
+.notice-card.past {
+  opacity: 0.75;
+  background-color: #fafafa;
+}
+
+.notice-card h3 {
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.notice-card p {
+  font-size: 0.9rem;
+  color: #444;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.notice-card small {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.notice-card img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.empty-msg {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 20px 0;
+}
+
+/* HORARIO DE CLASES */
+.schedule-container {
+  overflow-x: auto;
+  background: var(--card-bg);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.schedule-table th, 
+.schedule-table td {
+  padding: 8px 4px;
+  border: 1px solid var(--border-color);
+}
+
+.schedule-table th {
+  background-color: #f0f4f2;
+  font-weight: bold;
+}
+
+.schedule-table .time-col {
+  font-weight: bold;
+  background-color: #fafafa;
+  white-space: nowrap;
+}
+
+.schedule-table .break-row {
+  background-color: #eef2f5;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* Colores por Asignatura */
+.sub-mate { background-color: #e3f2fd; color: #0d47a1; font-weight: 600; }
+.sub-euskera { background-color: #e8f5e9; color: #1b5e20; font-weight: 600; }
+.sub-ingurune { background-color: #fff3e0; color: #e65100; font-weight: 600; }
+.sub-gazte { background-color: #f3e5f5; color: #4a148c; font-weight: 600; }
+.sub-ingelesa { background-color: #ffebee; color: #b71c1c; font-weight: 600; }
+.sub-ef { background-color: #e0f2f1; color: #004d40; font-weight: 600; }
+.sub-musika { background-color: #fffde7; color: #f57f17; font-weight: 600; }
+.sub-plastika { background-color: #fce4ec; color: #880e4f; font-weight: 600; }
+.sub-tutoretza { background-color: #efebe9; color: #3e2723; font-weight: 600; }
+.sub-kzp { background-color: #e0f7fa; color: #006064; font-weight: 600; }
+
+/* CALENDARIO DE INGLÉS (TARJETA) */
+.english-calendar-card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  font-size: 0.75rem;
+  margin-bottom: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.leg-start { background-color: #22c55e; }
+.leg-festivo { background-color: #ef4444; }
+.leg-navidad { background-color: #3b82f6; }
+.leg-carnaval { background-color: #a855f7; }
+.leg-santa { background-color: #f97316; }
+.leg-v-lx { background-color: #10b981; }
+.leg-v-mj { background-color: #ec4899; }
+
+.eng-info-box {
+  background-color: #f8fafc;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--primary);
+}
+
+.english-calendar-img-wrapper {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.eng-cal-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* CALENDARIO INTERACTIVO */
 .calendar-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--card-bg);
-  padding: 12px 16px;
-  border-radius: var(--border-radius);
   margin-bottom: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  background: var(--card-bg);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
 }
 
 .calendar-head button {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 20px;
-  font-weight: bold;
-  color: var(--primary-color);
+  font-size: 1.4rem;
   cursor: pointer;
-  padding: 4px 12px;
+  color: var(--primary);
+  padding: 0 8px;
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: 4px;
   background: var(--card-bg);
-  padding: 12px;
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-  text-align: center;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
 }
 
 .calendar-day-header {
-  font-size: 12px;
-  font-weight: 600;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  padding-bottom: 6px;
+  padding: 4px 0;
 }
 
 .calendar-day {
-  padding: 10px 0;
-  border-radius: 10px;
-  font-size: 14px;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  border-radius: 6px;
   cursor: pointer;
   position: relative;
-  background: #f9fbf9;
+  background-color: #fdfdfd;
+  border: 1px solid #f0f0f0;
+}
+
+.calendar-day.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
 }
 
 .calendar-day.today {
-  border: 2px solid var(--primary-color);
+  border: 2px solid var(--primary);
+  font-weight: bold;
+}
+
+.calendar-day.has-event {
+  background-color: #e8f5e9;
+  color: var(--primary-dark);
   font-weight: bold;
 }
 
 .calendar-day.has-event::after {
   content: '';
   position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  background: var(--primary-color);
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  background-color: var(--primary);
   border-radius: 50%;
 }
 
-/* MARCADO DE DÍAS FESTIVOS Y VACACIONES EN ROJO */
-.calendar-day.holiday {
-  background-color: var(--danger-bg) !important;
-  color: var(--danger-color) !important;
-  font-weight: bold;
-}
-
-.calendar-day.holiday.has-event::after {
-  background: var(--danger-color);
-}
-
-.calendar-day.empty {
-  background: transparent;
-  cursor: default;
-}
-
-/* LEYENDA DEL CALENDARIO */
-.calendar-legend {
-  display: flex;
-  gap: 16px;
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--text-muted);
-  justify-content: center;
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 4px;
-}
-
-.legend-dot.red {
-  background-color: var(--danger-color);
-}
-
-.legend-dot.green {
-  background-color: var(--primary-color);
-}
-
-/* BARRA DE NAVEGACIÓN INFERIOR */
-nav.bottom {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
+/* FORMULARIO ADMIN */
+.form {
   background: var(--card-bg);
-  display: flex;
-  border-top: 1px solid #e5e7eb;
-  z-index: 100;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
 }
 
-nav.bottom button {
-  flex: 1;
-  border: none;
-  background: none;
+.form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.form input, 
+.form textarea {
+  width: 100%;
+  padding: 8px 12px;
+  margin-top: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.form textarea {
+  height: 80px;
+  resize: vertical;
+}
+
+.form .two {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 18px;
+  gap: 12px;
+}
+
+.form .two label {
+  flex: 1;
+}
+
+button.primary {
+  width: 100%;
+  background-color: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+button.primary:hover {
+  background-color: var(--primary-dark);
+}
+
+#backBtn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  margin-right: 8px;
   cursor: pointer;
 }
 
-nav.bottom button span {
-  font-size: 11px;
-  margin-top: 2px;
-}
-
-nav.bottom button.active {
-  color: var(--primary-color);
-  font-weight: bold;
+.msg {
+  font-size: 0.85rem;
+  margin-top: 8px;
+  text-align: center;
 }
