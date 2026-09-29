@@ -78,9 +78,9 @@ function renderHomeNotices() {
     return;
   }
 
-  // Tarjeta Destacada "Próximo Evento"
-  if (nextCard && upcoming[0]) {
-    const nextEvent = upcoming[0];
+  // Tarjeta Destacada "Próximo Evento" (Primer evento de la lista)
+  const nextEvent = upcoming[0];
+  if (nextCard) {
     nextCard.innerHTML = `
       <div class="next-tag">📌 Próximo Evento</div>
       <h3 class="event-title-red">${nextEvent.title}</h3>
@@ -92,8 +92,10 @@ function renderHomeNotices() {
     `;
   }
 
-  // Lista General de Próximos Eventos
-  upcoming.forEach(notice => {
+  // Resto de eventos o lista general (omitimos el primero si ya está destacado en nextCard)
+  const listEvents = nextCard ? upcoming.slice(1) : upcoming;
+
+  listEvents.forEach(notice => {
     const card = document.createElement('div');
     card.className = 'notice-card';
     
@@ -212,55 +214,63 @@ document.getElementById('nextMonth')?.addEventListener('click', () => {
   renderCalendar();
 });
 
-// Publicar Evento
-document.getElementById('publish')?.addEventListener('click', async () => {
-  const adminPass = prompt("Introduce la contraseña de administrador:");
-  if (!adminPass) return;
+// Publicar Evento (Control de doble envío)
+const publishBtn = document.getElementById('publish');
+if (publishBtn) {
+  publishBtn.onclick = async () => {
+    const title = document.getElementById('title').value;
+    const description = document.getElementById('description').value;
+    const date = document.getElementById('date').value;
+    const time = document.getElementById('time').value;
+    const imageInput = document.getElementById('imageFile');
+    const msgEl = document.getElementById('adminMsg');
 
-  const title = document.getElementById('title').value;
-  const description = document.getElementById('description').value;
-  const date = document.getElementById('date').value;
-  const time = document.getElementById('time').value;
-  const imageInput = document.getElementById('imageFile');
-  const msgEl = document.getElementById('adminMsg');
-
-  if (!title) {
-    if (msgEl) msgEl.textContent = "El título es obligatorio.";
-    return;
-  }
-
-  let imageUrl = null;
-  if (imageInput && imageInput.files[0]) {
-    const reader = new FileReader();
-    imageUrl = await new Promise((resolve) => {
-      reader.onload = e => resolve(e.target.result);
-      reader.readAsDataURL(imageInput.files[0]);
-    });
-  }
-
-  try {
-    const res = await fetch('/api/notices', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-app-password': appPassword,
-        'x-admin-password': adminPass
-      },
-      body: JSON.stringify({ title, description, date, time, imageUrl })
-    });
-
-    if (res.ok) {
-      document.getElementById('title').value = '';
-      document.getElementById('description').value = '';
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById('home').classList.add('active');
-      loadNotices();
-    } else {
-      alert("Contraseña de administrador incorrecta");
+    if (!title) {
+      if (msgEl) msgEl.textContent = "El título es obligatorio.";
+      return;
     }
-  } catch (err) {
-    alert("Error de conexión");
-  }
-});
+
+    const adminPass = prompt("Introduce la contraseña de administrador:");
+    if (!adminPass) return;
+
+    publishBtn.disabled = true;
+
+    let imageUrl = null;
+    if (imageInput && imageInput.files[0]) {
+      const reader = new FileReader();
+      imageUrl = await new Promise((resolve) => {
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(imageInput.files[0]);
+      });
+    }
+
+    try {
+      const res = await fetch('/api/notices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-app-password': appPassword,
+          'x-admin-password': adminPass
+        },
+        body: JSON.stringify({ title, description, date, time, imageUrl })
+      });
+
+      if (res.ok) {
+        document.getElementById('title').value = '';
+        document.getElementById('description').value = '';
+        if (imageInput) imageInput.value = '';
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('home').classList.add('active');
+        await loadNotices();
+      } else {
+        alert("Contraseña de administrador incorrecta");
+      }
+    } catch (err) {
+      alert("Error de conexión");
+    } finally {
+      publishBtn.disabled = false;
+    }
+  };
+}
 
 loadNotices();
