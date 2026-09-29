@@ -129,6 +129,7 @@ function renderHomeNotices() {
         <span>📅 ${nextEvent.date || ''}</span>
         ${nextEvent.time ? `<span>🕑 ${nextEvent.time}</span>` : ''}
       </p>
+      ${nextEvent.description ? `<p class="event-desc">${nextEvent.description}</p>` : ''}
       ${nextEvent.imageUrl ? `<div class="img-container-full"><img src="${nextEvent.imageUrl}" alt="Imagen del evento"></div>` : ''}
       
       <a href="${googleCalUrl}" target="_blank" rel="noopener noreferrer" class="btn-action btn-add-cal" style="display: block; text-align: center; text-decoration: none; box-sizing: border-box; margin-top: 10px;">
@@ -164,7 +165,7 @@ function renderHomeNotices() {
       </a>
       
       <div class="card-actions-row">
-        <button class="btn-action btn-edit" onclick="editNotice('${notice.id}')">✏️ Editar</button>
+        <button class="btn-action btn-edit" onclick="editNotice('${notice.id}')">✏️️ Editar</button>
         <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">🗑️ Borrar</button>
       </div>
     `;
@@ -214,34 +215,7 @@ function renderPastNotices() {
   });
 }
 
-// Borrar Evento
-window.deleteNotice = async function(id) {
-  const adminPass = prompt("Introduce la contraseña de administrador para borrar:");
-  if (!adminPass) return;
-
-  try {
-    const res = await fetch(`/api/notices/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'x-app-password': appPassword,
-        'x-admin-password': adminPass
-      }
-    });
-    if (res.ok) {
-      loadNotices();
-    } else {
-      alert("Contraseña de administrador incorrecta");
-    }
-  } catch (err) {
-    alert("Error al eliminar el evento");
-  }
-};
-
-window.editNotice = function(id) {
-  alert("Para editar, modifica los datos y vuelve a publicar o elimina y vuelve a crearlo.");
-};
-
-// Renderizar Calendario
+// Renderizar Calendario y Eventos del Mes
 function renderCalendar() {
   const grid = document.getElementById('calendarGrid');
   const monthLabel = document.getElementById('monthLabel');
@@ -294,6 +268,55 @@ function renderCalendar() {
 
     grid.appendChild(dayEl);
   }
+
+  // Carga los eventos del mes en curso en la lista inferior
+  renderMonthEvents();
+}
+
+// Mostrar lista de eventos del mes activo en el calendario
+function renderMonthEvents() {
+  const container = document.getElementById('monthEventsList');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  const monthEvents = notices.filter(n => {
+    if (!n.date) return false;
+    const [y, m] = n.date.split('-').map(Number);
+    return y === currentYear && (m - 1) === currentMonth;
+  }).sort((a, b) => new Date(`${a.date}T${a.time || '00:00'}`) - new Date(`${b.date}T${b.time || '00:00'}`));
+
+  if (monthEvents.length === 0) {
+    container.innerHTML = '<p class="empty-msg">No hay eventos programados para este mes.</p>';
+    return;
+  }
+
+  monthEvents.forEach(notice => {
+    const card = document.createElement('div');
+    card.className = 'notice-card';
+    const googleCalUrl = generateGoogleCalendarUrl(notice);
+
+    card.innerHTML = `
+      <h3 class="event-title-red">${notice.title}</h3>
+      <p class="event-datetime-info">
+        <span>📅 ${notice.date || ''}</span>
+        ${notice.time ? `<span>🕑 ${notice.time}</span>` : ''}
+      </p>
+      
+      ${notice.description ? `<p class="event-desc">${notice.description}</p>` : ''}
+      ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen del evento"></div>` : ''}
+      
+      <a href="${googleCalUrl}" target="_blank" rel="noopener noreferrer" class="btn-action btn-add-cal" style="display: block; text-align: center; text-decoration: none; box-sizing: border-box;">
+        📅 Añadir a Google Calendar
+      </a>
+      
+      <div class="card-actions-row">
+        <button class="btn-action btn-edit" onclick="editNotice('${notice.id}')">✏️ Editar</button>
+        <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">🗑️ Borrar</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
 }
 
 document.getElementById('prevMonth')?.addEventListener('click', () => {
@@ -307,6 +330,33 @@ document.getElementById('nextMonth')?.addEventListener('click', () => {
   if (currentMonth > 11) { currentMonth = 0; currentYear++; }
   renderCalendar();
 });
+
+// Borrar Evento
+window.deleteNotice = async function(id) {
+  const adminPass = prompt("Introduce la contraseña de administrador para borrar:");
+  if (!adminPass) return;
+
+  try {
+    const res = await fetch(`/api/notices/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'x-app-password': appPassword,
+        'x-admin-password': adminPass
+      }
+    });
+    if (res.ok) {
+      loadNotices();
+    } else {
+      alert("Contraseña de administrador incorrecta");
+    }
+  } catch (err) {
+    alert("Error al eliminar el evento");
+  }
+};
+
+window.editNotice = function(id) {
+  alert("Para editar, modifica los datos y vuelve a publicar o elimina y vuelve a crearlo.");
+};
 
 // Publicar Evento
 const publishBtn = document.getElementById('publish');
@@ -367,4 +417,5 @@ if (publishBtn) {
   };
 }
 
+// Carga inicial
 loadNotices();
