@@ -10,12 +10,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configuración de contraseñas
-const APP_PASSWORD = process.env.APP_PASSWORD || "78875879";      // Contraseña para acceder a la app
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";  // Contraseña para publicar/editar/borrar
+const APP_PASSWORD = process.env.APP_PASSWORD || "78875879";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";
 
 app.use(express.json({ limit: '10mb' }));
 
-// Servir archivos estáticos de la carpeta public
+// Servir archivos estáticos desde la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Middleware para verificar la contraseña de la App en la API
@@ -69,7 +69,7 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// Rutas de la API protegidas con contraseña de la App
+// Rutas de la API protegidas
 app.get('/api/notices', checkAppPassword, (req, res) => {
   res.json(getNotices());
 });
