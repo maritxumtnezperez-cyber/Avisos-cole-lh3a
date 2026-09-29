@@ -1,3 +1,9 @@
+// Redirección inmediata a login si no hay contraseña almacenada
+const globalPassword = sessionStorage.getItem('appPassword');
+if (!globalPassword && window.location.pathname !== '/login.html') {
+  window.location.href = '/login.html';
+}
+
 let notices = [];
 let month = new Date().getMonth(), year = new Date().getFullYear();
 let editingNoticeId = null;
@@ -18,12 +24,10 @@ function fmtDate(d) {
   return d;
 }
 
-// Verifica si la sesión actual tiene la contraseña guardada
 function isAdminLoggedIn() {
   return !!sessionStorage.getItem("adminPassword");
 }
 
-// Genera los botones de Admin SOLO si ha iniciado sesión
 function renderAdminControls(n) {
   if (!isAdminLoggedIn()) return "";
   return `
@@ -41,10 +45,8 @@ function renderImage(imageUrl) {
 
 function isPastEvent(n) {
   if (!n.date) return false;
-
   const timeStr = n.time || "23:59";
   const parts = n.date.split("-");
-  
   if (parts.length !== 3) return false;
 
   let yearNum = Number(parts[0]);
@@ -58,9 +60,7 @@ function isPastEvent(n) {
 
   const [hours, minutes] = timeStr.split(":").map(Number);
   const eventDate = new Date(yearNum, monthNum - 1, dayNum, hours || 23, minutes || 59, 0);
-  const now = new Date();
-
-  return eventDate < now;
+  return eventDate < new Date();
 }
 
 window.downloadICS = function(id) {
@@ -79,19 +79,14 @@ window.downloadICS = function(id) {
   const startDate = new Date(yearNum, monthNum - 1, dayNum, hoursNum, minutesNum, 0);
   const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
-  const formatGoogleDate = (date) => {
-    return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-  };
+  const formatGoogleDate = (date) => date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 
   const title = encodeURIComponent(n.title || "Evento");
   const details = encodeURIComponent((n.description || "") + "\n\n📌 Recordatorio: Mañana es el evento.");
   const dates = `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`;
 
-  const isAndroid = /Android/i.test(navigator.userAgent);
-
-  if (isAndroid) {
-    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&add=1`;
-    window.open(googleUrl, "_blank");
+  if (/Android/i.test(navigator.userAgent)) {
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&add=1`, "_blank");
     return;
   }
 
@@ -217,12 +212,15 @@ function renderCalendar() {
 
 async function load() {
   try {
-    const r = await fetch("/api/notices");
-    if (r.ok) {
-      notices = await r.json();
-    } else {
-      notices = [];
+    const r = await fetch("/api/notices", {
+      headers: { "x-app-password": sessionStorage.getItem("appPassword") || "" }
+    });
+    if (r.status === 401) {
+      sessionStorage.removeItem("appPassword");
+      window.location.href = "/login.html";
+      return;
     }
+    notices = r.ok ? await r.json() : [];
   } catch (err) {
     console.error("Error al cargar eventos:", err);
     notices = [];
@@ -253,10 +251,8 @@ function resetAdminForm() {
   if ($("#adminMsg")) $("#adminMsg").textContent = "";
 }
 
-// Acción de editar: carga datos en el formulario
 window.editNotice = function (id) {
   if (!isAdminLoggedIn()) return;
-
   const n = notices.find(x => x.id === id);
   if (!n) return;
 
@@ -274,19 +270,22 @@ window.editNotice = function (id) {
   }, 50);
 };
 
-// Acción de borrar con validación de contraseña
 window.deleteNotice = async function (id) {
   if (!isAdminLoggedIn()) return;
-
   if (!confirm("¿Seguro que quieres borrar este evento?")) return;
+  
   const r = await fetch(`/api/notices/${id}`, {
     method: "DELETE",
-    headers: { "x-admin-password": sessionStorage.getItem("adminPassword") || "" }
+    headers: { 
+      "x-admin-password": sessionStorage.getItem("adminPassword") || "",
+      "x-app-password": sessionStorage.getItem("appPassword") || ""
+    }
   });
+
   if (r.ok) { 
     await load(); 
   } else { 
-    alert("No se pudo borrar. Revisa la contraseña de administración."); 
+    alert("No se pudo borrar. Revisa la contraseña."); 
     sessionStorage.removeItem("adminPassword");
     render();
   }
@@ -302,7 +301,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (p !== null && p.trim() !== "") {
         sessionStorage.setItem("adminPassword", p);
         show("admin");
-        render(); // Renderiza de nuevo para mostrar botones de edición/borrado al entrar como admin
+        render();
       }
     };
   }
@@ -368,7 +367,8 @@ document.addEventListener("DOMContentLoaded", () => {
           method: method,
           headers: {
             "Content-Type": "application/json",
-            "x-admin-password": pass
+            "x-admin-password": pass,
+            "x-app-password": sessionStorage.getItem("appPassword") || ""
           },
           body: JSON.stringify(payload)
         });
