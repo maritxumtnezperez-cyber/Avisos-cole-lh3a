@@ -41,6 +41,17 @@ document.getElementById('backBtn')?.addEventListener('click', () => {
   document.getElementById('home').classList.add('active');
 });
 
+// Comprobar si un evento ya ha pasado (fecha y hora exacta)
+function isEventPast(notice) {
+  if (!notice.date) return false;
+  
+  const now = new Date();
+  const timeStr = notice.time ? notice.time : '23:59';
+  const eventDateTime = new Date(`${notice.date}T${timeStr}:00`);
+  
+  return eventDateTime < now;
+}
+
 // Cargar eventos desde el servidor
 async function loadNotices() {
   try {
@@ -58,10 +69,11 @@ async function loadNotices() {
 
 function renderAll() {
   renderHomeNotices();
+  renderPastNotices();
   renderCalendar();
 }
 
-// Renderizar Eventos en la Pantalla 'Próximos'
+// Renderizar Eventos Futuros / Próximos
 function renderHomeNotices() {
   const noticeList = document.getElementById('noticeList');
   const nextCard = document.getElementById('next');
@@ -70,15 +82,17 @@ function renderHomeNotices() {
   noticeList.innerHTML = '';
   if (nextCard) nextCard.innerHTML = '';
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const upcoming = notices.filter(n => !n.date || n.date >= todayStr);
+  // Filtrar eventos que AÚN NO han pasado y ordenarlos cronológicamente
+  const upcoming = notices
+    .filter(n => !isEventPast(n))
+    .sort((a, b) => new Date(`${a.date || '9999-12-31'}T${a.time || '00:00'}`) - new Date(`${b.date || '9999-12-31'}T${b.time || '00:00'}`));
 
   if (upcoming.length === 0) {
     noticeList.innerHTML = '<p class="empty-msg">No hay próximos eventos programados.</p>';
     return;
   }
 
-  // Tarjeta Destacada "Próximo Evento" (Primer evento de la lista)
+  // Tarjeta Destacada "Próximo Evento"
   const nextEvent = upcoming[0];
   if (nextCard) {
     nextCard.innerHTML = `
@@ -92,7 +106,7 @@ function renderHomeNotices() {
     `;
   }
 
-  // Resto de eventos o lista general (omitimos el primero si ya está destacado en nextCard)
+  // Lista general de los siguientes eventos futuros
   const listEvents = nextCard ? upcoming.slice(1) : upcoming;
 
   listEvents.forEach(notice => {
@@ -117,6 +131,45 @@ function renderHomeNotices() {
       </div>
     `;
     noticeList.appendChild(card);
+  });
+}
+
+// Renderizar Eventos Pasados (Pestaña "Pasados")
+function renderPastNotices() {
+  const pastList = document.getElementById('pastNoticeList') || document.getElementById('pastNotices');
+  if (!pastList) return;
+
+  pastList.innerHTML = '';
+
+  // Filtrar eventos que YA HAN PASADO y ordenarlos de más reciente a más antiguo
+  const pastEvents = notices
+    .filter(n => isEventPast(n))
+    .sort((a, b) => new Date(`${b.date}T${b.time || '23:59'}`) - new Date(`${a.date}T${a.time || '23:59'}`));
+
+  if (pastEvents.length === 0) {
+    pastList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
+    return;
+  }
+
+  pastEvents.forEach(notice => {
+    const card = document.createElement('div');
+    card.className = 'notice-card past-card';
+    
+    card.innerHTML = `
+      <h3 class="event-title-red" style="color: #6b7280 !important;">${notice.title}</h3>
+      <p class="event-datetime-info">
+        <span>📅 ${notice.date || ''}</span>
+        ${notice.time ? `<span>🕑 ${notice.time}</span>` : ''}
+      </p>
+      
+      ${notice.description ? `<p class="event-desc">${notice.description}</p>` : ''}
+      ${notice.imageUrl ? `<div class="img-container-full"><img src="${notice.imageUrl}" alt="Imagen del evento"></div>` : ''}
+      
+      <div class="card-actions-row">
+        <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">🗑️ Borrar</button>
+      </div>
+    `;
+    pastList.appendChild(card);
   });
 }
 
