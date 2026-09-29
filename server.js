@@ -11,6 +11,9 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";  // Contraseñ
 
 app.use(express.json({ limit: '10mb' }));
 
+// Servir archivos estáticos de la carpeta public (incluye login.html)
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Middleware para verificar la contraseña de la App en la API
 function checkAppPassword(req, res, next) {
   const pass = req.headers['x-app-password'];
@@ -28,14 +31,6 @@ function checkAdminPassword(req, res, next) {
   }
   return res.status(401).json({ error: "Contraseña de administración incorrecta" });
 }
-
-// Servir la pantalla de login
-app.get('/login.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-// Archivos estáticos
-app.use(express.static('public'));
 
 const DATA_FILE = path.join(__dirname, 'data', 'notices.json');
 
