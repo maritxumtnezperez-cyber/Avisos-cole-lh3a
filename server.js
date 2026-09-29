@@ -5,13 +5,13 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configura aquí las contraseñas
-const APP_PASSWORD = process.env.APP_PASSWORD || "LH3A2026";      // Contraseña para acceder a la app
+// Configuración de contraseñas
+const APP_PASSWORD = process.env.APP_PASSWORD || "78875879";      // Contraseña para acceder a la app
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";  // Contraseña para publicar/editar/borrar
 
 app.use(express.json({ limit: '10mb' }));
 
-// Middleware para verificar la contraseña de la App en las API
+// Middleware para verificar la contraseña de la App en la API
 function checkAppPassword(req, res, next) {
   const pass = req.headers['x-app-password'];
   if (pass === APP_PASSWORD) {
@@ -29,12 +29,12 @@ function checkAdminPassword(req, res, next) {
   return res.status(401).json({ error: "Contraseña de administración incorrecta" });
 }
 
-// Servir login.html antes de proteger los archivos estáticos
+// Servir la pantalla de login
 app.get('/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Proteger archivos estáticos: si intenta entrar sin cookie/header pasa por aquí
+// Archivos estáticos
 app.use(express.static('public'));
 
 const DATA_FILE = path.join(__dirname, 'data', 'notices.json');
@@ -70,7 +70,7 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// Rutas API protegidas
+// Rutas de la API protegidas con contraseña de la App
 app.get('/api/notices', checkAppPassword, (req, res) => {
   res.json(getNotices());
 });
@@ -110,5 +110,5 @@ app.delete('/api/notices/:id', checkAppPassword, checkAdminPassword, (req, res) 
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor iniciado en puerto ${PORT}`);
+  console.log(`Servidor iniciado en el puerto ${PORT}`);
 });
