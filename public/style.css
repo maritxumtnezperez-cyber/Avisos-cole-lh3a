@@ -9,7 +9,7 @@
 body {
   background-color: #f4f6f8;
   color: #333;
-  padding-bottom: 70px; /* Espacio para el menú inferior */
+  padding-bottom: 70px;
 }
 
 /* CABECERA */
@@ -37,7 +37,7 @@ header h1 {
   cursor: pointer;
 }
 
-/* PANTALLAS Y NAVEGACIÓN */
+/* PANTALLAS */
 main {
   padding: 16px;
   max-width: 600px;
@@ -45,11 +45,11 @@ main {
 }
 
 .screen {
-  display: none; /* Oculta las pantallas por defecto */
+  display: none;
 }
 
 .screen.active {
-  display: block; /* Muestra solo la pantalla activa */
+  display: block;
 }
 
 .section-title h2 {
@@ -62,6 +62,100 @@ main {
   color: #6b7280;
   font-size: 0.95rem;
   padding: 12px 0;
+}
+
+/* TABLA DE HORARIOS Y MATERIAS */
+.schedule-table-container {
+  overflow-x: auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 0.8rem;
+  min-width: 480px;
+}
+
+.schedule-table th {
+  background-color: #f3f4f6;
+  padding: 10px 6px;
+  color: #374151;
+  font-weight: 700;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.schedule-table td {
+  padding: 8px 4px;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+}
+
+.time-col {
+  background-color: #f9fafb;
+  font-size: 0.75rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.break-row td {
+  background-color: #e5e7eb;
+  color: #374151;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* Colores de Asignaturas */
+.subject-mat { background-color: #3b82f6; color: #ffffff; }
+.subject-eus { background-color: #f97316; color: #ffffff; }
+.subject-ingurune { background-color: #22c55e; color: #ffffff; }
+.subject-musika { background-color: #ec4899; color: #ffffff; }
+.subject-gazte { background-color: #ef4444; color: #ffffff; }
+.subject-ing { background-color: #eab308; color: #ffffff; }
+.subject-plas { background-color: #facc15; color: #000000; }
+.subject-tutor { background-color: #a855f7; color: #ffffff; }
+.subject-efi { background-color: #6366f1; color: #ffffff; }
+.subject-kzp { background-color: #881337; color: #ffffff; }
+
+/* CALENDARIO ANUAL Y LEYENDA */
+.annual-calendar-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.legend-item {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.leg-start { background-color: #eab308; color: #000; }
+.leg-navidad { background-color: #a855f7; }
+.leg-carnaval { background-color: #06b6d4; }
+.leg-santa { background-color: #8b5cf6; }
+.leg-festivo { background-color: #ef4444; }
+
+.school-info-box {
+  background: #f9fafb;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 /* TARJETAS DE EVENTOS */
@@ -78,38 +172,11 @@ main {
   background-color: #fffaf0;
 }
 
-.next-tag {
-  color: #dc2626;
-  font-size: 0.8rem;
-  font-weight: bold;
-  margin-bottom: 6px;
-}
-
-.event-title-red {
-  color: #dc2626;
-  font-size: 1.1rem;
-  margin-bottom: 6px;
-}
-
-.event-datetime-info {
-  font-size: 0.85rem;
-  color: #4b5563;
-  margin-bottom: 8px;
-  display: flex;
-  gap: 12px;
-}
-
-.event-desc {
-  font-size: 0.9rem;
-  color: #4b5563;
-  margin-bottom: 12px;
-}
-
-.img-container-full img {
-  width: 100%;
-  border-radius: 8px;
-  margin: 10px 0;
-}
+.next-tag { color: #dc2626; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; }
+.event-title-red { color: #dc2626; font-size: 1.1rem; margin-bottom: 6px; }
+.event-datetime-info { font-size: 0.85rem; color: #4b5563; margin-bottom: 8px; display: flex; gap: 12px; }
+.event-desc { font-size: 0.9rem; color: #4b5563; margin-bottom: 12px; }
+.img-container-full img { width: 100%; border-radius: 8px; margin: 10px 0; }
 
 /* BOTONES Y ACCIONES */
 .btn-action {
@@ -122,34 +189,13 @@ main {
   font-size: 0.9rem;
 }
 
-.btn-add-cal {
-  background-color: #2563eb;
-  color: #ffffff !important;
-}
+.btn-add-cal { background-color: #2563eb; color: #ffffff !important; }
+.card-actions-row { display: flex; gap: 8px; margin-top: 10px; }
+.btn-edit { background-color: #e5e7eb; color: #374151; }
+.btn-delete { background-color: #fee2e2; color: #dc2626; }
+.btn-publish { background-color: #16a34a; color: #ffffff; margin-top: 12px; }
 
-.card-actions-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.btn-edit {
-  background-color: #e5e7eb;
-  color: #374151;
-}
-
-.btn-delete {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-
-.btn-publish {
-  background-color: #16a34a;
-  color: #ffffff;
-  margin-top: 12px;
-}
-
-/* CALENDARIO EN CUADRÍCULA */
+/* CALENDARIO MENSUAL (GRID DE 7 COLUMNAS) */
 .calendar-head {
   display: flex;
   justify-content: space-between;
@@ -170,7 +216,7 @@ main {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr); /* 7 columnas para los días */
+  grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   background: #ffffff;
   padding: 12px;
@@ -193,45 +239,17 @@ main {
   background-color: #f9fafb;
 }
 
-.calendar-day.empty {
-  background: transparent;
-}
-
-.calendar-day.today {
-  border: 2px solid #2563eb;
-  font-weight: bold;
-}
-
-.calendar-day.holiday {
-  background-color: #fee2e2;
-  color: #dc2626;
-}
-
-.calendar-day.has-event {
-  background-color: #dbeafe;
-  font-weight: bold;
-  color: #1e40af;
-}
+.calendar-day.empty { background: transparent; }
+.calendar-day.today { border: 2px solid #2563eb; font-weight: bold; }
+.calendar-day.holiday { background-color: #fee2e2; color: #dc2626; }
+.calendar-day.has-event { background-color: #dbeafe; font-weight: bold; color: #1e40af; }
 
 /* FORMULARIOS (ADMIN) */
-.form-group {
-  margin-bottom: 12px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.85rem;
-  margin-bottom: 4px;
-  color: #374151;
-}
-
-.form-group input, .form-group textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: #374151; }
+.form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; }
+.admin-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.admin-header button { width: auto; }
 
 /* MENÚ NAVEGACIÓN INFERIOR */
 nav.bottom {
@@ -258,10 +276,5 @@ nav.bottom button {
   cursor: pointer;
 }
 
-nav.bottom button.active {
-  color: #2563eb;
-}
-
-.nav-icon {
-  font-size: 1.2rem;
-}
+nav.bottom button.active { color: #2563eb; }
+.nav-icon { font-size: 1.2rem; }
