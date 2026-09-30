@@ -8,13 +8,11 @@ if (!savedPassword && window.location.pathname !== "/login.html") {
 let currentCalendarDate = new Date();
 let currentUrineDate = new Date();
 
-// Estado de selección actual para tiras de orina
-let urineSelection = {
-  leucocitos: { val: 'Neg', color: '#fef08a', textcolor: '#854d0e' },
-  nitritos: { val: 'Neg', color: '#ffffff', textcolor: '#333333' },
-  proteinas: { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' },
-  sangre: { val: 'Neg', color: '#fef08a', textcolor: '#854d0e' },
-  ph: { val: '6.0', color: '#eab308', textcolor: '#ffffff' }
+// Estado de selección exclusivo para Proteínas
+let proteinSelection = {
+  val: 'Neg',
+  color: '#fef9c3',
+  textcolor: '#713f12'
 };
 
 // Formato de fecha DD/MM/AAAA
@@ -350,7 +348,7 @@ async function renderCalendar() {
   }
 }
 
-// LÓGICA DE LA QUINTA PESTAÑA: TIRAS DE ORINA
+// LÓGICA EXCLUSIVA: REGISTRO DE PROTEÍNAS
 function getUrineLogs() {
   const data = localStorage.getItem('urineLogsData');
   return data ? JSON.parse(data) : {};
@@ -361,26 +359,24 @@ function saveUrineLogs(logs) {
 }
 
 function initPillsSelector() {
-  document.querySelectorAll('.color-options-grid').forEach(grid => {
-    const paramName = grid.getAttribute('data-param');
-    const pills = grid.querySelectorAll('.color-pill');
+  const grid = document.querySelector('.color-options-grid[data-param="proteinas"]');
+  if (!grid) return;
 
-    pills.forEach(pill => {
-      // Marcar por defecto según urineSelection
-      if (pill.getAttribute('data-val') === urineSelection[paramName].val) {
-        pill.classList.add('selected');
-      }
+  const pills = grid.querySelectorAll('.color-pill');
+  pills.forEach(pill => {
+    if (pill.getAttribute('data-val') === proteinSelection.val) {
+      pill.classList.add('selected');
+    }
 
-      pill.addEventListener('click', () => {
-        pills.forEach(p => p.classList.remove('selected'));
-        pill.classList.add('selected');
+    pill.addEventListener('click', () => {
+      pills.forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
 
-        urineSelection[paramName] = {
-          val: pill.getAttribute('data-val'),
-          color: pill.getAttribute('data-color'),
-          textcolor: pill.getAttribute('data-textcolor')
-        };
-      });
+      proteinSelection = {
+        val: pill.getAttribute('data-val'),
+        color: pill.getAttribute('data-color'),
+        textcolor: pill.getAttribute('data-textcolor')
+      };
     });
   });
 }
@@ -455,26 +451,26 @@ function renderUrineModule() {
 function loadUrineLogForDate(dateStr) {
   const urineLogs = getUrineLogs();
   const titleElem = document.getElementById('selectedUrineDateTitle');
-  if (titleElem) titleElem.textContent = `Anotar Tira: ${formatDate(dateStr)}`;
+  if (titleElem) titleElem.textContent = `Anotar Proteínas: ${formatDate(dateStr)}`;
 
   if (urineLogs[dateStr]) {
     const log = urineLogs[dateStr];
     document.getElementById('urineNotes').value = log.notes || '';
     
-    // Restaurar selecciones
-    Object.keys(log.data).forEach(param => {
-      urineSelection[param] = log.data[param];
-      const grid = document.querySelector(`.color-options-grid[data-param="${param}"]`);
-      if (grid) {
-        grid.querySelectorAll('.color-pill').forEach(pill => {
-          if (pill.getAttribute('data-val') === log.data[param].val) {
-            pill.classList.add('selected');
-          } else {
-            pill.classList.remove('selected');
-          }
-        });
-      }
-    });
+    // Si viene del formato antiguo con varios datos, extraer solo proteinas
+    const proData = log.protein || (log.data && log.data.proteinas) || { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' };
+    proteinSelection = proData;
+
+    const grid = document.querySelector('.color-options-grid[data-param="proteinas"]');
+    if (grid) {
+      grid.querySelectorAll('.color-pill').forEach(pill => {
+        if (pill.getAttribute('data-val') === proData.val) {
+          pill.classList.add('selected');
+        } else {
+          pill.classList.remove('selected');
+        }
+      });
+    }
   } else {
     document.getElementById('urineNotes').value = '';
   }
@@ -505,27 +501,20 @@ function renderUrineLogsList() {
   entries.forEach(dateKey => {
     const log = urineLogs[dateKey];
     const card = document.createElement('div');
-    card.style.cssText = "background:white; padding:12px; border-radius:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.08);";
+    card.style.cssText = "background:white; padding:12px; border-radius:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.08); display:flex; justify-style:space-between; flex-direction:column;";
 
-    let pillsHtml = '';
-    const labels = { leucocitos: 'LEU', nitritos: 'NIT', proteinas: 'PRO', sangre: 'BLO', ph: 'pH' };
-
-    Object.keys(log.data).forEach(param => {
-      const item = log.data[param];
-      pillsHtml += `
-        <div class="strip-summary-item" style="background:${item.color}; color:${item.textcolor}; border: 1px solid rgba(0,0,0,0.1);">
-          <div>${labels[param]}</div>
-          <div>${item.val}</div>
-        </div>
-      `;
-    });
+    const proData = log.protein || (log.data && log.data.proteinas) || { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' };
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <strong style="color:#1e293b;">📅 ${formatDate(dateKey)}</strong>
-        <button onclick="deleteUrineLog('${dateKey}')" style="background:none; border:none; color:#dc2626; cursor:pointer; font-weight:bold;">🗑️</button>
+        <button onclick="deleteUrineLog('${dateKey}')" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:16px;">🗑️</button>
       </div>
-      <div class="strip-summary-bar">${pillsHtml}</div>
+      <div>
+        <span class="strip-summary-item" style="background:${proData.color}; color:${proData.textcolor}; border:1px solid rgba(0,0,0,0.1);">
+          Proteínas: ${proData.val}
+        </span>
+      </div>
       ${log.notes ? `<p style="font-size:12px; color:#475569; margin-top:8px;">📝 ${log.notes}</p>` : ''}
     `;
 
@@ -534,7 +523,7 @@ function renderUrineLogsList() {
 }
 
 function deleteUrineLog(dateKey) {
-  if (confirm(`¿Eliminar la tira del día ${formatDate(dateKey)}?`)) {
+  if (confirm(`¿Eliminar la anotación del día ${formatDate(dateKey)}?`)) {
     const logs = getUrineLogs();
     delete logs[dateKey];
     saveUrineLogs(logs);
@@ -542,7 +531,7 @@ function deleteUrineLog(dateKey) {
   }
 }
 
-// EVENTOS DE LA QUINTA PESTAÑA
+// EVENTOS DE LA PESTAÑA TIRAS
 document.getElementById('prevUrineMonth')?.addEventListener('click', () => {
   currentUrineDate.setMonth(currentUrineDate.getMonth() - 1);
   renderUrineModule();
@@ -564,12 +553,12 @@ document.getElementById('saveUrineStrip')?.addEventListener('click', () => {
 
   const logs = getUrineLogs();
   logs[dateVal] = {
-    data: { ...urineSelection },
+    protein: { ...proteinSelection },
     notes: notesVal
   };
 
   saveUrineLogs(logs);
-  alert('Tira registrada correctamente');
+  alert('Valor de proteína registrado correctamente');
   renderUrineModule();
 });
 
