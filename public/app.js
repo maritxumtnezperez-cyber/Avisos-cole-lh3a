@@ -26,13 +26,19 @@ document.querySelectorAll('nav.bottom button').forEach(button => {
   });
 });
 
-document.getElementById('adminBtn').addEventListener('click', () => {
-  showScreen('admin');
-});
+const adminBtn = document.getElementById('adminBtn');
+if (adminBtn) {
+  adminBtn.addEventListener('click', () => {
+    showScreen('admin');
+  });
+}
 
-document.getElementById('backBtn').addEventListener('click', () => {
-  showScreen('home');
-});
+const backBtn = document.getElementById('backBtn');
+if (backBtn) {
+  backBtn.addEventListener('click', () => {
+    showScreen('home');
+  });
+}
 
 const filterCategory = document.getElementById('filterCategory');
 if (filterCategory) {
@@ -295,63 +301,66 @@ if (nextMonthBtn) {
   });
 }
 
-document.getElementById('publish').addEventListener('click', () => {
-  const titleInput = document.getElementById('title');
-  const categoryInput = document.getElementById('category');
-  const dateInput = document.getElementById('date');
-  const timeInput = document.getElementById('time');
-  const descriptionInput = document.getElementById('description');
-  const imageFileInput = document.getElementById('imageFile');
+const publishBtn = document.getElementById('publish');
+if (publishBtn) {
+  publishBtn.addEventListener('click', () => {
+    const titleInput = document.getElementById('title');
+    const categoryInput = document.getElementById('category');
+    const dateInput = document.getElementById('date');
+    const timeInput = document.getElementById('time');
+    const descriptionInput = document.getElementById('description');
+    const imageFileInput = document.getElementById('imageFile');
 
-  const title = titleInput.value.trim();
-  const category = categoryInput.value;
-  const date = dateInput.value;
-  const time = timeInput.value;
-  const description = descriptionInput.value.trim();
-  const file = imageFileInput.files[0];
+    const title = titleInput.value.trim();
+    const category = categoryInput.value;
+    const date = dateInput.value;
+    const time = timeInput.value;
+    const description = descriptionInput.value.trim();
+    const file = imageFileInput.files[0];
 
-  if (!title) {
-    alert('Por favor, introduce un título para el evento.');
-    return;
-  }
+    if (!title) {
+      alert('Por favor, introduce un título para el evento.');
+      return;
+    }
 
-  const saveAndFinish = (imageBase64 = null) => {
-    const newNotice = {
-      id: Date.now(),
-      title: title,
-      category: category,
-      date: date,
-      time: time,
-      description: description,
-      image: imageBase64
+    const saveAndFinish = (imageBase64 = null) => {
+      const newNotice = {
+        id: Date.now(),
+        title: title,
+        category: category,
+        date: date,
+        time: time,
+        description: description,
+        image: imageBase64
+      };
+
+      const notices = getNotices();
+      notices.push(newNotice);
+      saveNotices(notices);
+
+      titleInput.value = '';
+      dateInput.value = '';
+      timeInput.value = '';
+      descriptionInput.value = '';
+      imageFileInput.value = '';
+
+      alert('Evento publicado con éxito');
+      renderNotices();
+      renderCalendar();
+      showScreen('home');
     };
 
-    const notices = getNotices();
-    notices.push(newNotice);
-    saveNotices(notices);
-
-    titleInput.value = '';
-    dateInput.value = '';
-    timeInput.value = '';
-    descriptionInput.value = '';
-    imageFileInput.value = '';
-
-    alert('Evento publicado con éxito');
-    renderNotices();
-    renderCalendar();
-    showScreen('home');
-  };
-
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      saveAndFinish(e.target.result);
-    };
-    reader.readAsDataURL(file);
-  } else {
-    saveAndFinish();
-  }
-});
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        saveAndFinish(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      saveAndFinish();
+    }
+  });
+}
 
 function deleteNotice(id) {
   if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
