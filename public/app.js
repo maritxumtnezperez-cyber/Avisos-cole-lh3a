@@ -1,6 +1,5 @@
 let currentCalendarDate = new Date();
 
-// CONTROL DE NAVEGACIÓN ENTRE PANTALLAS
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(screen => {
     screen.classList.remove('active');
@@ -20,7 +19,6 @@ function showScreen(screenId) {
   }
 }
 
-// EVENTOS DE NAVEGACIÓN
 document.querySelectorAll('nav.bottom button').forEach(button => {
   button.addEventListener('click', () => {
     const screen = button.getAttribute('data-screen');
@@ -36,7 +34,6 @@ document.getElementById('backBtn').addEventListener('click', () => {
   showScreen('home');
 });
 
-// FILTRAR EVENTOS
 const filterCategory = document.getElementById('filterCategory');
 if (filterCategory) {
   filterCategory.addEventListener('change', () => {
@@ -44,7 +41,6 @@ if (filterCategory) {
   });
 }
 
-// LOCALSTORAGE
 function getNotices() {
   return JSON.parse(localStorage.getItem('notices') || '[]');
 }
@@ -53,7 +49,6 @@ function saveNotices(notices) {
   localStorage.setItem('notices', JSON.stringify(notices));
 }
 
-// GENERAR ENLACE DE GOOGLE CALENDAR
 function getGoogleCalendarUrl(title, date, time, description) {
   if (!date) return '#';
   
@@ -76,7 +71,6 @@ function getGoogleCalendarUrl(title, date, time, description) {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
 }
 
-// RENDERIZAR EVENTOS PRÓXIMOS Y PASADOS
 function renderNotices() {
   const notices = getNotices();
   const noticeList = document.getElementById('noticeList');
@@ -186,7 +180,6 @@ function renderNotices() {
   }
 }
 
-// CALENDARIO MENSUAL INTERACTIVO
 function renderCalendar() {
   const monthLabel = document.getElementById('monthLabel');
   const calendarGrid = document.getElementById('calendarGrid');
@@ -285,7 +278,6 @@ function renderCalendar() {
   }
 }
 
-// NAVEGACIÓN MESES
 const prevMonthBtn = document.getElementById('prevMonth');
 const nextMonthBtn = document.getElementById('nextMonth');
 
@@ -303,7 +295,6 @@ if (nextMonthBtn) {
   });
 }
 
-// PUBLICAR EVENTO
 document.getElementById('publish').addEventListener('click', () => {
   const titleInput = document.getElementById('title');
   const categoryInput = document.getElementById('category');
@@ -362,7 +353,6 @@ document.getElementById('publish').addEventListener('click', () => {
   }
 });
 
-// ELIMINAR EVENTO
 function deleteNotice(id) {
   if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
     let notices = getNotices();
@@ -373,7 +363,6 @@ function deleteNotice(id) {
   }
 }
 
-// INICIALIZACIÓN
 document.addEventListener('DOMContentLoaded', () => {
   renderNotices();
   renderCalendar();
