@@ -1,3 +1,9 @@
+// VERIFICACIÓN Y GUARDIÁN DE ACCESO
+const savedPassword = sessionStorage.getItem("appPassword");
+if (!savedPassword) {
+  window.location.href = "/login.html";
+}
+
 let currentCalendarDate = new Date();
 
 function showScreen(screenId) {
@@ -47,12 +53,23 @@ if (filterCategory) {
   });
 }
 
-function getNotices() {
-  return JSON.parse(localStorage.getItem('notices') || '[]');
-}
-
-function saveNotices(notices) {
-  localStorage.setItem('notices', JSON.stringify(notices));
+// Obtener avisos con validación de cabecera de la App
+async function getNotices() {
+  try {
+    const res = await fetch('/api/notices', {
+      headers: { 'x-app-password': savedPassword }
+    });
+    if (!res.ok) {
+      if (res.status === 401) {
+        sessionStorage.removeItem("appPassword");
+        window.location.href = "/login.html";
+      }
+      return [];
+    }
+    return await res.json();
+  } catch (err) {
+    return JSON.parse(localStorage.getItem('notices') || '[]');
+  }
 }
 
 function getGoogleCalendarUrl(title, date, time, description) {
@@ -77,8 +94,8 @@ function getGoogleCalendarUrl(title, date, time, description) {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
 }
 
-function renderNotices() {
-  const notices = getNotices();
+async function renderNotices() {
+  const notices = await getNotices();
   const noticeList = document.getElementById('noticeList');
   const pastNoticeList = document.getElementById('pastNoticeList');
   const nextContainer = document.getElementById('next');
@@ -91,14 +108,12 @@ function renderNotices() {
   if (pastNoticeList) pastNoticeList.innerHTML = '';
   if (nextContainer) nextContainer.innerHTML = '';
 
-  // Fecha y hora exactas en el momento de renderizar
   const now = new Date();
 
-  // Convierte la fecha y hora de la notificacion a un objeto Date real
   const getEventDateTime = (dateStr, timeStr) => {
     if (!dateStr) return null;
     const parts = dateStr.split('-');
-    let hour = 23, minute = 59; // Si no hay hora especificada, caduca al final del día
+    let hour = 23, minute = 59;
     
     if (timeStr) {
       const timeParts = timeStr.split(':');
@@ -109,7 +124,6 @@ function renderNotices() {
     return new Date(parts[0], parts[1] - 1, parts[2], hour, minute, 0);
   };
 
-  // Eventos cuya hora fijada aún NO ha transcurrido
   let futureNotices = notices.filter(n => {
     if (!n.date) return true;
     const eventDateTime = getEventDateTime(n.date, n.time);
@@ -120,7 +134,6 @@ function renderNotices() {
     futureNotices = futureNotices.filter(n => n.category === selectedFilter);
   }
 
-  // Eventos cuyo horario YA ha transcurrido
   let pastNotices = notices.filter(n => {
     if (!n.date) return false;
     const eventDateTime = getEventDateTime(n.date, n.time);
@@ -131,10 +144,9 @@ function renderNotices() {
     pastNotices = pastNotices.filter(n => n.category === selectedFilter);
   }
 
-  // Tarjeta de Evento Destacado
   if (futureNotices.length > 0 && nextContainer) {
     const next = futureNotices[0];
-    const imageHtml = next.image ? `<div class="img-container-full"><img src="${next.image}" alt="Imagen del evento"></div>` : '';
+    const imageHtml = (next.image || next.imageUrl) ? `<div class="img-container-full"><img src="${next.image || next.imageUrl}" alt="Imagen del evento"></div>` : '';
     const calUrl = getGoogleCalendarUrl(next.title, next.date, next.time, next.description);
     
     nextContainer.innerHTML = `
@@ -149,19 +161,18 @@ function renderNotices() {
       ${imageHtml}
       <div class="card-actions-column">
         ${next.date ? `<a href="${calUrl}" target="_blank" class="btn-action btn-add-calendar">📅 Añadir a Google Calendar</a>` : ''}
-        <button class="btn-action btn-delete" onclick="deleteNotice(${next.id})">Eliminar</button>
+        <button class="btn-action btn-delete" onclick="deleteNotice('${next.id}')">Eliminar</button>
       </div>
     `;
   }
 
-  // Lista de Próximos Eventos
   if (futureNotices.length === 0) {
     noticeList.innerHTML = '<p class="empty-msg">No hay eventos programados en esta categoría.</p>';
   } else {
     futureNotices.forEach((notice) => {
       const card = document.createElement('div');
       card.className = 'notice-card';
-      const imageHtml = notice.image ? `<div class="img-container-full"><img src="${notice.image}" alt="Imagen de evento"></div>` : '';
+      const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento"></div>` : '';
       const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
       card.innerHTML = `
@@ -175,14 +186,13 @@ function renderNotices() {
         ${imageHtml}
         <div class="card-actions-column">
           ${notice.date ? `<a href="${calUrl}" target="_blank" class="btn-action btn-add-calendar">📅 Añadir a Google Calendar</a>` : ''}
-          <button class="btn-action btn-delete" onclick="deleteNotice(${notice.id})">Eliminar</button>
+          <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>
         </div>
       `;
       noticeList.appendChild(card);
     });
   }
 
-  // Lista de Eventos Pasados
   if (pastNoticeList) {
     if (pastNotices.length === 0) {
       pastNoticeList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
@@ -190,7 +200,7 @@ function renderNotices() {
       pastNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
-        const imageHtml = notice.image ? `<div class="img-container-full"><img src="${notice.image}" alt="Imagen de evento"></div>` : '';
+        const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento"></div>` : '';
         card.innerHTML = `
           <span class="category-tag">${notice.category || 'General'}</span>
           <h3>${notice.title}</h3>
@@ -201,7 +211,7 @@ function renderNotices() {
           <p class="event-desc">${notice.description || ''}</p>
           ${imageHtml}
           <div class="card-actions-column">
-            <button class="btn-action btn-delete" onclick="deleteNotice(${notice.id})">Eliminar</button>
+            <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>
           </div>
         `;
         pastNoticeList.appendChild(card);
@@ -210,7 +220,7 @@ function renderNotices() {
   }
 }
 
-function renderCalendar() {
+async function renderCalendar() {
   const monthLabel = document.getElementById('monthLabel');
   const calendarGrid = document.getElementById('calendarGrid');
   const monthEventsList = document.getElementById('monthEventsList');
@@ -242,7 +252,7 @@ function renderCalendar() {
   const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
   const totalDays = new Date(year, month + 1, 0).getDate();
 
-  const notices = getNotices();
+  const notices = await getNotices();
   const today = new Date();
 
   for (let i = 0; i < firstDayIndex; i++) {
@@ -287,7 +297,7 @@ function renderCalendar() {
       monthNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
-        const imageHtml = notice.image ? `<div class="img-container-full"><img src="${notice.image}" alt="Imagen de evento"></div>` : '';
+        const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento"></div>` : '';
         const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
         card.innerHTML = `
@@ -328,7 +338,7 @@ if (nextMonthBtn) {
 
 const publishBtn = document.getElementById('publish');
 if (publishBtn) {
-  publishBtn.addEventListener('click', () => {
+  publishBtn.addEventListener('click', async () => {
     const titleInput = document.getElementById('title');
     const categoryInput = document.getElementById('category');
     const dateInput = document.getElementById('date');
@@ -348,31 +358,49 @@ if (publishBtn) {
       return;
     }
 
-    const saveAndFinish = (imageBase64 = null) => {
+    const adminPass = prompt("Introduce la contraseña de administración para publicar:");
+    if (!adminPass) return;
+
+    const saveAndFinish = async (imageBase64 = null) => {
       const newNotice = {
-        id: Date.now(),
         title: title,
         category: category,
         date: date,
         time: time,
         description: description,
-        image: imageBase64
+        imageUrl: imageBase64
       };
 
-      const notices = getNotices();
-      notices.push(newNotice);
-      saveNotices(notices);
+      try {
+        const res = await fetch('/api/notices', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-app-password': savedPassword,
+            'x-admin-password': adminPass
+          },
+          body: JSON.stringify(newNotice)
+        });
 
-      titleInput.value = '';
-      dateInput.value = '';
-      timeInput.value = '';
-      descriptionInput.value = '';
-      imageFileInput.value = '';
+        if (!res.ok) {
+          const errData = await res.json();
+          alert(errData.error || 'Error al publicar evento');
+          return;
+        }
 
-      alert('Evento publicado con éxito');
-      renderNotices();
-      renderCalendar();
-      showScreen('home');
+        titleInput.value = '';
+        dateInput.value = '';
+        timeInput.value = '';
+        descriptionInput.value = '';
+        imageFileInput.value = '';
+
+        alert('Evento publicado con éxito');
+        renderNotices();
+        renderCalendar();
+        showScreen('home');
+      } catch (err) {
+        alert('Error al conectar con el servidor');
+      }
     };
 
     if (file) {
@@ -387,13 +415,31 @@ if (publishBtn) {
   });
 }
 
-function deleteNotice(id) {
+async function deleteNotice(id) {
+  const adminPass = prompt("Introduce la contraseña de administración para eliminar:");
+  if (!adminPass) return;
+
   if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
-    let notices = getNotices();
-    notices = notices.filter(n => n.id !== id);
-    saveNotices(notices);
-    renderNotices();
-    renderCalendar();
+    try {
+      const res = await fetch(`/api/notices/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-app-password': savedPassword,
+          'x-admin-password': adminPass
+        }
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        alert(errData.error || 'Error al eliminar');
+        return;
+      }
+
+      renderNotices();
+      renderCalendar();
+    } catch (err) {
+      alert('Error de conexión al eliminar');
+    }
   }
 }
 
