@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#39aa6a">
   <link rel="stylesheet" href="/styles.css">
-  <title>Acceso Privado · LH3A</title>
+  <title>Acceso Privado · Cosas de Ane</title>
   <style>
     body {
       display: flex;
@@ -73,8 +73,8 @@
 </head>
 <body>
   <div class="login-card">
-    <img src="/Logo.png" alt="LH3A Logo">
-    <h2>Avisos Cole LH3A</h2>
+    <img src="/Logo.png" alt="Cosas de Ane Logo">
+    <h2>Cosas de Ane</h2>
     <p>Introduce la contraseña para acceder</p>
     <form id="loginForm">
       <input type="password" id="passInput" placeholder="Contraseña de acceso" required autofocus>
@@ -84,9 +84,15 @@
   </div>
 
   <script>
+    // Si ya existe una contraseña guardada válida, redirige directamente al inicio
+    const existingPass = localStorage.getItem("appPassword");
+    if (existingPass) {
+      window.location.replace("/");
+    }
+
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const pass = document.getElementById("passInput").value;
+      const pass = document.getElementById("passInput").value.trim();
       const errMsg = document.getElementById("errMsg");
 
       try {
@@ -98,7 +104,7 @@
 
         if (res.ok) {
           localStorage.setItem("appPassword", pass);
-          window.location.href = "/";
+          window.location.replace("/");
         } else {
           errMsg.textContent = "Contraseña incorrecta";
         }
