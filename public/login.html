@@ -73,7 +73,7 @@
 </head>
 <body>
   <div class="login-card">
-    <img src="/logo.jpg?v=1" alt="LH3A Logo">
+    <img src="/Logo.png" alt="LH3A Logo">
     <h2>Avisos Cole LH3A</h2>
     <p>Introduce la contraseña para acceder</p>
     <form id="loginForm">
@@ -97,7 +97,7 @@
         });
 
         if (res.ok) {
-          sessionStorage.setItem("appPassword", pass);
+          localStorage.setItem("appPassword", pass);
           window.location.href = "/";
         } else {
           errMsg.textContent = "Contraseña incorrecta";
