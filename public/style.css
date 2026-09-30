@@ -111,94 +111,14 @@ main {
   padding: 12px 0;
 }
 
-/* TABLA DE HORARIOS Y MATERIAS */
-.schedule-table-container {
-  overflow-x: auto;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-}
-
-.schedule-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-  font-size: 0.8rem;
-  min-width: 480px;
-}
-
-.schedule-table th {
-  background-color: #f3f4f6;
-  padding: 10px 6px;
-  color: #374151;
-  font-weight: 700;
-  border-bottom: 2px solid #e5e7eb;
-}
-
-.schedule-table td {
-  padding: 8px 4px;
-  border: 1px solid #e5e7eb;
-  font-weight: 600;
-}
-
-.time-col {
-  background-color: #f9fafb;
-  font-size: 0.75rem;
-  color: #6b7280;
-  white-space: nowrap;
-}
-
-.break-row td {
-  background-color: #e5e7eb;
-  color: #374151;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-
-/* Colores de Asignaturas */
-.subject-mat { background-color: #3b82f6; color: #ffffff; }
-.subject-eus { background-color: #f97316; color: #ffffff; }
-.subject-ingurune { background-color: #22c55e; color: #ffffff; }
-.subject-musika { background-color: #ec4899; color: #ffffff; }
-.subject-gazte { background-color: #ef4444; color: #ffffff; }
-.subject-ing { background-color: #eab308; color: #ffffff; }
-.subject-plas { background-color: #facc15; color: #000000; }
-.subject-tutor { background-color: #a855f7; color: #ffffff; }
-.subject-efi { background-color: #6366f1; color: #ffffff; }
-.subject-kzp { background-color: #881337; color: #ffffff; }
-
-/* CALENDARIO ANUAL (IMÁGENES) */
-.annual-calendar-card {
-  background: #ffffff;
-  border-radius: 12px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  margin-bottom: 16px;
-}
-
-.img-responsive-calendar {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  display: block;
-}
-
-.school-info-box {
-  background: #f9fafb;
-  padding: 10px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-
-/* TARJETAS DE EVENTOS Y ETIQUETA DE CATEGORÍA */
+/* TARJETAS DE EVENTOS Y CONTENEDOR DE IMÁGENES */
 .notice-card, .next-card {
   background: #ffffff;
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 
 .next-card {
@@ -222,15 +142,36 @@ main {
 .event-datetime-info { font-size: 0.85rem; color: #4b5563; margin-bottom: 8px; display: flex; gap: 12px; }
 .event-desc { font-size: 0.9rem; color: #4b5563; margin-bottom: 12px; }
 
-.img-container-full img {
+/* FIX DEFINITIVO DE DESBORDAMIENTO DE IMAGEN */
+.img-container-full {
   width: 100%;
+  max-width: 100%;
   max-height: 250px;
-  object-fit: cover;
+  margin: 12px 0;
   border-radius: 8px;
-  margin: 10px 0;
+  overflow: hidden;
+  background-color: #f3f4f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* BOTONES Y ACCIONES */
+.img-container-full img {
+  width: 100%;
+  height: 100%;
+  max-height: 250px;
+  object-fit: contain;
+  display: block;
+}
+
+/* BOTONES Y ACCIONES EN LA TARJETA */
+.card-actions-column {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .btn-action {
   width: 100%;
   padding: 10px 14px;
@@ -239,11 +180,33 @@ main {
   font-weight: 600;
   cursor: pointer;
   font-size: 0.9rem;
+  text-decoration: none !important;
+  text-align: center;
+  display: inline-block;
+  box-sizing: border-box;
 }
 
-.card-actions-row { display: flex; gap: 8px; margin-top: 10px; }
-.btn-delete { background-color: #fee2e2; color: #dc2626; }
-.btn-publish { background-color: #16a34a; color: #ffffff; margin-top: 12px; }
+/* BOTÓN VERDE DE GOOGLE CALENDAR */
+.btn-add-calendar {
+  background-color: #279f5f !important;
+  color: #ffffff !important;
+  border: 1px solid #1e7e4a;
+}
+
+.btn-add-calendar:hover {
+  background-color: #1f824c !important;
+}
+
+.btn-delete {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.btn-publish {
+  background-color: #16a34a;
+  color: #ffffff;
+  margin-top: 12px;
+}
 
 /* CALENDARIO MENSUAL */
 .calendar-head {
@@ -291,15 +254,79 @@ main {
 
 .calendar-day.empty { background: transparent; }
 .calendar-day.today { border: 2px solid #2563eb; font-weight: bold; }
-.calendar-day.holiday { background-color: #fee2e2; color: #dc2626; }
 .calendar-day.has-event { background-color: #dbeafe; font-weight: bold; color: #1e40af; border: 1px solid #3b82f6; }
 
-/* FORMULARIOS (ADMIN) */
+/* HORARIOS Y NAVEGACIÓN INFERIOR */
+.schedule-table-container {
+  overflow-x: auto;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 0.8rem;
+  min-width: 480px;
+}
+
+.schedule-table th {
+  background-color: #f3f4f6;
+  padding: 10px 6px;
+  color: #374151;
+  font-weight: 700;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.schedule-table td {
+  padding: 8px 4px;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+}
+
+.time-col { background-color: #f9fafb; font-size: 0.75rem; color: #6b7280; white-space: nowrap; }
+.break-row td { background-color: #e5e7eb; color: #374151; font-weight: bold; letter-spacing: 1px; }
+
+.subject-mat { background-color: #3b82f6; color: #ffffff; }
+.subject-eus { background-color: #f97316; color: #ffffff; }
+.subject-ingurune { background-color: #22c55e; color: #ffffff; }
+.subject-musika { background-color: #ec4899; color: #ffffff; }
+.subject-gazte { background-color: #ef4444; color: #ffffff; }
+.subject-ing { background-color: #eab308; color: #ffffff; }
+.subject-plas { background-color: #facc15; color: #000000; }
+.subject-tutor { background-color: #a855f7; color: #ffffff; }
+.subject-efi { background-color: #6366f1; color: #ffffff; }
+.subject-kzp { background-color: #881337; color: #ffffff; }
+
+.annual-calendar-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+}
+
+.img-responsive-calendar {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
+.school-info-box {
+  background: #f9fafb;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .form-group { margin-bottom: 12px; }
 .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: #374151; }
-.form-group input, 
-.form-group textarea, 
-.form-group select { 
+.form-group input, .form-group textarea, .form-group select { 
   width: 100%; 
   padding: 10px; 
   border: 1px solid #d1d5db; 
@@ -312,7 +339,6 @@ main {
 .admin-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .admin-header button { width: auto; }
 
-/* MENÚ NAVEGACIÓN INFERIOR */
 nav.bottom {
   position: fixed;
   bottom: 0;
