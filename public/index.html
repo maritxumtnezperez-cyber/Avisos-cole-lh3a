@@ -165,6 +165,59 @@
       cursor: pointer;
     }
 
+    /* Estilos para Tarjetas de Horarios y Tabla escolar */
+    .schedule-card {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+    }
+    .schedule-card h3 {
+      margin: 0 0 4px 0;
+      color: #39aa6a;
+      font-size: 16px;
+    }
+    .schedule-subtitle {
+      margin: 0 0 12px 0;
+      font-size: 12px;
+      color: #666;
+    }
+    .schedule-table-wrapper {
+      overflow-x: auto;
+      margin-bottom: 10px;
+    }
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: center;
+    }
+    .schedule-table th, .schedule-table td {
+      border: 1px solid #e0e0e0;
+      padding: 6px 4px;
+    }
+    .schedule-table th {
+      background-color: #39aa6a;
+      color: white;
+      font-weight: 600;
+    }
+    .schedule-table .time-col {
+      background-color: #f0f0f0;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .schedule-table .break-row td {
+      background-color: #fff3cd;
+      color: #856404;
+      font-size: 11px;
+    }
+    .schedule-table .merged-cell {
+      background-color: #e8f5e9;
+      vertical-align: middle;
+      font-weight: bold;
+    }
+
     /* Navegación Inferior */
     nav.bottom {
       position: fixed;
@@ -250,15 +303,106 @@
       <div id="monthEventsList" class="notice-list" style="margin-top: 20px;"></div>
     </section>
 
-    <!-- Pantalla: Horarios -->
+    <!-- Pantalla: Horarios y Calendarios Escolares -->
     <section id="schedules" class="screen">
-      <h2>Horarios habituales</h2>
-      <div id="schedulesContent" class="notice-card" style="padding: 16px; background: white; border-radius: 12px; margin-top: 10px;">
-        <h3>Escolar y Actividades</h3>
-        <ul>
-          <li><strong>Colegio:</strong> Lunes a Viernes de 09:00 a 16:30</li>
-          <li><strong>Jiujitsu:</strong> Martes y Jueves de 17:30 a 18:30</li>
-        </ul>
+      <h2>Horarios y Calendarios 2026/2027</h2>
+
+      <!-- Tarjeta 1: Horario Escolar Semanal -->
+      <div class="schedule-card">
+        <h3>📚 Horario del Colegio</h3>
+        <p class="schedule-subtitle">Lunes a Viernes (Ordutegia)</p>
+        
+        <div class="schedule-table-wrapper">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Astelehena</th>
+                <th>Asteartea</th>
+                <th>Asteazkena</th>
+                <th>Osteguna</th>
+                <th>Ostirala</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="time-col">09:00 - 09:50</td>
+                <td>Matematika</td>
+                <td>Euskera</td>
+                <td rowspan="2" class="merged-cell">Ingurune</td>
+                <td>Euskera</td>
+                <td>Euskera</td>
+              </tr>
+              <tr>
+                <td class="time-col">09:50 - 10:40</td>
+                <td>Ingurune</td>
+                <td>Matematika</td>
+                <td>Musika</td>
+                <td>Matematika</td>
+              </tr>
+              <tr class="break-row">
+                <td class="time-col">10:40 - 11:10</td>
+                <td colspan="5"><strong>JOLASTORDUA (Recreo)</strong></td>
+              </tr>
+              <tr>
+                <td class="time-col">11:10 - 11:55</td>
+                <td>Gaztelania</td>
+                <td>Ingelesa</td>
+                <td>Euskera</td>
+                <td>Matematika</td>
+                <td>Tutoretza</td>
+              </tr>
+              <tr>
+                <td class="time-col">11:55 - 12:45</td>
+                <td>Euskera</td>
+                <td>Plastika</td>
+                <td>Gaztelania</td>
+                <td>Ingurune</td>
+                <td>Ingelesa</td>
+              </tr>
+              <tr class="break-row">
+                <td class="time-col">12:45 - 13:25</td>
+                <td colspan="5"><strong>BAZKALORDUA (Comida)</strong></td>
+              </tr>
+              <tr>
+                <td class="time-col">Tarde</td>
+                <td>Ingelesa</td>
+                <td>Heziketa Fisikoa</td>
+                <td>K.Z.P.</td>
+                <td>Gaztelania</td>
+                <td>Heziketa Fisikoa</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="img-container-full" style="margin-top: 12px;">
+          <a href="/horario-colegio.jpg" target="_blank">
+            <img src="/horario-colegio.jpg" alt="Horario Colegio" style="width:100%; border-radius:8px; border:1px solid #ddd;">
+          </a>
+        </div>
+      </div>
+
+      <!-- Tarjeta 2: Calendario Bentades 26/27 -->
+      <div class="schedule-card">
+        <h3>🏫 Egutegia Bentades 2026/2027</h3>
+        <p class="schedule-subtitle">Calendario lectivo HH - LH (175 egun lektibo)</p>
+        <div class="img-container-full">
+          <a href="/calendario-bentades.jpg" target="_blank">
+            <img src="/calendario-bentades.jpg" alt="Egutegia Bentades 2026/2027" style="width:100%; border-radius:8px; border:1px solid #ddd;">
+          </a>
+        </div>
+      </div>
+
+      <!-- Tarjeta 3: Calendario de Inglés -->
+      <div class="schedule-card">
+        <h3>🇬🇧 Calendario de Inglés (Elsa & Friends)</h3>
+        <p class="schedule-subtitle">Curso 2026/2027</p>
+        <div class="img-container-full">
+          <a href="/calendario-ingles.jpg" target="_blank">
+            <img src="/calendario-ingles.jpg" alt="Calendario de Inglés 2026/2027" style="width:100%; border-radius:8px; border:1px solid #ddd;">
+          </a>
+        </div>
       </div>
     </section>
 
