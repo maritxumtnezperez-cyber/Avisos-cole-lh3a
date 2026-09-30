@@ -36,7 +36,7 @@ document.getElementById('backBtn').addEventListener('click', () => {
   showScreen('home');
 });
 
-// EVENTO PARA FILTRAR EVENTOS PRÓXIMOS POR CATEGORÍA
+// FILTRAR EVENTOS
 const filterCategory = document.getElementById('filterCategory');
 if (filterCategory) {
   filterCategory.addEventListener('change', () => {
@@ -44,7 +44,7 @@ if (filterCategory) {
   });
 }
 
-// OBTENER Y GUARDAR DE LOCALSTORAGE
+// LOCALSTORAGE
 function getNotices() {
   return JSON.parse(localStorage.getItem('notices') || '[]');
 }
@@ -53,7 +53,30 @@ function saveNotices(notices) {
   localStorage.setItem('notices', JSON.stringify(notices));
 }
 
-// RENDERIZAR LISTAS DE EVENTOS (PRÓXIMOS Y PASADOS)
+// GENERAR ENLACE DE GOOGLE CALENDAR
+function getGoogleCalendarUrl(title, date, time, description) {
+  if (!date) return '#';
+  
+  const cleanDate = date.replace(/-/g, '');
+  let startTime = '090000';
+  let endTime = '100000';
+
+  if (time) {
+    const cleanTime = time.replace(':', '');
+    startTime = cleanTime.padEnd(4, '0') + '00';
+    const hour = parseInt(cleanTime.substring(0, 2), 10);
+    const endHour = (hour + 1).toString().padStart(2, '0');
+    endTime = endHour + cleanTime.substring(2).padEnd(2, '0') + '00';
+  }
+
+  const dates = `${cleanDate}T${startTime}/${cleanDate}T${endTime}`;
+  const details = encodeURIComponent(description || '');
+  const text = encodeURIComponent(title || 'Evento Cole');
+
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
+}
+
+// RENDERIZAR EVENTOS PRÓXIMOS Y PASADOS
 function renderNotices() {
   const notices = getNotices();
   const noticeList = document.getElementById('noticeList');
@@ -71,7 +94,6 @@ function renderNotices() {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
-  // Filtrar eventos futuros y por categoría seleccionada
   let futureNotices = notices.filter(n => {
     if (!n.date) return true;
     const noticeDate = new Date(n.date + 'T00:00:00');
@@ -88,10 +110,12 @@ function renderNotices() {
     return noticeDate < now;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Tarjeta de Próximo Evento Destacado
+  // Tarjeta Próximo Evento Destacado
   if (futureNotices.length > 0 && nextContainer) {
     const next = futureNotices[0];
     const imageHtml = next.image ? `<div class="img-container-full"><img src="${next.image}" alt="Imagen del evento"></div>` : '';
+    const calUrl = getGoogleCalendarUrl(next.title, next.date, next.time, next.description);
+    
     nextContainer.innerHTML = `
       <div class="next-tag">Próximo evento destacado</div>
       <span class="category-tag">${next.category || 'General'}</span>
@@ -102,6 +126,10 @@ function renderNotices() {
       </div>
       <p class="event-desc">${next.description || ''}</p>
       ${imageHtml}
+      <div class="card-actions-column">
+        ${next.date ? `<a href="${calUrl}" target="_blank" class="btn-action btn-add-calendar">📅 Añadir a Google Calendar</a>` : ''}
+        <button class="btn-action btn-delete" onclick="deleteNotice(${next.id})">Eliminar</button>
+      </div>
     `;
   }
 
@@ -113,6 +141,8 @@ function renderNotices() {
       const card = document.createElement('div');
       card.className = 'notice-card';
       const imageHtml = notice.image ? `<div class="img-container-full"><img src="${notice.image}" alt="Imagen de evento"></div>` : '';
+      const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
+
       card.innerHTML = `
         <span class="category-tag">${notice.category || 'General'}</span>
         <h3 class="event-title-red">${notice.title}</h3>
@@ -122,7 +152,8 @@ function renderNotices() {
         </div>
         <p class="event-desc">${notice.description || ''}</p>
         ${imageHtml}
-        <div class="card-actions-row">
+        <div class="card-actions-column">
+          ${notice.date ? `<a href="${calUrl}" target="_blank" class="btn-action btn-add-calendar">📅 Añadir a Google Calendar</a>` : ''}
           <button class="btn-action btn-delete" onclick="deleteNotice(${notice.id})">Eliminar</button>
         </div>
       `;
@@ -155,7 +186,7 @@ function renderNotices() {
   }
 }
 
-// LÓGICA Y DIBUJO DEL CALENDARIO MENSUAL
+// CALENDARIO MENSUAL INTERACTIVO
 function renderCalendar() {
   const monthLabel = document.getElementById('monthLabel');
   const calendarGrid = document.getElementById('calendarGrid');
@@ -177,7 +208,6 @@ function renderCalendar() {
 
   calendarGrid.innerHTML = '';
 
-  // Días de la semana en la cabecera del calendario
   const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   weekDays.forEach(day => {
     const headerCell = document.createElement('div');
@@ -186,20 +216,18 @@ function renderCalendar() {
     calendarGrid.appendChild(headerCell);
   });
 
-  const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Lunes = 0
+  const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
   const totalDays = new Date(year, month + 1, 0).getDate();
 
   const notices = getNotices();
   const today = new Date();
 
-  // Celdas vacías al principio del mes
   for (let i = 0; i < firstDayIndex; i++) {
     const emptyCell = document.createElement('div');
     emptyCell.className = 'calendar-day empty';
     calendarGrid.appendChild(emptyCell);
   }
 
-  // Días del mes
   for (let day = 1; day <= totalDays; day++) {
     const dayCell = document.createElement('div');
     dayCell.className = 'calendar-day';
@@ -209,12 +237,10 @@ function renderCalendar() {
     const formattedMonth = (month + 1) < 10 ? `0${month + 1}` : (month + 1);
     const dateString = `${year}-${formattedMonth}-${formattedDay}`;
 
-    // Resaltar si es hoy
     if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
       dayCell.classList.add('today');
     }
 
-    // Comprobar si hay eventos en esta fecha
     const hasEvent = notices.some(n => n.date === dateString);
     if (hasEvent) {
       dayCell.classList.add('has-event');
@@ -223,7 +249,6 @@ function renderCalendar() {
     calendarGrid.appendChild(dayCell);
   }
 
-  // Cargar lista de eventos correspondientes al mes visible
   if (monthEventsList) {
     monthEventsList.innerHTML = '';
     const monthNotices = notices.filter(n => {
@@ -239,6 +264,8 @@ function renderCalendar() {
         const card = document.createElement('div');
         card.className = 'notice-card';
         const imageHtml = notice.image ? `<div class="img-container-full"><img src="${notice.image}" alt="Imagen de evento"></div>` : '';
+        const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
+
         card.innerHTML = `
           <span class="category-tag">${notice.category || 'General'}</span>
           <h3 class="event-title-red">${notice.title}</h3>
@@ -248,6 +275,9 @@ function renderCalendar() {
           </div>
           <p class="event-desc">${notice.description || ''}</p>
           ${imageHtml}
+          <div class="card-actions-column">
+            <a href="${calUrl}" target="_blank" class="btn-action btn-add-calendar">📅 Añadir a Google Calendar</a>
+          </div>
         `;
         monthEventsList.appendChild(card);
       });
@@ -255,7 +285,7 @@ function renderCalendar() {
   }
 }
 
-// Botones para avanzar/retroceder mes en el calendario
+// NAVEGACIÓN MESES
 const prevMonthBtn = document.getElementById('prevMonth');
 const nextMonthBtn = document.getElementById('nextMonth');
 
@@ -273,7 +303,7 @@ if (nextMonthBtn) {
   });
 }
 
-// PUBLICAR EVENTO CON LECTURA DE IMAGEN (BASE64)
+// PUBLICAR EVENTO
 document.getElementById('publish').addEventListener('click', () => {
   const titleInput = document.getElementById('title');
   const categoryInput = document.getElementById('category');
@@ -309,7 +339,6 @@ document.getElementById('publish').addEventListener('click', () => {
     notices.push(newNotice);
     saveNotices(notices);
 
-    // Limpieza de inputs
     titleInput.value = '';
     dateInput.value = '';
     timeInput.value = '';
@@ -333,7 +362,7 @@ document.getElementById('publish').addEventListener('click', () => {
   }
 });
 
-// ELIMINAR EVENTO POR ID
+// ELIMINAR EVENTO
 function deleteNotice(id) {
   if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
     let notices = getNotices();
