@@ -91,40 +91,47 @@ function renderNotices() {
   if (pastNoticeList) pastNoticeList.innerHTML = '';
   if (nextContainer) nextContainer.innerHTML = '';
 
-  // Fecha actual a medianoche
+  // Fecha y hora exactas en el momento de renderizar
   const now = new Date();
-  now.setHours(0, 0, 0, 0);
 
-  // Función auxiliar para parsear fechas "YYYY-MM-DD" correctamente sin desfasajes de zona horaria
-  const parseDate = (dateStr) => {
+  // Convierte la fecha y hora de la notificacion a un objeto Date real
+  const getEventDateTime = (dateStr, timeStr) => {
     if (!dateStr) return null;
     const parts = dateStr.split('-');
-    return new Date(parts[0], parts[1] - 1, parts[2]);
+    let hour = 23, minute = 59; // Si no hay hora especificada, caduca al final del día
+    
+    if (timeStr) {
+      const timeParts = timeStr.split(':');
+      hour = parseInt(timeParts[0], 10) || 0;
+      minute = parseInt(timeParts[1], 10) || 0;
+    }
+
+    return new Date(parts[0], parts[1] - 1, parts[2], hour, minute, 0);
   };
 
-  // Filtrar eventos futuros (fechas hoy o posteriores)
+  // Eventos cuya hora fijada aún NO ha transcurrido
   let futureNotices = notices.filter(n => {
     if (!n.date) return true;
-    const noticeDate = parseDate(n.date);
-    return noticeDate >= now;
-  }).sort((a, b) => parseDate(a.date) - parseDate(b.date));
+    const eventDateTime = getEventDateTime(n.date, n.time);
+    return eventDateTime >= now;
+  }).sort((a, b) => getEventDateTime(a.date, a.time) - getEventDateTime(b.date, b.time));
 
   if (selectedFilter !== 'TODAS') {
     futureNotices = futureNotices.filter(n => n.category === selectedFilter);
   }
 
-  // Filtrar eventos pasados (fechas estrictamente anteriores a hoy)
+  // Eventos cuyo horario YA ha transcurrido
   let pastNotices = notices.filter(n => {
     if (!n.date) return false;
-    const noticeDate = parseDate(n.date);
-    return noticeDate < now;
-  }).sort((a, b) => parseDate(b.date) - parseDate(a.date));
+    const eventDateTime = getEventDateTime(n.date, n.time);
+    return eventDateTime < now;
+  }).sort((a, b) => getEventDateTime(b.date, b.time) - getEventDateTime(a.date, a.time));
 
   if (selectedFilter !== 'TODAS') {
     pastNotices = pastNotices.filter(n => n.category === selectedFilter);
   }
 
-  // Tarjeta Próximo Evento Destacado
+  // Tarjeta de Evento Destacado
   if (futureNotices.length > 0 && nextContainer) {
     const next = futureNotices[0];
     const imageHtml = next.image ? `<div class="img-container-full"><img src="${next.image}" alt="Imagen del evento"></div>` : '';
@@ -175,7 +182,7 @@ function renderNotices() {
     });
   }
 
-  // Lista de Eventos Pasados (se renderiza en la pestaña "Pasados")
+  // Lista de Eventos Pasados
   if (pastNoticeList) {
     if (pastNotices.length === 0) {
       pastNoticeList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
