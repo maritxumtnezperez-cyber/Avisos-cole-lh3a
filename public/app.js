@@ -150,13 +150,17 @@ async function renderNotices() {
     const calUrl = getGoogleCalendarUrl(next.title, next.date, next.time, next.description);
     
     nextContainer.innerHTML = `
-      <div class="next-tag" style="background:#e6f4ea; color:#137333; padding:4px 8px; border-radius:4px; font-weight:bold; display:inline-block; margin-bottom:8px;">Próximo evento destacado</div>
-      <br>
-      <span class="category-tag">${next.category || 'General'}</span>
-      <h3 style="color:#d93025; margin:8px 0;">${next.title}</h3>
-      <div class="event-datetime-info">
-        <span>📅 ${next.date || 'Sin fecha'}</span>
-        <span>🕒 ${next.time || 'Sin hora'}</span>
+      <div style="background: #e6f4ea; border: 2px solid #d93025; border-radius: 12px; padding: 14px; margin-bottom: 16px; box-shadow: 0 3px 8px rgba(0,0,0,0.08);">
+        <div style="background:#137333; color:white; padding:4px 10px; border-radius:6px; font-weight:bold; display:inline-block; font-size:12px; margin-bottom:8px;">
+          Próximo evento destacado
+        </div>
+        <br>
+        <span class="category-tag">${next.category || 'General'}</span>
+        <h3 style="color:#d93025; margin:8px 0; font-size: 18px;">${next.title}</h3>
+        <div class="event-datetime-info" style="font-weight: bold; color: #1f2937;">
+          <span>📅 ${next.date || 'Sin fecha'}</span>
+          <span style="margin-left: 10px;">🕒 ${next.time || 'Sin hora'}</span>
+        </div>
       </div>
       <p class="event-desc">${next.description || ''}</p>
       ${imageHtml}
