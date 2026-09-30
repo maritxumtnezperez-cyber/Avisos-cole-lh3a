@@ -25,7 +25,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: #f4f6f5;
       color: #333;
-      padding-bottom: 70px;
+      padding-bottom: 75px;
     }
 
     /* Encabezado */
@@ -105,7 +105,7 @@
       flex: 1;
     }
 
-    /* Botones de Evento y Calendar */
+    /* Botones generales */
     .btn-primary {
       width: 100%;
       padding: 12px;
@@ -165,7 +165,7 @@
       cursor: pointer;
     }
 
-    /* Estilos para Tarjetas de Horarios y Tabla escolar */
+    /* Estilos para Horarios */
     .schedule-card {
       background: white;
       padding: 16px;
@@ -216,7 +216,7 @@
       letter-spacing: 1px;
     }
 
-    /* Colores por Asignatura */
+    /* Colores Asignaturas */
     .subject-matematika { background-color: #3b82f6; color: white; }
     .subject-ingurune   { background-color: #22c55e; color: white; }
     .subject-euskera    { background-color: #f97316; color: white; }
@@ -228,7 +228,65 @@
     .subject-kzp        { background-color: #8b5cf6; color: white; }
     .subject-tutoretza  { background-color: #9ca3af; color: white; }
 
-    /* Navegación Inferior */
+    /* ESTILOS ESPECÍFICOS: TIRAS DE ORINA */
+    .urine-param-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .urine-param-title {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+    .color-options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+      gap: 6px;
+    }
+    .color-pill {
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 6px 4px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: bold;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+    }
+    .color-pill.selected {
+      border-color: #0f172a;
+      box-shadow: 0 0 0 2px #38bdf8;
+      transform: scale(1.05);
+    }
+    .strip-summary-bar {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 8px;
+      background: #f1f5f9;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .strip-summary-item {
+      flex: 1;
+      padding: 6px 4px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 10px;
+      font-weight: bold;
+      min-width: 55px;
+    }
+
+    /* Navegación Inferior (5 Pestañas) */
     nav.bottom {
       position: fixed;
       bottom: 0;
@@ -249,7 +307,8 @@
       align-items: center;
       justify-content: center;
       color: #6b7280;
-      font-size: 11px;
+      font-size: 10px;
+      padding: 2px 0;
       cursor: pointer;
     }
     nav.bottom button.active {
@@ -257,7 +316,7 @@
       font-weight: bold;
     }
     nav.bottom button span {
-      font-size: 18px;
+      font-size: 17px;
       margin-bottom: 2px;
     }
   </style>
@@ -302,7 +361,7 @@
       <div id="pastNoticeList" class="notice-list"></div>
     </section>
 
-    <!-- Pantalla: Calendario con Flechas de Navegación -->
+    <!-- Pantalla: Calendario de Eventos -->
     <section id="calendar" class="screen">
       <div class="calendar-header">
         <button id="prevMonth" class="btn-calendar">←</button>
@@ -317,7 +376,6 @@
     <section id="schedules" class="screen">
       <h2>Horarios y Calendarios 2026/2027</h2>
 
-      <!-- Tarjeta 1: Horario Escolar Semanal -->
       <div class="schedule-card">
         <h3>📚 Horario del Colegio</h3>
         <p class="schedule-subtitle">Ordutegia - Lunes a Viernes</p>
@@ -387,7 +445,6 @@
         </div>
       </div>
 
-      <!-- Tarjeta 2: Calendario Bentades 26/27 -->
       <div class="schedule-card">
         <h3>🏫 Egutegia Bentades 2026/2027</h3>
         <p class="schedule-subtitle">Calendario lectivo HH - LH (175 egun lektibo)</p>
@@ -398,7 +455,6 @@
         </div>
       </div>
 
-      <!-- Tarjeta 3: Calendario de Inglés -->
       <div class="schedule-card">
         <h3>🇬🇧 Calendario de Inglés (Elsa & Friends)</h3>
         <p class="schedule-subtitle">Curso 2026/2027</p>
@@ -407,6 +463,101 @@
             <img src="/calendario-ingles.jpg" alt="Calendario de Inglés 2026/2027" style="width:100%; border-radius:8px; border:1px solid #ddd;">
           </a>
         </div>
+      </div>
+    </section>
+
+    <!-- QUINTA PESTAÑA: CALENDARIO Y REGISTRO DE TIRAS DE ORINA -->
+    <section id="stripes" class="screen">
+      <h2>🧪 Registro Tira de Orina</h2>
+      
+      <!-- Navegación del mes para tiras -->
+      <div class="calendar-header">
+        <button id="prevUrineMonth" class="btn-calendar">←</button>
+        <h2 id="urineMonthLabel"></h2>
+        <button id="nextUrineMonth" class="btn-calendar">→</button>
+      </div>
+
+      <!-- Calendario de Tiras -->
+      <div id="urineCalendarGrid" class="calendar-grid"></div>
+
+      <!-- Formulario de Registro para el día seleccionado -->
+      <div style="margin-top: 20px; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+        <h3 style="margin-bottom: 12px; color: #39aa6a;" id="selectedUrineDateTitle">Anotar Tira de Hoy</h3>
+        
+        <div class="form-group">
+          <label for="urineDate">Fecha de la muestra:</label>
+          <input type="date" id="urineDate">
+        </div>
+
+        <!-- Parámetro 1: Leucocitos -->
+        <div class="urine-param-card">
+          <div class="urine-param-title">1. Leucocitos (LEU)</div>
+          <div class="color-options-grid" data-param="leucocitos">
+            <div class="color-pill" style="background:#fef08a; color:#854d0e;" data-val="Neg" data-color="#fef08a" data-textcolor="#854d0e">Neg</div>
+            <div class="color-pill" style="background:#fde047; color:#713f12;" data-val="Trazas" data-color="#fde047" data-textcolor="#713f12">Trazas</div>
+            <div class="color-pill" style="background:#f59e0b; color:#ffffff;" data-val="+" data-color="#f59e0b" data-textcolor="#ffffff">+</div>
+            <div class="color-pill" style="background:#d97706; color:#ffffff;" data-val="++" data-color="#d97706" data-textcolor="#ffffff">++</div>
+            <div class="color-pill" style="background:#b45309; color:#ffffff;" data-val="+++" data-color="#b45309" data-textcolor="#ffffff">+++</div>
+          </div>
+        </div>
+
+        <!-- Parámetro 2: Nitritos -->
+        <div class="urine-param-card">
+          <div class="urine-param-title">2. Nitritos (NIT)</div>
+          <div class="color-options-grid" data-param="nitritos">
+            <div class="color-pill" style="background:#ffffff; color:#333; border:1px solid #ccc;" data-val="Neg" data-color="#ffffff" data-textcolor="#333333">Neg</div>
+            <div class="color-pill" style="background:#fbcfe8; color:#9d174d;" data-val="Positivo" data-color="#fbcfe8" data-textcolor="#9d174d">Pos (+)</div>
+          </div>
+        </div>
+
+        <!-- Parámetro 3: Proteínas -->
+        <div class="urine-param-card">
+          <div class="urine-param-title">3. Proteínas (PRO)</div>
+          <div class="color-options-grid" data-param="proteinas">
+            <div class="color-pill" style="background:#fef9c3; color:#713f12;" data-val="Neg" data-color="#fef9c3" data-textcolor="#713f12">Neg</div>
+            <div class="color-pill" style="background:#a7f3d0; color:#065f46;" data-val="Trazas" data-color="#a7f3d0" data-textcolor="#065f46">Trazas</div>
+            <div class="color-pill" style="background:#34d399; color:#064e3b;" data-val="+" data-color="#34d399" data-textcolor="#064e3b">+</div>
+            <div class="color-pill" style="background:#059669; color:#ffffff;" data-val="++" data-color="#059669" data-textcolor="#ffffff">++</div>
+            <div class="color-pill" style="background:#047857; color:#ffffff;" data-val="+++" data-color="#047857" data-textcolor="#ffffff">+++</div>
+          </div>
+        </div>
+
+        <!-- Parámetro 4: Sangre / Hemoglobina -->
+        <div class="urine-param-card">
+          <div class="urine-param-title">4. Sangre / Eritrocitos (BLO)</div>
+          <div class="color-options-grid" data-param="sangre">
+            <div class="color-pill" style="background:#fef08a; color:#854d0e;" data-val="Neg" data-color="#fef08a" data-textcolor="#854d0e">Neg</div>
+            <div class="color-pill" style="background:#facc15; color:#713f12;" data-val="Trazas" data-color="#facc15" data-textcolor="#713f12">Trazas</div>
+            <div class="color-pill" style="background:#84cc16; color:#365314;" data-val="+" data-color="#84cc16" data-textcolor="#365314">+</div>
+            <div class="color-pill" style="background:#15803d; color:#ffffff;" data-val="++" data-color="#15803d" data-textcolor="#ffffff">++</div>
+            <div class="color-pill" style="background:#166534; color:#ffffff;" data-val="+++" data-color="#166534" data-textcolor="#ffffff">+++</div>
+          </div>
+        </div>
+
+        <!-- Parámetro 5: pH -->
+        <div class="urine-param-card">
+          <div class="urine-param-title">5. pH</div>
+          <div class="color-options-grid" data-param="ph">
+            <div class="color-pill" style="background:#f97316; color:#ffffff;" data-val="5.0" data-color="#f97316" data-textcolor="#ffffff">5.0</div>
+            <div class="color-pill" style="background:#eab308; color:#ffffff;" data-val="6.0" data-color="#eab308" data-textcolor="#ffffff">6.0</div>
+            <div class="color-pill" style="background:#84cc16; color:#ffffff;" data-val="6.5" data-color="#84cc16" data-textcolor="#ffffff">6.5</div>
+            <div class="color-pill" style="background:#22c55e; color:#ffffff;" data-val="7.0" data-color="#22c55e" data-textcolor="#ffffff">7.0</div>
+            <div class="color-pill" style="background:#06b6d4; color:#ffffff;" data-val="8.0" data-color="#06b6d4" data-textcolor="#ffffff">8.0</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="urineNotes">Observaciones o Notas:</label>
+          <textarea id="urineNotes" rows="2" placeholder="Síntomas, beber más agua, etc..."></textarea>
+        </div>
+
+        <button id="saveUrineStrip" class="btn-primary">Guardar Anotación</button>
+      </div>
+
+      <!-- Detalle de Registros del Mes -->
+      <div style="margin-top: 20px;">
+        <h3>📋 Historial de lecturas del mes</h3>
+        <div id="urineLogsList" style="margin-top: 10px;"></div>
       </div>
     </section>
 
@@ -456,7 +607,7 @@
     </section>
   </main>
 
-  <!-- Navegación Inferior (4 Pestañas) -->
+  <!-- Navegación Inferior (5 Pestañas) -->
   <nav class="bottom">
     <button data-screen="home" class="active">
       <span>📌</span>
@@ -468,11 +619,15 @@
     </button>
     <button data-screen="calendar">
       <span>📅</span>
-      <label>Calendario</label>
+      <label>Eventos</label>
     </button>
     <button data-screen="schedules">
       <span>🕒</span>
       <label>Horarios</label>
+    </button>
+    <button data-screen="stripes">
+      <span>🧪</span>
+      <label>Tiras</label>
     </button>
   </nav>
 
