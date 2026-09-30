@@ -7,6 +7,14 @@ if (!savedPassword && window.location.pathname !== "/login.html") {
 
 let currentCalendarDate = new Date();
 
+// Función auxiliar para formatear fechas a DD/MM/AAAA
+function formatDate(dateStr) {
+  if (!dateStr) return 'Sin fecha';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
 function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(screen => {
     screen.classList.remove('active');
@@ -171,7 +179,7 @@ async function renderNotices() {
         <span class="category-tag">${next.category || 'General'}</span>
         <h3 style="color:#d93025; margin:8px 0; font-size: 18px;">${next.title}</h3>
         <div class="event-datetime-info" style="font-weight: bold; color: #1f2937;">
-          <span>📅 ${next.date || 'Sin fecha'}</span>
+          <span>📅 ${formatDate(next.date)}</span>
           <span style="margin-left: 10px;">🕒 ${next.time || 'Sin hora'}</span>
         </div>
       </div>
@@ -194,7 +202,7 @@ async function renderNotices() {
         <span class="category-tag">${notice.category || 'General'}</span>
         <h3 style="color:#d93025; margin:8px 0;">${notice.title}</h3>
         <div class="event-datetime-info">
-          <span>📅 ${notice.date || 'Sin fecha'}</span>
+          <span>📅 ${formatDate(notice.date)}</span>
           <span>🕒 ${notice.time || 'Sin hora'}</span>
         </div>
         <p class="event-desc">${notice.description || ''}</p>
@@ -222,7 +230,7 @@ async function renderNotices() {
           <span class="category-tag">${notice.category || 'General'}</span>
           <h3>${notice.title}</h3>
           <div class="event-datetime-info">
-            <span>📅 ${notice.date}</span>
+            <span>📅 ${formatDate(notice.date)}</span>
             <span>🕒 ${notice.time || ''}</span>
           </div>
           <p class="event-desc">${notice.description || ''}</p>
@@ -322,7 +330,7 @@ async function renderCalendar() {
           <span class="category-tag">${notice.category || 'General'}</span>
           <h3 style="color:#d93025; margin:8px 0;">${notice.title}</h3>
           <div class="event-datetime-info">
-            <span>📅 ${notice.date}</span>
+            <span>📅 ${formatDate(notice.date)}</span>
             <span>🕒 ${notice.time || 'Sin hora'}</span>
           </div>
           <p class="event-desc">${notice.description || ''}</p>
