@@ -1,7 +1,8 @@
-// VERIFICACIÓN Y GUARDIÁN DE ACCESO
-const savedPassword = sessionStorage.getItem("appPassword");
-if (!savedPassword) {
-  window.location.href = "/login.html";
+// VERIFICACIÓN DE ACCESO
+const savedPassword = localStorage.getItem("appPassword");
+
+if (!savedPassword && window.location.pathname !== "/login.html") {
+  window.location.replace("/login.html");
 }
 
 let currentCalendarDate = new Date();
@@ -53,22 +54,21 @@ if (filterCategory) {
   });
 }
 
-// Obtener avisos con validación de cabecera de la App
 async function getNotices() {
   try {
     const res = await fetch('/api/notices', {
-      headers: { 'x-app-password': savedPassword }
+      headers: { 'x-app-password': savedPassword || '' }
     });
     if (!res.ok) {
       if (res.status === 401) {
-        sessionStorage.removeItem("appPassword");
-        window.location.href = "/login.html";
+        localStorage.removeItem("appPassword");
+        window.location.replace("/login.html");
       }
       return [];
     }
     return await res.json();
   } catch (err) {
-    return JSON.parse(localStorage.getItem('notices') || '[]');
+    return [];
   }
 }
 
@@ -89,7 +89,7 @@ function getGoogleCalendarUrl(title, date, time, description) {
 
   const dates = `${cleanDate}T${startTime}/${cleanDate}T${endTime}`;
   const details = encodeURIComponent(description || '');
-  const text = encodeURIComponent(title || 'Evento Cole');
+  const text = encodeURIComponent(title || 'Evento');
 
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
 }
@@ -358,9 +358,6 @@ if (publishBtn) {
       return;
     }
 
-    const adminPass = prompt("Introduce la contraseña de administración para publicar:");
-    if (!adminPass) return;
-
     const saveAndFinish = async (imageBase64 = null) => {
       const newNotice = {
         title: title,
@@ -376,8 +373,7 @@ if (publishBtn) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-app-password': savedPassword,
-            'x-admin-password': adminPass
+            'x-app-password': savedPassword
           },
           body: JSON.stringify(newNotice)
         });
@@ -416,16 +412,12 @@ if (publishBtn) {
 }
 
 async function deleteNotice(id) {
-  const adminPass = prompt("Introduce la contraseña de administración para eliminar:");
-  if (!adminPass) return;
-
   if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
     try {
       const res = await fetch(`/api/notices/${id}`, {
         method: 'DELETE',
         headers: {
-          'x-app-password': savedPassword,
-          'x-admin-password': adminPass
+          'x-app-password': savedPassword
         }
       });
 
@@ -444,6 +436,8 @@ async function deleteNotice(id) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  renderNotices();
-  renderCalendar();
+  if (savedPassword) {
+    renderNotices();
+    renderCalendar();
+  }
 });
