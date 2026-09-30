@@ -146,13 +146,14 @@ async function renderNotices() {
 
   if (futureNotices.length > 0 && nextContainer) {
     const next = futureNotices[0];
-    const imageHtml = (next.image || next.imageUrl) ? `<div class="img-container-full"><img src="${next.image || next.imageUrl}" alt="Imagen del evento"></div>` : '';
+    const imageHtml = (next.image || next.imageUrl) ? `<div class="img-container-full"><img src="${next.image || next.imageUrl}" alt="Imagen del evento" style="max-width:100%; border-radius:8px;"></div>` : '';
     const calUrl = getGoogleCalendarUrl(next.title, next.date, next.time, next.description);
     
     nextContainer.innerHTML = `
-      <div class="next-tag">Próximo evento destacado</div>
+      <div class="next-tag" style="background:#e6f4ea; color:#137333; padding:4px 8px; border-radius:4px; font-weight:bold; display:inline-block; margin-bottom:8px;">Próximo evento destacado</div>
+      <br>
       <span class="category-tag">${next.category || 'General'}</span>
-      <h3 class="event-title-red">${next.title}</h3>
+      <h3 style="color:#d93025; margin:8px 0;">${next.title}</h3>
       <div class="event-datetime-info">
         <span>📅 ${next.date || 'Sin fecha'}</span>
         <span>🕒 ${next.time || 'Sin hora'}</span>
@@ -172,12 +173,13 @@ async function renderNotices() {
     futureNotices.forEach((notice) => {
       const card = document.createElement('div');
       card.className = 'notice-card';
-      const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento"></div>` : '';
+      card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05);";
+      const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
       const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
       card.innerHTML = `
         <span class="category-tag">${notice.category || 'General'}</span>
-        <h3 class="event-title-red">${notice.title}</h3>
+        <h3 style="color:#d93025; margin:8px 0;">${notice.title}</h3>
         <div class="event-datetime-info">
           <span>📅 ${notice.date || 'Sin fecha'}</span>
           <span>🕒 ${notice.time || 'Sin hora'}</span>
@@ -200,7 +202,8 @@ async function renderNotices() {
       pastNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
-        const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento"></div>` : '';
+        card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px;";
+        const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
         card.innerHTML = `
           <span class="category-tag">${notice.category || 'General'}</span>
           <h3>${notice.title}</h3>
@@ -297,12 +300,13 @@ async function renderCalendar() {
       monthNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
-        const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento"></div>` : '';
+        card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px;";
+        const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
         const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
         card.innerHTML = `
           <span class="category-tag">${notice.category || 'General'}</span>
-          <h3 class="event-title-red">${notice.title}</h3>
+          <h3 style="color:#d93025; margin:8px 0;">${notice.title}</h3>
           <div class="event-datetime-info">
             <span>📅 ${notice.date}</span>
             <span>🕒 ${notice.time || 'Sin hora'}</span>
