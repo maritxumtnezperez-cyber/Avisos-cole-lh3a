@@ -10,40 +10,46 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Única contraseña de la App
-const APP_PASSWORD = process.env.APP_PASSWORD || "78875879";
+const APP_PASSWORD = (process.env.APP_PASSWORD || "78875879").trim();
 
 app.use(express.json({ limit: '10mb' }));
 
-// Servir la imagen del logo directamente si está en la raíz o en public
+// Ruta para servir la imagen del logo
 app.get(['/Logo.png', '/logo.png'], (req, res) => {
   const rootLogo = path.join(__dirname, 'Logo.png');
   const rootLogoLower = path.join(__dirname, 'logo.png');
   const publicLogo = path.join(__dirname, 'public', 'Logo.png');
   const publicLogoLower = path.join(__dirname, 'public', 'logo.png');
 
-  if (fs.existsSync(rootLogo)) {
-    return res.sendFile(rootLogo);
-  } else if (fs.existsSync(rootLogoLower)) {
-    return res.sendFile(rootLogoLower);
-  } else if (fs.existsSync(publicLogo)) {
-    return res.sendFile(publicLogo);
-  } else if (fs.existsSync(publicLogoLower)) {
-    return res.sendFile(publicLogoLower);
-  }
+  if (fs.existsSync(rootLogo)) return res.sendFile(rootLogo);
+  if (fs.existsSync(rootLogoLower)) return res.sendFile(rootLogoLower);
+  if (fs.existsSync(publicLogo)) return res.sendFile(publicLogo);
+  if (fs.existsSync(publicLogoLower)) return res.sendFile(publicLogoLower);
+  
   res.status(404).send('Logo no encontrado');
 });
 
-// Servir archivos estáticos de la carpeta public
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Middleware para verificar la contraseña de acceso
+// Middleware para verificar contraseña de API
 function checkAppPassword(req, res, next) {
   const pass = req.headers['x-app-password'];
-  if (pass === APP_PASSWORD) {
+  if (pass && pass.trim() === APP_PASSWORD) {
     return next();
   }
   return res.status(401).json({ error: "Acceso no autorizado" });
 }
+
+// Endpoint de Login
+app.post('/api/login', (req, res) => {
+  const { password } = req.body;
+  if (password && password.trim() === APP_PASSWORD) {
+    res.status(200).json({ ok: true });
+  } else {
+    res.status(401).json({ error: "Contraseña incorrecta" });
+  }
+});
+
+// Archivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
 
 const DATA_FILE = path.join(__dirname, 'data', 'notices.json');
 
@@ -65,17 +71,7 @@ function saveNotices(notices) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(notices, null, 2));
 }
 
-// Endpoint de Login
-app.post('/api/login', (req, res) => {
-  const { password } = req.body;
-  if (password === APP_PASSWORD) {
-    res.status(200).json({ ok: true });
-  } else {
-    res.status(401).json({ error: "Contraseña incorrecta" });
-  }
-});
-
-// Rutas protegidas solo con la contraseña de acceso principal
+// Rutas de API protegidas
 app.get('/api/notices', checkAppPassword, (req, res) => {
   res.json(getNotices());
 });
