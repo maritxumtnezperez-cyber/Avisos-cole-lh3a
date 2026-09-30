@@ -6,8 +6,18 @@ if (!savedPassword && window.location.pathname !== "/login.html") {
 }
 
 let currentCalendarDate = new Date();
+let currentUrineDate = new Date();
 
-// Función auxiliar para formatear fechas a DD/MM/AAAA
+// Estado de selección actual para tiras de orina
+let urineSelection = {
+  leucocitos: { val: 'Neg', color: '#fef08a', textcolor: '#854d0e' },
+  nitritos: { val: 'Neg', color: '#ffffff', textcolor: '#333333' },
+  proteinas: { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' },
+  sangre: { val: 'Neg', color: '#fef08a', textcolor: '#854d0e' },
+  ph: { val: '6.0', color: '#eab308', textcolor: '#ffffff' }
+};
+
+// Formato de fecha DD/MM/AAAA
 function formatDate(dateStr) {
   if (!dateStr) return 'Sin fecha';
   const parts = dateStr.split('-');
@@ -31,6 +41,8 @@ function showScreen(screenId) {
 
   if (screenId === 'calendar') {
     renderCalendar();
+  } else if (screenId === 'stripes') {
+    renderUrineModule();
   }
 }
 
@@ -62,6 +74,7 @@ if (filterCategory) {
   });
 }
 
+// OBTENER Y MANEJAR EVENTOS GENERALES
 async function getNotices() {
   try {
     const res = await fetch('/api/notices', {
@@ -166,7 +179,6 @@ async function renderNotices() {
     pastNotices = pastNotices.filter(n => n.category === selectedFilter);
   }
 
-  // Etiqueta del Próximo Evento Destacado
   if (futureNotices.length > 0 && nextContainer) {
     const next = futureNotices[0];
     
@@ -186,7 +198,6 @@ async function renderNotices() {
     `;
   }
 
-  // Lista de eventos futuros
   if (futureNotices.length === 0) {
     noticeList.innerHTML = '<p class="empty-msg">No hay eventos programados en esta categoría.</p>';
   } else {
@@ -216,7 +227,6 @@ async function renderNotices() {
     });
   }
 
-  // Lista de eventos pasados
   if (pastNoticeList) {
     if (pastNotices.length === 0) {
       pastNoticeList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
@@ -260,10 +270,7 @@ async function renderCalendar() {
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
 
-  if (monthLabel) {
-    monthLabel.textContent = `${monthNames[month]} ${year}`;
-  }
-
+  if (monthLabel) monthLabel.textContent = `${monthNames[month]} ${year}`;
   calendarGrid.innerHTML = '';
 
   const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
@@ -276,7 +283,6 @@ async function renderCalendar() {
 
   const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
   const totalDays = new Date(year, month + 1, 0).getDate();
-
   const notices = await getNotices();
   const today = new Date();
 
@@ -299,8 +305,7 @@ async function renderCalendar() {
       dayCell.classList.add('today');
     }
 
-    const hasEvent = notices.some(n => n.date === dateString);
-    if (hasEvent) {
+    if (notices.some(n => n.date === dateString)) {
       dayCell.classList.add('has-event');
     }
 
@@ -345,6 +350,230 @@ async function renderCalendar() {
   }
 }
 
+// LÓGICA DE LA QUINTA PESTAÑA: TIRAS DE ORINA
+function getUrineLogs() {
+  const data = localStorage.getItem('urineLogsData');
+  return data ? JSON.parse(data) : {};
+}
+
+function saveUrineLogs(logs) {
+  localStorage.setItem('urineLogsData', JSON.stringify(logs));
+}
+
+function initPillsSelector() {
+  document.querySelectorAll('.color-options-grid').forEach(grid => {
+    const paramName = grid.getAttribute('data-param');
+    const pills = grid.querySelectorAll('.color-pill');
+
+    pills.forEach(pill => {
+      // Marcar por defecto según urineSelection
+      if (pill.getAttribute('data-val') === urineSelection[paramName].val) {
+        pill.classList.add('selected');
+      }
+
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('selected'));
+        pill.classList.add('selected');
+
+        urineSelection[paramName] = {
+          val: pill.getAttribute('data-val'),
+          color: pill.getAttribute('data-color'),
+          textcolor: pill.getAttribute('data-textcolor')
+        };
+      });
+    });
+  });
+}
+
+function renderUrineModule() {
+  const year = currentUrineDate.getFullYear();
+  const month = currentUrineDate.getMonth();
+  const urineMonthLabel = document.getElementById('urineMonthLabel');
+  const urineCalendarGrid = document.getElementById('urineCalendarGrid');
+  const urineDateInput = document.getElementById('urineDate');
+
+  const monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  if (urineMonthLabel) urineMonthLabel.textContent = `${monthNames[month]} ${year}`;
+  if (urineCalendarGrid) urineCalendarGrid.innerHTML = '';
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (urineDateInput && !urineDateInput.value) {
+    urineDateInput.value = todayStr;
+  }
+
+  const weekDays = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+  weekDays.forEach(day => {
+    const headerCell = document.createElement('div');
+    headerCell.className = 'calendar-day-header';
+    headerCell.textContent = day;
+    urineCalendarGrid.appendChild(headerCell);
+  });
+
+  const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const urineLogs = getUrineLogs();
+
+  for (let i = 0; i < firstDayIndex; i++) {
+    const emptyCell = document.createElement('div');
+    emptyCell.className = 'calendar-day empty';
+    urineCalendarGrid.appendChild(emptyCell);
+  }
+
+  for (let day = 1; day <= totalDays; day++) {
+    const dayCell = document.createElement('div');
+    dayCell.className = 'calendar-day';
+    dayCell.textContent = day;
+
+    const formattedDay = day < 10 ? `0${day}` : day;
+    const formattedMonth = (month + 1) < 10 ? `0${month + 1}` : (month + 1);
+    const dateString = `${year}-${formattedMonth}-${formattedDay}`;
+
+    if (dateString === urineDateInput.value) {
+      dayCell.classList.add('selected-day');
+    }
+
+    if (urineLogs[dateString]) {
+      dayCell.classList.add('has-urine');
+    }
+
+    dayCell.addEventListener('click', () => {
+      urineDateInput.value = dateString;
+      loadUrineLogForDate(dateString);
+      renderUrineModule();
+    });
+
+    urineCalendarGrid.appendChild(dayCell);
+  }
+
+  renderUrineLogsList();
+}
+
+function loadUrineLogForDate(dateStr) {
+  const urineLogs = getUrineLogs();
+  const titleElem = document.getElementById('selectedUrineDateTitle');
+  if (titleElem) titleElem.textContent = `Anotar Tira: ${formatDate(dateStr)}`;
+
+  if (urineLogs[dateStr]) {
+    const log = urineLogs[dateStr];
+    document.getElementById('urineNotes').value = log.notes || '';
+    
+    // Restaurar selecciones
+    Object.keys(log.data).forEach(param => {
+      urineSelection[param] = log.data[param];
+      const grid = document.querySelector(`.color-options-grid[data-param="${param}"]`);
+      if (grid) {
+        grid.querySelectorAll('.color-pill').forEach(pill => {
+          if (pill.getAttribute('data-val') === log.data[param].val) {
+            pill.classList.add('selected');
+          } else {
+            pill.classList.remove('selected');
+          }
+        });
+      }
+    });
+  } else {
+    document.getElementById('urineNotes').value = '';
+  }
+}
+
+function renderUrineLogsList() {
+  const urineLogsList = document.getElementById('urineLogsList');
+  if (!urineLogsList) return;
+
+  const urineLogs = getUrineLogs();
+  const year = currentUrineDate.getFullYear();
+  const month = currentUrineDate.getMonth();
+
+  urineLogsList.innerHTML = '';
+
+  const entries = Object.keys(urineLogs)
+    .filter(dateKey => {
+      const parts = dateKey.split('-');
+      return parseInt(parts[0]) === year && (parseInt(parts[1]) - 1) === month;
+    })
+    .sort((a, b) => new Date(b) - new Date(a));
+
+  if (entries.length === 0) {
+    urineLogsList.innerHTML = '<p class="empty-msg">No hay lecturas registradas este mes.</p>';
+    return;
+  }
+
+  entries.forEach(dateKey => {
+    const log = urineLogs[dateKey];
+    const card = document.createElement('div');
+    card.style.cssText = "background:white; padding:12px; border-radius:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.08);";
+
+    let pillsHtml = '';
+    const labels = { leucocitos: 'LEU', nitritos: 'NIT', proteinas: 'PRO', sangre: 'BLO', ph: 'pH' };
+
+    Object.keys(log.data).forEach(param => {
+      const item = log.data[param];
+      pillsHtml += `
+        <div class="strip-summary-item" style="background:${item.color}; color:${item.textcolor}; border: 1px solid rgba(0,0,0,0.1);">
+          <div>${labels[param]}</div>
+          <div>${item.val}</div>
+        </div>
+      `;
+    });
+
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <strong style="color:#1e293b;">📅 ${formatDate(dateKey)}</strong>
+        <button onclick="deleteUrineLog('${dateKey}')" style="background:none; border:none; color:#dc2626; cursor:pointer; font-weight:bold;">🗑️</button>
+      </div>
+      <div class="strip-summary-bar">${pillsHtml}</div>
+      ${log.notes ? `<p style="font-size:12px; color:#475569; margin-top:8px;">📝 ${log.notes}</p>` : ''}
+    `;
+
+    urineLogsList.appendChild(card);
+  });
+}
+
+function deleteUrineLog(dateKey) {
+  if (confirm(`¿Eliminar la tira del día ${formatDate(dateKey)}?`)) {
+    const logs = getUrineLogs();
+    delete logs[dateKey];
+    saveUrineLogs(logs);
+    renderUrineModule();
+  }
+}
+
+// EVENTOS DE LA QUINTA PESTAÑA
+document.getElementById('prevUrineMonth')?.addEventListener('click', () => {
+  currentUrineDate.setMonth(currentUrineDate.getMonth() - 1);
+  renderUrineModule();
+});
+
+document.getElementById('nextUrineMonth')?.addEventListener('click', () => {
+  currentUrineDate.setMonth(currentUrineDate.getMonth() + 1);
+  renderUrineModule();
+});
+
+document.getElementById('saveUrineStrip')?.addEventListener('click', () => {
+  const dateVal = document.getElementById('urineDate').value;
+  const notesVal = document.getElementById('urineNotes').value;
+
+  if (!dateVal) {
+    alert('Selecciona una fecha');
+    return;
+  }
+
+  const logs = getUrineLogs();
+  logs[dateVal] = {
+    data: { ...urineSelection },
+    notes: notesVal
+  };
+
+  saveUrineLogs(logs);
+  alert('Tira registrada correctamente');
+  renderUrineModule();
+});
+
+// NAVEGACIÓN DE EVENTOS EN CALENDARIO GENERAL
 const prevMonthBtn = document.getElementById('prevMonth');
 const nextMonthBtn = document.getElementById('nextMonth');
 
@@ -362,6 +591,7 @@ if (nextMonthBtn) {
   });
 }
 
+// PUBLICAR EVENTOS GENERALES
 const publishBtn = document.getElementById('publish');
 if (publishBtn) {
   publishBtn.addEventListener('click', async () => {
@@ -462,6 +692,7 @@ async function deleteNotice(id) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  initPillsSelector();
   if (savedPassword) {
     renderNotices();
     renderCalendar();
