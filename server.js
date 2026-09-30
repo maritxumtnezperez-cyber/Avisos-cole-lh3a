@@ -76,7 +76,7 @@ function saveNotices(notices) {
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
   if (password === APP_PASSWORD) {
-    res.json({ ok: true });
+    res.status(200).json({ ok: true });
   } else {
     res.status(401).json({ error: "Contraseña incorrecta" });
   }
@@ -92,6 +92,7 @@ app.post('/api/notices', checkAppPassword, checkAdminPassword, (req, res) => {
   const newNotice = {
     id: Date.now().toString(),
     title: req.body.title,
+    category: req.body.category || "General",
     description: req.body.description || "",
     date: req.body.date || null,
     time: req.body.time || null,
@@ -124,3 +125,4 @@ app.delete('/api/notices/:id', checkAppPassword, checkAdminPassword, (req, res) 
 app.listen(PORT, () => {
   console.log(`Servidor iniciado en el puerto ${PORT}`);
 });
+
