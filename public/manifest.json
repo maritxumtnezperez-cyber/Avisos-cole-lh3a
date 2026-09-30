@@ -1,22 +1,21 @@
 {
-  "name": "Avisos Cole LH3A",
-  "short_name": "Avisos LH3A",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#39aa6a",
+  "short_name": "Cosas de Ane",
+  "name": "Cosas de Ane",
   "icons": [
     {
       "src": "/Logo.png",
-      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "sizes": "192x192"
     },
     {
       "src": "/Logo.png",
-      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "sizes": "512x512"
     }
-  ]
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#39aa6a",
+  "display": "standalone",
+  "scope": "/"
 }
