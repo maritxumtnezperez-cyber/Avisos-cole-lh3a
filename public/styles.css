@@ -254,18 +254,19 @@ main {
 .calendar-day.today { border: 2px solid #39aa6a; font-weight: bold; }
 .calendar-day.has-event { background-color: #dbeafe; font-weight: bold; color: #1e40af; border: 1px solid #3b82f6; }
 
-/* Días con registro de tiras de orina */
+/* Días con registro de proteína */
 .calendar-day.has-urine {
-  background-color: #fef9c3;
-  border: 1px solid #eab308;
+  background-color: #a7f3d0;
+  border: 1px solid #059669;
   font-weight: bold;
+  color: #065f46;
 }
 
 .calendar-day.selected-day {
   box-shadow: 0 0 0 2px #0f172a;
 }
 
-/* FORMULARIOS Y TINTAS DE TIRAS */
+/* FORMULARIOS */
 .form-group { margin-bottom: 12px; }
 .form-group label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: #374151; }
 .form-group input, .form-group textarea, .form-group select { 
