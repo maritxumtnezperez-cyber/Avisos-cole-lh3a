@@ -94,6 +94,18 @@ function getGoogleCalendarUrl(title, date, time, description) {
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${dates}&details=${details}`;
 }
 
+function scrollToEvent(eventId) {
+  const targetElement = document.getElementById(`event-card-${eventId}`);
+  if (targetElement) {
+    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    targetElement.style.transition = 'box-shadow 0.3s ease';
+    targetElement.style.boxShadow = '0 0 12px rgba(217, 48, 37, 0.6)';
+    setTimeout(() => {
+      targetElement.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+    }, 2000);
+  }
+}
+
 async function renderNotices() {
   const notices = await getNotices();
   const noticeList = document.getElementById('noticeList');
@@ -144,13 +156,12 @@ async function renderNotices() {
     pastNotices = pastNotices.filter(n => n.category === selectedFilter);
   }
 
+  // Etiqueta del Próximo Evento Destacado (Sin imagen ni descripción)
   if (futureNotices.length > 0 && nextContainer) {
     const next = futureNotices[0];
-    const imageHtml = (next.image || next.imageUrl) ? `<div class="img-container-full"><img src="${next.image || next.imageUrl}" alt="Imagen del evento" style="max-width:100%; border-radius:8px;"></div>` : '';
-    const calUrl = getGoogleCalendarUrl(next.title, next.date, next.time, next.description);
     
     nextContainer.innerHTML = `
-      <div style="background: #e6f4ea; border: 2px solid #d93025; border-radius: 12px; padding: 14px; margin-bottom: 16px; box-shadow: 0 3px 8px rgba(0,0,0,0.08);">
+      <div onclick="scrollToEvent('${next.id}')" style="background: #e6f4ea; border: 2px solid #d93025; border-radius: 12px; padding: 14px; margin-bottom: 16px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); cursor: pointer;">
         <div style="background:#137333; color:white; padding:4px 10px; border-radius:6px; font-weight:bold; display:inline-block; font-size:12px; margin-bottom:8px;">
           Próximo evento destacado
         </div>
@@ -162,21 +173,17 @@ async function renderNotices() {
           <span style="margin-left: 10px;">🕒 ${next.time || 'Sin hora'}</span>
         </div>
       </div>
-      <p class="event-desc">${next.description || ''}</p>
-      ${imageHtml}
-      <div class="card-actions-column">
-        ${next.date ? `<a href="${calUrl}" target="_blank" class="btn-action btn-add-calendar">📅 Añadir a Google Calendar</a>` : ''}
-        <button class="btn-action btn-delete" onclick="deleteNotice('${next.id}')">Eliminar</button>
-      </div>
     `;
   }
 
+  // Lista de eventos
   if (futureNotices.length === 0) {
     noticeList.innerHTML = '<p class="empty-msg">No hay eventos programados en esta categoría.</p>';
   } else {
     futureNotices.forEach((notice) => {
       const card = document.createElement('div');
       card.className = 'notice-card';
+      card.id = `event-card-${notice.id}`;
       card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05);";
       const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
       const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
