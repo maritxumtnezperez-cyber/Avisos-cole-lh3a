@@ -14,6 +14,10 @@ const APP_PASSWORD = (process.env.APP_PASSWORD || "78875879").trim();
 
 app.use(express.json({ limit: '10mb' }));
 
+// Servir archivos estáticos desde 'public' y desde la raíz para que styles.css y Logo.png siempre carguen
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
+
 // Ruta para servir la imagen del logo
 app.get(['/Logo.png', '/logo.png'], (req, res) => {
   const rootLogo = path.join(__dirname, 'Logo.png');
@@ -48,9 +52,6 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// Archivos estáticos
-app.use(express.static(path.join(__dirname, 'public')));
-
 const DATA_FILE = path.join(__dirname, 'data', 'notices.json');
 
 if (!fs.existsSync(path.join(__dirname, 'data'))) {
@@ -81,7 +82,7 @@ app.post('/api/notices', checkAppPassword, (req, res) => {
   const newNotice = {
     id: Date.now().toString(),
     title: req.body.title,
-    category: req.body.category || "General",
+    category: req.body.category || "General 📌",
     description: req.body.description || "",
     date: req.body.date || null,
     time: req.body.time || null,
