@@ -190,33 +190,43 @@
     .schedule-table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 11px;
       text-align: center;
+      font-weight: bold;
     }
     .schedule-table th, .schedule-table td {
-      border: 1px solid #e0e0e0;
-      padding: 6px 4px;
+      border: 1px solid #ffffff;
+      padding: 8px 4px;
     }
     .schedule-table th {
-      background-color: #39aa6a;
+      background-color: #2e7d32;
       color: white;
-      font-weight: 600;
+      font-weight: bold;
     }
     .schedule-table .time-col {
-      background-color: #f0f0f0;
+      background-color: #e0e0e0;
+      color: #333;
       font-weight: bold;
       white-space: nowrap;
     }
     .schedule-table .break-row td {
-      background-color: #fff3cd;
-      color: #856404;
+      background-color: #f5f5f5;
+      color: #424242;
       font-size: 11px;
+      letter-spacing: 1px;
     }
-    .schedule-table .merged-cell {
-      background-color: #e8f5e9;
-      vertical-align: middle;
-      font-weight: bold;
-    }
+
+    /* Colores por Asignatura */
+    .subject-matematika { background-color: #3b82f6; color: white; }
+    .subject-ingurune   { background-color: #22c55e; color: white; }
+    .subject-euskera    { background-color: #f97316; color: white; }
+    .subject-gaztelania { background-color: #ef4444; color: white; }
+    .subject-ingelesa   { background-color: #eab308; color: black; }
+    .subject-plastika   { background-color: #ec4899; color: white; }
+    .subject-musika     { background-color: #ec4899; color: white; }
+    .subject-ef         { background-color: #8b5cf6; color: white; }
+    .subject-kzp        { background-color: #8b5cf6; color: white; }
+    .subject-tutoretza  { background-color: #9ca3af; color: white; }
 
     /* Navegación Inferior */
     nav.bottom {
@@ -310,13 +320,13 @@
       <!-- Tarjeta 1: Horario Escolar Semanal -->
       <div class="schedule-card">
         <h3>📚 Horario del Colegio</h3>
-        <p class="schedule-subtitle">Lunes a Viernes (Ordutegia)</p>
+        <p class="schedule-subtitle">Ordutegia - Lunes a Viernes</p>
         
         <div class="schedule-table-wrapper">
           <table class="schedule-table">
             <thead>
               <tr>
-                <th>Hora</th>
+                <th>Ordua</th>
                 <th>Astelehena</th>
                 <th>Asteartea</th>
                 <th>Asteazkena</th>
@@ -327,59 +337,53 @@
             <tbody>
               <tr>
                 <td class="time-col">09:00 - 09:50</td>
-                <td>Matematika</td>
-                <td>Euskera</td>
-                <td rowspan="2" class="merged-cell">Ingurune</td>
-                <td>Euskera</td>
-                <td>Euskera</td>
+                <td class="subject-matematika">MATEMATIKA</td>
+                <td class="subject-euskera">EUSKERA</td>
+                <td rowspan="2" class="subject-ingurune">INGURUNE</td>
+                <td class="subject-euskera">EUSKERA</td>
+                <td class="subject-euskera">EUSKERA</td>
               </tr>
               <tr>
                 <td class="time-col">09:50 - 10:40</td>
-                <td>Ingurune</td>
-                <td>Matematika</td>
-                <td>Musika</td>
-                <td>Matematika</td>
+                <td class="subject-ingurune">INGURUNE</td>
+                <td class="subject-matematika">MATEMATIKA</td>
+                <td class="subject-musika">MUSIKA</td>
+                <td class="subject-matematika">MATEMATIKA</td>
               </tr>
               <tr class="break-row">
                 <td class="time-col">10:40 - 11:10</td>
-                <td colspan="5"><strong>JOLASTORDUA (Recreo)</strong></td>
+                <td colspan="5">JOLASTORDUA</td>
               </tr>
               <tr>
                 <td class="time-col">11:10 - 11:55</td>
-                <td>Gaztelania</td>
-                <td>Ingelesa</td>
-                <td>Euskera</td>
-                <td>Matematika</td>
-                <td>Tutoretza</td>
+                <td class="subject-gaztelania">GAZTELANIA</td>
+                <td class="subject-ingelesa">INGELESA</td>
+                <td class="subject-euskera">EUSKERA</td>
+                <td class="subject-matematika">MATEMATIKA</td>
+                <td class="subject-tutoretza">TUTORETZA</td>
               </tr>
               <tr>
                 <td class="time-col">11:55 - 12:45</td>
-                <td>Euskera</td>
-                <td>Plastika</td>
-                <td>Gaztelania</td>
-                <td>Ingurune</td>
-                <td>Ingelesa</td>
+                <td class="subject-euskera">EUSKERA</td>
+                <td class="subject-plastika">PLASTIKA</td>
+                <td class="subject-gaztelania">GAZTELANIA</td>
+                <td class="subject-ingurune">INGURUNE</td>
+                <td class="subject-ingelesa">INGELESA</td>
               </tr>
               <tr class="break-row">
                 <td class="time-col">12:45 - 13:25</td>
-                <td colspan="5"><strong>BAZKALORDUA (Comida)</strong></td>
+                <td colspan="5">BAZKALORDUA</td>
               </tr>
               <tr>
                 <td class="time-col">Tarde</td>
-                <td>Ingelesa</td>
-                <td>Heziketa Fisikoa</td>
-                <td>K.Z.P.</td>
-                <td>Gaztelania</td>
-                <td>Heziketa Fisikoa</td>
+                <td class="subject-ingelesa">INGELESA</td>
+                <td class="subject-ef">HEZIKETA FISIKOA</td>
+                <td class="subject-kzp">K.Z.P.</td>
+                <td class="subject-gaztelania">GAZTELANIA</td>
+                <td class="subject-ef">HEZIKETA FISIKOA</td>
               </tr>
             </tbody>
           </table>
-        </div>
-
-        <div class="img-container-full" style="margin-top: 12px;">
-          <a href="/horario-colegio.jpg" target="_blank">
-            <img src="/horario-colegio.jpg" alt="Horario Colegio" style="width:100%; border-radius:8px; border:1px solid #ddd;">
-          </a>
         </div>
       </div>
 
