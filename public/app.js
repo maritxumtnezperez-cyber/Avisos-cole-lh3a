@@ -98,10 +98,12 @@ function scrollToEvent(eventId) {
   const targetElement = document.getElementById(`event-card-${eventId}`);
   if (targetElement) {
     targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    targetElement.style.transition = 'box-shadow 0.3s ease';
-    targetElement.style.boxShadow = '0 0 12px rgba(217, 48, 37, 0.6)';
+    targetElement.style.transition = 'box-shadow 0.3s ease, border-color 0.3s ease';
+    targetElement.style.boxShadow = '0 0 15px rgba(217, 48, 37, 0.6)';
+    targetElement.style.borderColor = '#d93025';
     setTimeout(() => {
-      targetElement.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+      targetElement.style.boxShadow = '0 4px 10px rgba(57, 170, 106, 0.15)';
+      targetElement.style.borderColor = '#39aa6a';
     }, 2000);
   }
 }
@@ -156,12 +158,12 @@ async function renderNotices() {
     pastNotices = pastNotices.filter(n => n.category === selectedFilter);
   }
 
-  // Etiqueta del Próximo Evento Destacado (Sin imagen ni descripción)
+  // Etiqueta del Próximo Evento Destacado
   if (futureNotices.length > 0 && nextContainer) {
     const next = futureNotices[0];
     
     nextContainer.innerHTML = `
-      <div onclick="scrollToEvent('${next.id}')" style="background: #e6f4ea; border: 2px solid #d93025; border-radius: 12px; padding: 14px; margin-bottom: 16px; box-shadow: 0 3px 8px rgba(0,0,0,0.08); cursor: pointer;">
+      <div onclick="scrollToEvent('${next.id}')" style="background: #e6f4ea; border: 2px solid #d93025; border-radius: 12px; padding: 14px; margin-bottom: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); cursor: pointer;">
         <div style="background:#137333; color:white; padding:4px 10px; border-radius:6px; font-weight:bold; display:inline-block; font-size:12px; margin-bottom:8px;">
           Próximo evento destacado
         </div>
@@ -176,7 +178,7 @@ async function renderNotices() {
     `;
   }
 
-  // Lista de eventos
+  // Lista de eventos futuros
   if (futureNotices.length === 0) {
     noticeList.innerHTML = '<p class="empty-msg">No hay eventos programados en esta categoría.</p>';
   } else {
@@ -184,7 +186,7 @@ async function renderNotices() {
       const card = document.createElement('div');
       card.className = 'notice-card';
       card.id = `event-card-${notice.id}`;
-      card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 5px rgba(0,0,0,0.05);";
+      card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
       const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
       const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
@@ -206,6 +208,7 @@ async function renderNotices() {
     });
   }
 
+  // Lista de eventos pasados
   if (pastNoticeList) {
     if (pastNotices.length === 0) {
       pastNoticeList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
@@ -213,7 +216,7 @@ async function renderNotices() {
       pastNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
-        card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px;";
+        card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
         const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
         card.innerHTML = `
           <span class="category-tag">${notice.category || 'General'}</span>
@@ -311,7 +314,7 @@ async function renderCalendar() {
       monthNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
-        card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px;";
+        card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
         const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
         const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
