@@ -9,21 +9,26 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuración de contraseñas
-const APP_PASSWORD = process.env.APP_PASSWORD || "78875879";      // Contraseña para acceder a la app
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "LH3Aadmin";  // Contraseña para publicar/editar/borrar
+// Única contraseña de la App
+const APP_PASSWORD = process.env.APP_PASSWORD || "78875879";
 
 app.use(express.json({ limit: '10mb' }));
 
 // Servir la imagen del logo directamente si está en la raíz o en public
-app.get('/logo.jpg', (req, res) => {
-  const rootLogo = path.join(__dirname, 'logo.jpg');
-  const publicLogo = path.join(__dirname, 'public', 'logo.jpg');
+app.get(['/Logo.png', '/logo.png'], (req, res) => {
+  const rootLogo = path.join(__dirname, 'Logo.png');
+  const rootLogoLower = path.join(__dirname, 'logo.png');
+  const publicLogo = path.join(__dirname, 'public', 'Logo.png');
+  const publicLogoLower = path.join(__dirname, 'public', 'logo.png');
 
   if (fs.existsSync(rootLogo)) {
     return res.sendFile(rootLogo);
+  } else if (fs.existsSync(rootLogoLower)) {
+    return res.sendFile(rootLogoLower);
   } else if (fs.existsSync(publicLogo)) {
     return res.sendFile(publicLogo);
+  } else if (fs.existsSync(publicLogoLower)) {
+    return res.sendFile(publicLogoLower);
   }
   res.status(404).send('Logo no encontrado');
 });
@@ -31,7 +36,7 @@ app.get('/logo.jpg', (req, res) => {
 // Servir archivos estáticos de la carpeta public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware para verificar la contraseña de la App en la API
+// Middleware para verificar la contraseña de acceso
 function checkAppPassword(req, res, next) {
   const pass = req.headers['x-app-password'];
   if (pass === APP_PASSWORD) {
@@ -40,23 +45,12 @@ function checkAppPassword(req, res, next) {
   return res.status(401).json({ error: "Acceso no autorizado" });
 }
 
-// Middleware para verificar la contraseña de Administrador
-function checkAdminPassword(req, res, next) {
-  const pass = req.headers['x-admin-password'];
-  if (pass === ADMIN_PASSWORD) {
-    return next();
-  }
-  return res.status(401).json({ error: "Contraseña de administración incorrecta" });
-}
-
 const DATA_FILE = path.join(__dirname, 'data', 'notices.json');
 
-// Crear carpeta data si no existe
 if (!fs.existsSync(path.join(__dirname, 'data'))) {
   fs.mkdirSync(path.join(__dirname, 'data'));
 }
 
-// Leer avisos
 function getNotices() {
   if (!fs.existsSync(DATA_FILE)) return [];
   try {
@@ -67,12 +61,11 @@ function getNotices() {
   }
 }
 
-// Guardar avisos
 function saveNotices(notices) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(notices, null, 2));
 }
 
-// Endpoint para verificar contraseña de entrada
+// Endpoint de Login
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
   if (password === APP_PASSWORD) {
@@ -82,12 +75,12 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-// Rutas de la API protegidas con contraseña de la App
+// Rutas protegidas solo con la contraseña de acceso principal
 app.get('/api/notices', checkAppPassword, (req, res) => {
   res.json(getNotices());
 });
 
-app.post('/api/notices', checkAppPassword, checkAdminPassword, (req, res) => {
+app.post('/api/notices', checkAppPassword, (req, res) => {
   const notices = getNotices();
   const newNotice = {
     id: Date.now().toString(),
@@ -103,7 +96,7 @@ app.post('/api/notices', checkAppPassword, checkAdminPassword, (req, res) => {
   res.json({ ok: true, notice: newNotice });
 });
 
-app.put('/api/notices/:id', checkAppPassword, checkAdminPassword, (req, res) => {
+app.put('/api/notices/:id', checkAppPassword, (req, res) => {
   let notices = getNotices();
   const idx = notices.findIndex(n => n.id === req.params.id);
   if (idx !== -1) {
@@ -115,7 +108,7 @@ app.put('/api/notices/:id', checkAppPassword, checkAdminPassword, (req, res) => 
   }
 });
 
-app.delete('/api/notices/:id', checkAppPassword, checkAdminPassword, (req, res) => {
+app.delete('/api/notices/:id', checkAppPassword, (req, res) => {
   let notices = getNotices();
   notices = notices.filter(n => n.id !== req.params.id);
   saveNotices(notices);
@@ -125,4 +118,3 @@ app.delete('/api/notices/:id', checkAppPassword, checkAdminPassword, (req, res) 
 app.listen(PORT, () => {
   console.log(`Servidor iniciado en el puerto ${PORT}`);
 });
-
