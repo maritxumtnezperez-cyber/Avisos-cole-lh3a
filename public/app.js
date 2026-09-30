@@ -91,24 +91,38 @@ function renderNotices() {
   if (pastNoticeList) pastNoticeList.innerHTML = '';
   if (nextContainer) nextContainer.innerHTML = '';
 
+  // Fecha actual a medianoche
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
+  // Función auxiliar para parsear fechas "YYYY-MM-DD" correctamente sin desfasajes de zona horaria
+  const parseDate = (dateStr) => {
+    if (!dateStr) return null;
+    const parts = dateStr.split('-');
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  };
+
+  // Filtrar eventos futuros (fechas hoy o posteriores)
   let futureNotices = notices.filter(n => {
     if (!n.date) return true;
-    const noticeDate = new Date(n.date + 'T00:00:00');
+    const noticeDate = parseDate(n.date);
     return noticeDate >= now;
-  }).sort((a, b) => new Date(a.date) - new Date(b.date));
+  }).sort((a, b) => parseDate(a.date) - parseDate(b.date));
 
   if (selectedFilter !== 'TODAS') {
     futureNotices = futureNotices.filter(n => n.category === selectedFilter);
   }
 
-  const pastNotices = notices.filter(n => {
+  // Filtrar eventos pasados (fechas estrictamente anteriores a hoy)
+  let pastNotices = notices.filter(n => {
     if (!n.date) return false;
-    const noticeDate = new Date(n.date + 'T00:00:00');
+    const noticeDate = parseDate(n.date);
     return noticeDate < now;
-  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }).sort((a, b) => parseDate(b.date) - parseDate(a.date));
+
+  if (selectedFilter !== 'TODAS') {
+    pastNotices = pastNotices.filter(n => n.category === selectedFilter);
+  }
 
   // Tarjeta Próximo Evento Destacado
   if (futureNotices.length > 0 && nextContainer) {
@@ -161,7 +175,7 @@ function renderNotices() {
     });
   }
 
-  // Lista de Eventos Pasados
+  // Lista de Eventos Pasados (se renderiza en la pestaña "Pasados")
   if (pastNoticeList) {
     if (pastNotices.length === 0) {
       pastNoticeList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
@@ -179,6 +193,9 @@ function renderNotices() {
           </div>
           <p class="event-desc">${notice.description || ''}</p>
           ${imageHtml}
+          <div class="card-actions-column">
+            <button class="btn-action btn-delete" onclick="deleteNotice(${notice.id})">Eliminar</button>
+          </div>
         `;
         pastNoticeList.appendChild(card);
       });
@@ -252,7 +269,8 @@ function renderCalendar() {
     monthEventsList.innerHTML = '';
     const monthNotices = notices.filter(n => {
       if (!n.date) return false;
-      const d = new Date(n.date + 'T00:00:00');
+      const parts = n.date.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
       return d.getFullYear() === year && d.getMonth() === month;
     }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
