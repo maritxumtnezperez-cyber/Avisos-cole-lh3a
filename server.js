@@ -22,10 +22,10 @@ app.use(express.static(__dirname));
 // Conexión mediante Pool de Neon Serverless
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-// Inicialización de las Tablas en la Base de Datos
+// Inicialización segura de la Base de Datos
 async function initDb() {
   try {
-    // 1. Crear la tabla notices si no existe
+    // 1. Tabla notices
     await pool.query(`
       CREATE TABLE IF NOT EXISTS notices (
         id VARCHAR(50) PRIMARY KEY,
@@ -38,29 +38,29 @@ async function initDb() {
       );
     `);
 
-    // 2. Asegurar que las columnas de notices existan
-    await pool.query(`
-      ALTER TABLE notices ADD COLUMN IF NOT EXISTS image_url TEXT;
-      ALTER TABLE notices ADD COLUMN IF NOT EXISTS title TEXT;
-      ALTER TABLE notices ADD COLUMN IF NOT EXISTS date TEXT;
-      ALTER TABLE notices ADD COLUMN IF NOT EXISTS time TEXT;
-      ALTER TABLE notices ADD COLUMN IF NOT EXISTS description TEXT;
-      ALTER TABLE notices ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General 📌';
-      ALTER TABLE notices ALTER COLUMN data DROP NOT NULL;
-    `);
+    // Asegurar columnas en notices de forma individual y segura
+    await pool.query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS image_url TEXT;`);
+    await pool.query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS title TEXT;`);
+    await pool.query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS date TEXT;`);
+    await pool.query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS time TEXT;`);
+    await pool.query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS description TEXT;`);
+    await pool.query(`ALTER TABLE notices ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General 📌';`);
+    await pool.query(`ALTER TABLE notices ALTER COLUMN data DROP NOT NULL;`).catch(() => {});
 
-    // 3. Crear la tabla urine_logs si no existe y asegurar columnas
+    // 2. Tabla urine_logs
     await pool.query(`
       CREATE TABLE IF NOT EXISTS urine_logs (
         date_key VARCHAR(10) PRIMARY KEY,
         logs JSONB
       );
-      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS logs JSONB;
-      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS val VARCHAR(20);
-      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS color VARCHAR(20);
-      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS text_color VARCHAR(20);
-      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS notes TEXT;
     `);
+
+    // Asegurar columnas en urine_logs
+    await pool.query(`ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS logs JSONB;`);
+    await pool.query(`ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS val VARCHAR(20);`);
+    await pool.query(`ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS color VARCHAR(20);`);
+    await pool.query(`ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS text_color VARCHAR(20);`);
+    await pool.query(`ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS notes TEXT;`);
 
     console.log("Base de datos inicializada correctamente");
   } catch (err) {
