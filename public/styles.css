@@ -140,7 +140,15 @@ main {
 .next-tag { color: #16a34a; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; }
 .event-title-red { color: #dc2626; font-size: 1.1rem; margin-bottom: 6px; }
 .event-datetime-info { font-size: 0.85rem; color: #4b5563; margin-bottom: 8px; display: flex; gap: 12px; }
-.event-desc { font-size: 0.9rem; color: #4b5563; margin-bottom: 12px; }
+
+/* DESCRIPCIÓN CON RESPETO A SALTOS DE LÍNEA Y ESPACIOS */
+.event-desc { 
+  font-size: 0.9rem; 
+  color: #4b5563; 
+  margin-bottom: 12px; 
+  white-space: pre-wrap; 
+  word-wrap: break-word; 
+}
 
 /* IMÁGENES */
 .img-container-full {
