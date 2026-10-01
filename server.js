@@ -2,6 +2,9 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import pkg from 'pg';
+
+const { Pool } = pkg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,9 +17,48 @@ const APP_PASSWORD = (process.env.APP_PASSWORD || "78875879").trim();
 
 app.use(express.json({ limit: '10mb' }));
 
-// Servir archivos estáticos desde 'public' y desde la raíz para que styles.css y Logo.png siempre carguen
+// Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
+
+// Configuración y conexión a PostgreSQL (Neon Console)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+});
+
+// Inicialización de las Tablas en la Base de Datos
+async function initDb() {
+  try {
+    // Tabla para eventos del calendario
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notices (
+        id VARCHAR(50) PRIMARY KEY,
+        title TEXT NOT NULL,
+        category TEXT,
+        description TEXT,
+        date TEXT,
+        time TEXT,
+        image_url TEXT
+      );
+    `);
+
+    // Tabla para registros de proteínas/tiras
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS urine_logs (
+        date_key VARCHAR(10) PRIMARY KEY,
+        val VARCHAR(20),
+        color VARCHAR(20),
+        text_color VARCHAR(20),
+        notes TEXT
+      );
+    `);
+    console.log("🟢 Conectado exitosamente a Neon PostgreSQL y tablas inicializadas");
+  } catch (err) {
+    console.error("🔴 Error inicializando tablas en PostgreSQL:", err);
+  }
+}
+initDb();
 
 // Ruta para servir la imagen del logo
 app.get(['/Logo.png', '/logo.png'], (req, res) => {
@@ -52,64 +94,129 @@ app.post('/api/login', (req, res) => {
   }
 });
 
-const DATA_FILE = path.join(__dirname, 'data', 'notices.json');
+/* ========================================================
+   RUTAS API: EVENTOS Y NOTICIAS (NEON DB)
+======================================================== */
 
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
-  fs.mkdirSync(path.join(__dirname, 'data'));
-}
-
-function getNotices() {
-  if (!fs.existsSync(DATA_FILE)) return [];
+app.get('/api/notices', checkAppPassword, async (req, res) => {
   try {
-    const data = fs.readFileSync(DATA_FILE, 'utf8');
-    return JSON.parse(data);
+    const result = await pool.query('SELECT id, title, category, description, date, time, image_url AS "imageUrl" FROM notices');
+    res.json(result.rows);
   } catch (err) {
-    return [];
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener eventos de la base de datos" });
   }
-}
-
-function saveNotices(notices) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(notices, null, 2));
-}
-
-// Rutas de API protegidas
-app.get('/api/notices', checkAppPassword, (req, res) => {
-  res.json(getNotices());
 });
 
-app.post('/api/notices', checkAppPassword, (req, res) => {
-  const notices = getNotices();
-  const newNotice = {
-    id: Date.now().toString(),
-    title: req.body.title,
-    category: req.body.category || "General 📌",
-    description: req.body.description || "",
-    date: req.body.date || null,
-    time: req.body.time || null,
-    imageUrl: req.body.imageUrl || null
-  };
-  notices.push(newNotice);
-  saveNotices(notices);
-  res.json({ ok: true, notice: newNotice });
+app.post('/api/notices', checkAppPassword, async (req, res) => {
+  const { title, category, description, date, time, imageUrl } = req.body;
+  const id = Date.now().toString();
+
+  try {
+    await pool.query(
+      'INSERT INTO notices (id, title, category, description, date, time, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [id, title, category || "General 📌", description || "", date || null, time || null, imageUrl || null]
+    );
+    res.json({ ok: true, notice: { id, title, category, description, date, time, imageUrl } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al guardar el evento en la base de datos" });
+  }
 });
 
-app.put('/api/notices/:id', checkAppPassword, (req, res) => {
-  let notices = getNotices();
-  const idx = notices.findIndex(n => n.id === req.params.id);
-  if (idx !== -1) {
-    notices[idx] = { ...notices[idx], ...req.body };
-    saveNotices(notices);
+app.put('/api/notices/:id', checkAppPassword, async (req, res) => {
+  const { title, category, description, date, time, imageUrl } = req.body;
+  const { id } = req.params;
+
+  try {
+    await pool.query(
+      `UPDATE notices 
+       SET title = COALESCE($1, title),
+           category = COALESCE($2, category),
+           description = COALESCE($3, description),
+           date = COALESCE($4, date),
+           time = COALESCE($5, time),
+           image_url = COALESCE($6, image_url)
+       WHERE id = $7`,
+      [title, category, description, date, time, imageUrl, id]
+    );
     res.json({ ok: true });
-  } else {
-    res.status(404).json({ error: "Evento no encontrado" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar evento" });
   }
 });
 
-app.delete('/api/notices/:id', checkAppPassword, (req, res) => {
-  let notices = getNotices();
-  notices = notices.filter(n => n.id !== req.params.id);
-  saveNotices(notices);
-  res.json({ ok: true });
+app.delete('/api/notices/:id', checkAppPassword, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM notices WHERE id = $1', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al eliminar evento" });
+  }
+});
+
+/* ========================================================
+   RUTAS API: HISTORIAL DE TIRAS/PROTEÍNAS (NEON DB)
+======================================================== */
+
+app.get('/api/urine-logs', checkAppPassword, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM urine_logs');
+    const logs = {};
+    
+    result.rows.forEach(row => {
+      logs[row.date_key] = {
+        protein: {
+          val: row.val,
+          color: row.color,
+          textcolor: row.text_color
+        },
+        notes: row.notes
+      };
+    });
+
+    res.json(logs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al cargar lecturas de proteína" });
+  }
+});
+
+app.post('/api/urine-logs', checkAppPassword, async (req, res) => {
+  const { dateKey, protein, notes } = req.body;
+
+  if (!dateKey || !protein) {
+    return res.status(400).json({ error: "Faltan datos obligatorios" });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO urine_logs (date_key, val, color, text_color, notes)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (date_key) DO UPDATE 
+       SET val = EXCLUDED.val,
+           color = EXCLUDED.color,
+           text_color = EXCLUDED.text_color,
+           notes = EXCLUDED.notes`,
+      [dateKey, protein.val, protein.color, protein.textcolor, notes || '']
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al guardar el registro en la base de datos" });
+  }
+});
+
+app.delete('/api/urine-logs/:dateKey', checkAppPassword, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM urine_logs WHERE date_key = $1', [req.params.dateKey]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al eliminar registro" });
+  }
 });
 
 app.listen(PORT, () => {
