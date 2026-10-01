@@ -348,14 +348,36 @@ async function renderCalendar() {
   }
 }
 
-// LÓGICA EXCLUSIVA: REGISTRO DE PROTEÍNAS
-function getUrineLogs() {
-  const data = localStorage.getItem('urineLogsData');
-  return data ? JSON.parse(data) : {};
+/* ========================================================
+   LÓGICA ACTUALIZADA DE PROTEÍNAS (DESDE POSTGRESQL)
+======================================================== */
+
+async function getUrineLogs() {
+  try {
+    const res = await fetch('/api/urine-logs', {
+      headers: { 'x-app-password': savedPassword || '' }
+    });
+    if (!res.ok) return {};
+    return await res.json();
+  } catch (err) {
+    return {};
+  }
 }
 
-function saveUrineLogs(logs) {
-  localStorage.setItem('urineLogsData', JSON.stringify(logs));
+async function saveUrineLogServer(dateKey, protein, notes) {
+  try {
+    const res = await fetch('/api/urine-logs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-app-password': savedPassword || ''
+      },
+      body: JSON.stringify({ dateKey, protein, notes })
+    });
+    return res.ok;
+  } catch (err) {
+    return false;
+  }
 }
 
 function initPillsSelector() {
@@ -381,7 +403,7 @@ function initPillsSelector() {
   });
 }
 
-function renderUrineModule() {
+async function renderUrineModule() {
   const year = currentUrineDate.getFullYear();
   const month = currentUrineDate.getMonth();
   const urineMonthLabel = document.getElementById('urineMonthLabel');
@@ -411,7 +433,7 @@ function renderUrineModule() {
 
   const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
   const totalDays = new Date(year, month + 1, 0).getDate();
-  const urineLogs = getUrineLogs();
+  const urineLogs = await getUrineLogs();
 
   for (let i = 0; i < firstDayIndex; i++) {
     const emptyCell = document.createElement('div');
@@ -448,8 +470,8 @@ function renderUrineModule() {
   renderUrineLogsList();
 }
 
-function loadUrineLogForDate(dateStr) {
-  const urineLogs = getUrineLogs();
+async function loadUrineLogForDate(dateStr) {
+  const urineLogs = await getUrineLogs();
   const titleElem = document.getElementById('selectedUrineDateTitle');
   if (titleElem) titleElem.textContent = `Anotar Proteínas: ${formatDate(dateStr)}`;
 
@@ -457,8 +479,7 @@ function loadUrineLogForDate(dateStr) {
     const log = urineLogs[dateStr];
     document.getElementById('urineNotes').value = log.notes || '';
     
-    // Si viene del formato antiguo con varios datos, extraer solo proteinas
-    const proData = log.protein || (log.data && log.data.proteinas) || { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' };
+    const proData = log.protein || { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' };
     proteinSelection = proData;
 
     const grid = document.querySelector('.color-options-grid[data-param="proteinas"]');
@@ -476,11 +497,11 @@ function loadUrineLogForDate(dateStr) {
   }
 }
 
-function renderUrineLogsList() {
+async function renderUrineLogsList() {
   const urineLogsList = document.getElementById('urineLogsList');
   if (!urineLogsList) return;
 
-  const urineLogs = getUrineLogs();
+  const urineLogs = await getUrineLogs();
   const year = currentUrineDate.getFullYear();
   const month = currentUrineDate.getMonth();
 
@@ -501,9 +522,9 @@ function renderUrineLogsList() {
   entries.forEach(dateKey => {
     const log = urineLogs[dateKey];
     const card = document.createElement('div');
-    card.style.cssText = "background:white; padding:12px; border-radius:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.08); display:flex; justify-style:space-between; flex-direction:column;";
+    card.style.cssText = "background:white; padding:12px; border-radius:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.08); display:flex; justify-content:space-between; flex-direction:column;";
 
-    const proData = log.protein || (log.data && log.data.proteinas) || { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' };
+    const proData = log.protein || { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' };
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -522,12 +543,21 @@ function renderUrineLogsList() {
   });
 }
 
-function deleteUrineLog(dateKey) {
+async function deleteUrineLog(dateKey) {
   if (confirm(`¿Eliminar la anotación del día ${formatDate(dateKey)}?`)) {
-    const logs = getUrineLogs();
-    delete logs[dateKey];
-    saveUrineLogs(logs);
-    renderUrineModule();
+    try {
+      const res = await fetch(`/api/urine-logs/${dateKey}`, {
+        method: 'DELETE',
+        headers: { 'x-app-password': savedPassword }
+      });
+      if (res.ok) {
+        renderUrineModule();
+      } else {
+        alert('Error al eliminar registro');
+      }
+    } catch (err) {
+      alert('Error de conexión al eliminar');
+    }
   }
 }
 
@@ -542,7 +572,7 @@ document.getElementById('nextUrineMonth')?.addEventListener('click', () => {
   renderUrineModule();
 });
 
-document.getElementById('saveUrineStrip')?.addEventListener('click', () => {
+document.getElementById('saveUrineStrip')?.addEventListener('click', async () => {
   const dateVal = document.getElementById('urineDate').value;
   const notesVal = document.getElementById('urineNotes').value;
 
@@ -551,15 +581,13 @@ document.getElementById('saveUrineStrip')?.addEventListener('click', () => {
     return;
   }
 
-  const logs = getUrineLogs();
-  logs[dateVal] = {
-    protein: { ...proteinSelection },
-    notes: notesVal
-  };
-
-  saveUrineLogs(logs);
-  alert('Valor de proteína registrado correctamente');
-  renderUrineModule();
+  const success = await saveUrineLogServer(dateVal, proteinSelection, notesVal);
+  if (success) {
+    alert('Valor de proteína registrado correctamente en la nube');
+    renderUrineModule();
+  } else {
+    alert('Error al guardar el valor en el servidor');
+  }
 });
 
 // NAVEGACIÓN DE EVENTOS EN CALENDARIO GENERAL
