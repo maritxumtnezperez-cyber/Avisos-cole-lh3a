@@ -38,21 +38,28 @@ async function initDb() {
       );
     `);
 
-    // 2. Asegurar que la columna image_url exista si la tabla se creó previamente sin ella
+    // 2. Asegurar que las columnas de notices existan
     await pool.query(`
       ALTER TABLE notices ADD COLUMN IF NOT EXISTS image_url TEXT;
+      ALTER TABLE notices ADD COLUMN IF NOT EXISTS title TEXT;
       ALTER TABLE notices ADD COLUMN IF NOT EXISTS date TEXT;
       ALTER TABLE notices ADD COLUMN IF NOT EXISTS time TEXT;
       ALTER TABLE notices ADD COLUMN IF NOT EXISTS description TEXT;
       ALTER TABLE notices ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General 📌';
+      ALTER TABLE notices ALTER COLUMN data DROP NOT NULL;
     `);
 
-    // 3. Crear la tabla urine_logs si no existe
+    // 3. Crear la tabla urine_logs si no existe y asegurar columnas
     await pool.query(`
       CREATE TABLE IF NOT EXISTS urine_logs (
         date_key VARCHAR(10) PRIMARY KEY,
         logs JSONB
       );
+      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS logs JSONB;
+      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS val VARCHAR(20);
+      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS color VARCHAR(20);
+      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS text_color VARCHAR(20);
+      ALTER TABLE urine_logs ADD COLUMN IF NOT EXISTS notes TEXT;
     `);
 
     console.log("Base de datos inicializada correctamente");
@@ -142,39 +149,66 @@ app.delete('/api/notices/:id', checkAppPassword, async (req, res) => {
   }
 });
 
-// GET: Obtener registros de pis por fecha
+// GET: Obtener registros de tiras de proteína por fecha
 app.get('/api/urine_logs/:dateKey', async (req, res) => {
   const { dateKey } = req.params;
   try {
-    const result = await pool.query('SELECT logs FROM urine_logs WHERE date_key = $1', [dateKey]);
+    const result = await pool.query('SELECT * FROM urine_logs WHERE date_key = $1', [dateKey]);
     if (result.rows.length > 0) {
-      res.json(result.rows[0].logs);
-    } else {
-      res.json([]);
+      const row = result.rows[0];
+      if (row.logs) {
+        return res.json(row.logs);
+      }
+      return res.json({
+        protein: {
+          val: row.val,
+          color: row.color,
+          textcolor: row.text_color
+        },
+        notes: row.notes
+      });
     }
+    res.json(null);
   } catch (err) {
     console.error("Error al obtener registros de pis:", err);
-    res.status(500).json({ error: "Error de servidor" });
+    res.status(500).json({ error: "Error de servidor al cargar registros" });
   }
 });
 
-// POST: Guardar registros de pis por fecha
+// POST: Guardar registros de tiras de proteína
 app.post('/api/urine_logs/:dateKey', checkAppPassword, async (req, res) => {
   const { dateKey } = req.params;
-  const logs = req.body;
+  const body = req.body;
+
+  const proteinVal = body.protein ? body.protein.val : body.val;
+  const proteinColor = body.protein ? body.protein.color : body.color;
+  const proteinTextColor = body.protein ? body.protein.textcolor : body.text_color;
+  const notes = body.notes || '';
 
   try {
     await pool.query(
-      `INSERT INTO urine_logs (date_key, logs) 
-       VALUES ($1, $2) 
+      `INSERT INTO urine_logs (date_key, val, color, text_color, notes, logs) 
+       VALUES ($1, $2, $3, $4, $5, $6) 
        ON CONFLICT (date_key) 
-       DO UPDATE SET logs = EXCLUDED.logs`,
-      [dateKey, JSON.stringify(logs)]
+       DO UPDATE SET 
+         val = EXCLUDED.val,
+         color = EXCLUDED.color,
+         text_color = EXCLUDED.text_color,
+         notes = EXCLUDED.notes,
+         logs = EXCLUDED.logs`,
+      [
+        dateKey,
+        proteinVal || null,
+        proteinColor || null,
+        proteinTextColor || null,
+        notes,
+        JSON.stringify(body)
+      ]
     );
     res.json({ ok: true });
   } catch (err) {
     console.error("Error al guardar registros de pis:", err);
-    res.status(500).json({ error: "Error de servidor al guardar" });
+    res.status(500).json({ error: `Error BD: ${err.message}` });
   }
 });
 
