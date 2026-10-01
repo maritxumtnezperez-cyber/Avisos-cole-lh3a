@@ -10,22 +10,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Única contraseña de la App
 const APP_PASSWORD = (process.env.APP_PASSWORD || "78875879").trim();
 
 app.use(express.json({ limit: '10mb' }));
 
-// Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
-// Conexión mediante Pool de Neon Serverless
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-// Inicialización de las Tablas en la Base de Datos
 async function initDb() {
   try {
-    // 1. Crear la tabla notices si no existe
     await pool.query(`
       CREATE TABLE IF NOT EXISTS notices (
         id VARCHAR(50) PRIMARY KEY,
@@ -38,12 +33,10 @@ async function initDb() {
       );
     `);
 
-    // 2. Asegurar que la columna image_url exista si la tabla se creó previamente sin ella
     await pool.query(`
       ALTER TABLE notices ADD COLUMN IF NOT EXISTS image_url TEXT;
     `);
 
-    // 3. Crear la tabla urine_logs si no existe
     await pool.query(`
       CREATE TABLE IF NOT EXISTS urine_logs (
         date_key VARCHAR(10) PRIMARY KEY,
@@ -60,7 +53,6 @@ async function initDb() {
 }
 initDb();
 
-// Ruta para servir la imagen del logo
 app.get(['/Logo.png', '/logo.png'], (req, res) => {
   const rootLogo = path.join(__dirname, 'Logo.png');
   const rootLogoLower = path.join(__dirname, 'logo.png');
@@ -75,7 +67,6 @@ app.get(['/Logo.png', '/logo.png'], (req, res) => {
   res.status(404).send('Logo no encontrado');
 });
 
-// Middleware para verificar contraseña de API
 function checkAppPassword(req, res, next) {
   const pass = req.headers['x-app-password'];
   if (pass && pass.trim() === APP_PASSWORD) {
@@ -84,7 +75,6 @@ function checkAppPassword(req, res, next) {
   return res.status(401).json({ error: "Acceso no autorizado" });
 }
 
-// Endpoint de Login
 app.post('/api/login', (req, res) => {
   const { password } = req.body;
   if (password && password.trim() === APP_PASSWORD) {
@@ -118,7 +108,15 @@ app.post('/api/notices', checkAppPassword, async (req, res) => {
     await pool.query(
       `INSERT INTO notices (id, title, category, description, date, time, image_url) 
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [id, title, category || "General 📌", description || "", date || null, time || null, imageUrl || null]
+      [
+        String(id),
+        String(title || 'Sin título'),
+        String(category || 'General 📌'),
+        String(description || ''),
+        date ? String(date) : '',
+        time ? String(time) : '',
+        imageUrl ? String(imageUrl) : ''
+      ]
     );
     res.json({ ok: true, notice: { id, title, category, description, date, time, imageUrl } });
   } catch (err) {
