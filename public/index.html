@@ -125,29 +125,8 @@
       cursor: pointer;
       margin-bottom: 12px;
     }
-    .btn-action {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      text-align: center;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-      box-sizing: border-box;
-      border: none;
-      cursor: pointer;
-    }
-    .btn-add-calendar {
-      background-color: #39aa6a;
-      color: white;
-    }
-    .btn-delete {
-      background-color: #fee2e2;
-      color: #dc2626;
-    }
 
-    /* Calendario */
+    /* Calendario General */
     .calendar-header {
       display: flex;
       justify-content: space-between;
@@ -163,6 +142,46 @@
       font-size: 18px;
       font-weight: bold;
       cursor: pointer;
+    }
+
+    /* Grid del Calendario de Tiras */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      background: white;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .calendar-day-header {
+      text-align: center;
+      font-weight: bold;
+      font-size: 12px;
+      color: #64748b;
+      padding-bottom: 6px;
+    }
+    .calendar-day-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .calendar-day-cell.empty {
+      background: transparent;
+      border: none;
+      cursor: default;
+    }
+    .calendar-day-cell.selected {
+      border: 2px solid #0f172a !important;
+      box-shadow: 0 0 0 2px #38bdf8;
     }
 
     /* Estilos para Horarios */
@@ -266,14 +285,6 @@
       border-color: #0f172a;
       box-shadow: 0 0 0 2px #38bdf8;
       transform: scale(1.05);
-    }
-    .strip-summary-item {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 6px;
-      text-align: center;
-      font-size: 12px;
-      font-weight: bold;
     }
 
     /* Navegación Inferior (5 Pestañas) */
@@ -456,7 +467,7 @@
       </div>
     </section>
 
-    <!-- QUINTA PESTAÑA: REGISTRO DE PROTEÍNAS EN ORINA -->
+    <!-- REGISTRO DE PROTEÍNAS EN ORINA -->
     <section id="stripes" class="screen">
       <h2>🧪 Proteína en Orina</h2>
       
@@ -467,7 +478,7 @@
         <button id="nextUrineMonth" class="btn-calendar">→</button>
       </div>
 
-      <!-- Calendario -->
+      <!-- Calendario Grid -->
       <div id="urineCalendarGrid" class="calendar-grid"></div>
 
       <!-- Formulario de Registro exclusivo de Proteínas -->
@@ -479,7 +490,7 @@
           <input type="date" id="urineDate">
         </div>
 
-        <!-- Único Parámetro: Proteínas -->
+        <!-- Parámetro: Proteínas -->
         <div class="urine-param-card">
           <div class="urine-param-title">Proteínas (PRO)</div>
           <div class="color-options-grid" data-param="proteinas">
@@ -575,6 +586,194 @@
       <label>Tiras</label>
     </button>
   </nav>
+
+  <!-- SCRIPT PARA GESTIONAR EL CALENDARIO Y VALORES DE TIRAS -->
+  <script>
+    let currentUrineDate = new Date();
+    let selectedUrinePill = null;
+
+    const MONTH_NAMES = [
+      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Inicializar fecha de hoy en el input
+      const todayStr = new Date().toISOString().split('T')[0];
+      const urineDateInput = document.getElementById('urineDate');
+      if (urineDateInput) urineDateInput.value = todayStr;
+
+      // Evento selector de cápsulas (color pills)
+      const pills = document.querySelectorAll('.color-pill');
+      pills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          pills.forEach(p => p.classList.remove('selected'));
+          pill.classList.add('selected');
+          selectedUrinePill = {
+            val: pill.dataset.val,
+            color: pill.dataset.color,
+            textcolor: pill.dataset.textcolor
+          };
+        });
+      });
+
+      // Controles del mes
+      document.getElementById('prevUrineMonth')?.addEventListener('click', () => {
+        currentUrineDate.setMonth(currentUrineDate.getMonth() - 1);
+        renderUrineCalendar();
+      });
+
+      document.getElementById('nextUrineMonth')?.addEventListener('click', () => {
+        currentUrineDate.setMonth(currentUrineDate.getMonth() + 1);
+        renderUrineCalendar();
+      });
+
+      // Cambio directo de fecha en el input
+      urineDateInput?.addEventListener('change', (e) => {
+        if (e.target.value) {
+          const parts = e.target.value.split('-');
+          currentUrineDate = new Date(parts[0], parts[1] - 1, parts[2]);
+          renderUrineCalendar();
+        }
+      });
+
+      // Botón Guardar
+      document.getElementById('saveUrineStrip')?.addEventListener('click', saveUrineData);
+
+      // Render inicial
+      renderUrineCalendar();
+    });
+
+    async function renderUrineCalendar() {
+      const year = currentUrineDate.getFullYear();
+      const month = currentUrineDate.getMonth();
+
+      // Actualizar Etiqueta del Mes
+      const monthLabel = document.getElementById('urineMonthLabel');
+      if (monthLabel) monthLabel.textContent = `${MONTH_NAMES[month]} ${year}`;
+
+      const grid = document.getElementById('urineCalendarGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      // Cabecera días de la semana
+      const dayHeaders = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+      dayHeaders.forEach(dh => {
+        const h = document.createElement('div');
+        h.className = 'calendar-day-header';
+        h.textContent = dh;
+        grid.appendChild(h);
+      });
+
+      // Cálculo primer día y total días del mes
+      const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Lunes = 0
+      const totalDays = new Date(year, month + 1, 0).getDate();
+
+      // Espacios vacíos antes del primer día
+      for (let i = 0; i < firstDayIndex; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day-cell empty';
+        grid.appendChild(emptyCell);
+      }
+
+      const selectedDateVal = document.getElementById('urineDate')?.value;
+
+      // Crear celdas de días
+      for (let day = 1; day <= totalDays; day++) {
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const dateKey = `${year}-${monthStr}-${dayStr}`;
+
+        const cell = document.createElement('div');
+        cell.className = 'calendar-day-cell';
+        cell.textContent = day;
+        cell.dataset.date = dateKey;
+
+        if (selectedDateVal === dateKey) {
+          cell.classList.add('selected');
+        }
+
+        // Consultar registro para asignar color
+        try {
+          const res = await fetch(`/api/urine_logs/${dateKey}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data) {
+              const color = data.protein?.color || data.color;
+              const textcolor = data.protein?.textcolor || data.text_color || '#000000';
+
+              if (color) {
+                cell.style.backgroundColor = color;
+                cell.style.color = textcolor;
+                cell.style.fontWeight = 'bold';
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Error al consultar fecha:", dateKey, e);
+        }
+
+        // Evento clic para seleccionar el día
+        cell.addEventListener('click', () => {
+          document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected'));
+          cell.classList.add('selected');
+
+          const dateInput = document.getElementById('urineDate');
+          if (dateInput) dateInput.value = dateKey;
+
+          const title = document.getElementById('selectedUrineDateTitle');
+          if (title) title.textContent = `Anotar Proteínas: ${dayStr}/${monthStr}/${year}`;
+        });
+
+        grid.appendChild(cell);
+      }
+    }
+
+    async function saveUrineData() {
+      const dateKey = document.getElementById('urineDate')?.value;
+      if (!dateKey) {
+        alert("Por favor selecciona una fecha válida.");
+        return;
+      }
+
+      if (!selectedUrinePill) {
+        alert("Por favor selecciona un valor de proteína (Neg, Trazas, +, ++, +++).");
+        return;
+      }
+
+      const notes = document.getElementById('urineNotes')?.value || '';
+
+      const payload = {
+        protein: selectedUrinePill,
+        notes: notes
+      };
+
+      // Contraseña exacta del backend
+      const appPassword = "78875879";
+
+      try {
+        const res = await fetch(`/api/urine_logs/${dateKey}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-app-password': appPassword
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+        if (res.ok && result.ok) {
+          alert("¡Valor de proteína guardado con éxito!");
+          renderUrineCalendar(); // Re-renderizar calendario para actualizar colores
+        } else {
+          alert("Error al guardar: " + (result.error || "Error del servidor (" + res.status + ")"));
+        }
+      } catch (err) {
+        console.error("Error en la solicitud:", err);
+        alert("Error de conexión al servidor");
+      }
+    }
+  </script>
 
   <script src="/app.js"></script>
 </body>
