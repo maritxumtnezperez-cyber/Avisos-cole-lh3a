@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#39aa6a">
+  <meta name="apple-mobile-web-app-title" content="Cosas de Ane">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+
+  <title>Cosas de Ane</title>
+
+  <!-- Favicon e Iconos PWA -->
+  <link rel="icon" type="image/png" href="/Logo.png">
+  <link rel="shortcut icon" href="/Logo.png">
+  <link rel="apple-touch-icon" href="/Logo.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <link rel="stylesheet" href="/styles.css">
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f4f6f5;
+      color: #333;
+      padding-bottom: 75px;
+    }
+
+    /* Encabezado */
+    .app-header {
+      background-color: #39aa6a;
+      color: white;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .app-logo {
+      width: 42px !important;
+      height: 42px !important;
+      max-width: 42px !important;
+      max-height: 42px !important;
+      border-radius: 50%;
+      object-fit: cover;
+      background: white;
+    }
+    .app-header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .header-subtitle {
+      font-size: 12px;
+      opacity: 0.85;
+      display: block;
+    }
+    .btn-icon {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    /* Contenedor y Pantallas */
+    .app-container {
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .screen {
+      display: none;
+    }
+    .screen.active {
+      display: block;
+    }
+
+    /* Formulario y Filtros */
+    .filter-container, .form-group {
+      margin-bottom: 14px;
+    }
+    .filter-container select, .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      margin-top: 4px;
+    }
+    .form-row {
+      display: flex;
+      gap: 10px;
+    }
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    /* Botones generales */
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: #39aa6a;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    .btn-action {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      text-align: center;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      box-sizing: border-box;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-add-calendar {
+      background-color: #39aa6a;
+      color: white;
+    }
+    .btn-delete {
+      background-color: #fee2e2;
+      color: #dc2626;
+    }
+
+    /* Calendario */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .btn-calendar {
+      background: #39aa6a;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* Estilos para Horarios */
+    .schedule-card {
+      background: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+    }
+    .schedule-card h3 {
+      margin: 0 0 4px 0;
+      color: #39aa6a;
+      font-size: 16px;
+    }
+    .schedule-subtitle {
+      margin: 0 0 12px 0;
+      font-size: 12px;
+      color: #666;
+    }
+    .schedule-table-wrapper {
+      overflow-x: auto;
+      margin-bottom: 10px;
+    }
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      text-align: center;
+      font-weight: bold;
+    }
+    .schedule-table th, .schedule-table td {
+      border: 1px solid #ffffff;
+      padding: 8px 4px;
+    }
+    .schedule-table th {
+      background-color: #2e7d32;
+      color: white;
+      font-weight: bold;
+    }
+    .schedule-table .time-col {
+      background-color: #e0e0e0;
+      color: #333;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .schedule-table .break-row td {
+      background-color: #f5f5f5;
+      color: #424242;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    /* Colores Asignaturas */
+    .subject-matematika { background-color: #3b82f6; color: white; }
+    .subject-ingurune   { background-color: #22c55e; color: white; }
+    .subject-euskera    { background-color: #f97316; color: white; }
+    .subject-gaztelania { background-color: #ef4444; color: white; }
+    .subject-ingelesa   { background-color: #eab308; color: black; }
+    .subject-plastika   { background-color: #ec4899; color: white; }
+    .subject-musika     { background-color: #ec4899; color: white; }
+    .subject-ef         { background-color: #8b5cf6; color: white; }
+    .subject-kzp        { background-color: #8b5cf6; color: white; }
+    .subject-tutoretza  { background-color: #9ca3af; color: white; }
+
+    /* ESTILOS ESPECÍFICOS: PROTEÍNA EN ORINA */
+    .urine-param-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .urine-param-title {
+      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+    .color-options-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
+      gap: 6px;
+    }
+    .color-pill {
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: bold;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+    }
+    .color-pill.selected {
+      border-color: #0f172a;
+      box-shadow: 0 0 0 2px #38bdf8;
+      transform: scale(1.05);
+    }
+    .strip-summary-item {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    /* Navegación Inferior (5 Pestañas) */
+    nav.bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: white;
+      display: flex;
+      border-top: 1px solid #e5e7eb;
+      z-index: 100;
+    }
+    nav.bottom button {
+      flex: 1;
+      border: none;
+      background: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #6b7280;
+      font-size: 10px;
+      padding: 2px 0;
+      cursor: pointer;
+    }
+    nav.bottom button.active {
+      color: #39aa6a;
+      font-weight: bold;
+    }
+    nav.bottom button span {
+      font-size: 17px;
+      margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Encabezado -->
+  <header class="app-header">
+    <div class="header-content">
+      <img src="/Logo.png" alt="Logo" class="app-logo">
+      <div>
+        <h1>Cosas de Ane</h1>
+        <span class="header-subtitle">LH3A</span>
+      </div>
+    </div>
+    <button id="adminBtn" class="btn-icon">⚙️</button>
+  </header>
+
+  <main class="app-container">
+    <!-- Pantalla: Próximos Eventos -->
+    <section id="home" class="screen active">
+      <div id="next" class="next-event-card"></div>
+
+      <div class="filter-container">
+        <label for="filterCategory">Filtrar por categoría:</label>
+        <select id="filterCategory">
+          <option value="TODAS">Todas las categorías</option>
+          <option value="Reunión 📝">Reunión 📝</option>
+          <option value="Excursión 🚌">Excursión 🚌</option>
+          <option value="Médico 🏥">Médico 🏥</option>
+          <option value="Jiujitsu 🥋">Jiujitsu 🥋</option>
+          <option value="General 📌">General 📌</option>
+        </select>
+      </div>
+
+      <div id="noticeList" class="notice-list"></div>
+    </section>
+
+    <!-- Pantalla: Pasados -->
+    <section id="past" class="screen">
+      <h2>Eventos pasados</h2>
+      <div id="pastNoticeList" class="notice-list"></div>
+    </section>
+
+    <!-- Pantalla: Calendario de Eventos -->
+    <section id="calendar" class="screen">
+      <div class="calendar-header">
+        <button id="prevMonth" class="btn-calendar">←</button>
+        <h2 id="monthLabel"></h2>
+        <button id="nextMonth" class="btn-calendar">→</button>
+      </div>
+      <div id="calendarGrid" class="calendar-grid"></div>
+      <div id="monthEventsList" class="notice-list" style="margin-top: 20px;"></div>
+    </section>
+
+    <!-- Pantalla: Horarios y Calendarios Escolares -->
+    <section id="schedules" class="screen">
+      <h2>Horarios y Calendarios 2026/2027</h2>
+
+      <div class="schedule-card">
+        <h3>📚 Horario del Colegio</h3>
+        <p class="schedule-subtitle">Ordutegia - Lunes a Viernes</p>
+        
+        <div class="schedule-table-wrapper">
+          <table class="schedule-table">
+            <thead>
+              <tr>
+                <th>Ordua</th>
+                <th>Astelehena</th>
+                <th>Asteartea</th>
+                <th>Asteazkena</th>
+                <th>Osteguna</th>
+                <th>Ostirala</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="time-col">09:00 - 09:50</td>
+                <td class="subject-matematika">MATEMATIKA</td>
+                <td class="subject-euskera">EUSKERA</td>
+                <td rowspan="2" class="subject-ingurune">INGURUNE</td>
+                <td class="subject-euskera">EUSKERA</td>
+                <td class="subject-euskera">EUSKERA</td>
+              </tr>
+              <tr>
+                <td class="time-col">09:50 - 10:40</td>
+                <td class="subject-ingurune">INGURUNE</td>
+                <td class="subject-matematika">MATEMATIKA</td>
+                <td class="subject-musika">MUSIKA</td>
+                <td class="subject-matematika">MATEMATIKA</td>
+              </tr>
+              <tr class="break-row">
+                <td class="time-col">10:40 - 11:10</td>
+                <td colspan="5">JOLASTORDUA</td>
+              </tr>
+              <tr>
+                <td class="time-col">11:10 - 11:55</td>
+                <td class="subject-gaztelania">GAZTELANIA</td>
+                <td class="subject-ingelesa">INGELESA</td>
+                <td class="subject-euskera">EUSKERA</td>
+                <td class="subject-matematika">MATEMATIKA</td>
+                <td class="subject-tutoretza">TUTORETZA</td>
+              </tr>
+              <tr>
+                <td class="time-col">11:55 - 12:45</td>
+                <td class="subject-euskera">EUSKERA</td>
+                <td class="subject-plastika">PLASTIKA</td>
+                <td class="subject-gaztelania">GAZTELANIA</td>
+                <td class="subject-ingurune">INGURUNE</td>
+                <td class="subject-ingelesa">INGELESA</td>
+              </tr>
+              <tr class="break-row">
+                <td class="time-col">12:45 - 13:25</td>
+                <td colspan="5">BAZKALORDUA</td>
+              </tr>
+              <tr>
+                <td class="time-col">Tarde</td>
+                <td class="subject-ingelesa">INGELESA</td>
+                <td class="subject-ef">HEZIKETA FISIKOA</td>
+                <td class="subject-kzp">K.Z.P.</td>
+                <td class="subject-gaztelania">GAZTELANIA</td>
+                <td class="subject-ef">HEZIKETA FISIKOA</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="schedule-card">
+        <h3>🏫 Egutegia Bentades 2026/2027</h3>
+        <p class="schedule-subtitle">Calendario lectivo HH - LH (175 egun lektibo)</p>
+        <div class="img-container-full">
+          <a href="/calendario-bentades.jpg" target="_blank">
+            <img src="/calendario-bentades.jpg" alt="Egutegia Bentades 2026/2027" style="width:100%; border-radius:8px; border:1px solid #ddd;">
+          </a>
+        </div>
+      </div>
+
+      <div class="schedule-card">
+        <h3>🇬🇧 Calendario de Inglés (Elsa & Friends)</h3>
+        <p class="schedule-subtitle">Curso 2026/2027</p>
+        <div class="img-container-full">
+          <a href="/calendario-ingles.jpg" target="_blank">
+            <img src="/calendario-ingles.jpg" alt="Calendario de Inglés 2026/2027" style="width:100%; border-radius:8px; border:1px solid #ddd;">
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUINTA PESTAÑA: REGISTRO DE PROTEÍNAS EN ORINA -->
+    <section id="stripes" class="screen">
+      <h2>🧪 Proteína en Orina</h2>
+      
+      <!-- Navegación del mes -->
+      <div class="calendar-header">
+        <button id="prevUrineMonth" class="btn-calendar">←</button>
+        <h2 id="urineMonthLabel"></h2>
+        <button id="nextUrineMonth" class="btn-calendar">→</button>
+      </div>
+
+      <!-- Calendario -->
+      <div id="urineCalendarGrid" class="calendar-grid"></div>
+
+      <!-- Formulario de Registro exclusivo de Proteínas -->
+      <div style="margin-top: 20px; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
+        <h3 style="margin-bottom: 12px; color: #39aa6a;" id="selectedUrineDateTitle">Anotar Proteínas</h3>
+        
+        <div class="form-group">
+          <label for="urineDate">Fecha de la muestra:</label>
+          <input type="date" id="urineDate">
+        </div>
+
+        <!-- Único Parámetro: Proteínas -->
+        <div class="urine-param-card">
+          <div class="urine-param-title">Proteínas (PRO)</div>
+          <div class="color-options-grid" data-param="proteinas">
+            <div class="color-pill" style="background:#fef9c3; color:#713f12;" data-val="Neg" data-color="#fef9c3" data-textcolor="#713f12">Neg</div>
+            <div class="color-pill" style="background:#a7f3d0; color:#065f46;" data-val="Trazas" data-color="#a7f3d0" data-textcolor="#065f46">Trazas</div>
+            <div class="color-pill" style="background:#34d399; color:#064e3b;" data-val="+" data-color="#34d399" data-textcolor="#064e3b">+</div>
+            <div class="color-pill" style="background:#059669; color:#ffffff;" data-val="++" data-color="#059669" data-textcolor="#ffffff">++</div>
+            <div class="color-pill" style="background:#047857; color:#ffffff;" data-val="+++" data-color="#047857" data-textcolor="#ffffff">+++</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="urineNotes">Observaciones / Notas:</label>
+          <textarea id="urineNotes" rows="2" placeholder="Notas adicionales..."></textarea>
+        </div>
+
+        <button id="saveUrineStrip" class="btn-primary">Guardar Valor</button>
+      </div>
+
+      <!-- Detalle de Registros del Mes -->
+      <div style="margin-top: 20px;">
+        <h3>📋 Historial de proteínas del mes</h3>
+        <div id="urineLogsList" style="margin-top: 10px;"></div>
+      </div>
+    </section>
+
+    <!-- Pantalla: Administración / Publicar -->
+    <section id="admin" class="screen">
+      <button id="backBtn" class="btn-secondary">← Volver</button>
+      <h2>Publicar nuevo evento</h2>
+
+      <div class="form-group">
+        <label for="title">Título del evento *</label>
+        <input type="text" id="title" placeholder="Ej. Salida al teatro">
+      </div>
+
+      <div class="form-group">
+        <label for="category">Categoría *</label>
+        <select id="category">
+          <option value="Reunión 📝">Reunión 📝</option>
+          <option value="Excursión 🚌">Excursión 🚌</option>
+          <option value="Médico 🏥">Médico 🏥</option>
+          <option value="Jiujitsu 🥋">Jiujitsu 🥋</option>
+          <option value="General 📌">General 📌</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="date">Fecha</label>
+          <input type="date" id="date">
+        </div>
+        <div class="form-group">
+          <label for="time">Hora</label>
+          <input type="time" id="time">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Detalles</label>
+        <textarea id="description" rows="3" placeholder="Detalles del evento..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="imageFile">Imagen (Opcional)</label>
+        <input type="file" id="imageFile" accept="image/*">
+      </div>
+
+      <button id="publish" class="btn-primary">Publicar Evento</button>
+    </section>
+  </main>
+
+  <!-- Navegación Inferior (5 Pestañas) -->
+  <nav class="bottom">
+    <button data-screen="home" class="active">
+      <span>📌</span>
+      <label>Próximos</label>
+    </button>
+    <button data-screen="past">
+      <span>⌛</span>
+      <label>Pasados</label>
+    </button>
+    <button data-screen="calendar">
+      <span>📅</span>
+      <label>Eventos</label>
+    </button>
+    <button data-screen="schedules">
+      <span>🕒</span>
+      <label>Horarios</label>
+    </button>
+    <button data-screen="stripes">
+      <span>🧪</span>
+      <label>Tiras</label>
+    </button>
+  </nav>
+
+  <script src="/app.js"></script>
+</body>
+</html>
