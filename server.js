@@ -149,8 +149,30 @@ app.delete('/api/notices/:id', checkAppPassword, async (req, res) => {
   }
 });
 
-// GET: Obtener registros de tiras de proteína por fecha
-app.get('/api/urine_logs/:dateKey', async (req, res) => {
+// GET: Obtener TODOS los registros de tiras de proteína (Soluciona el 404 al cargar el calendario)
+app.get(['/api/urine-logs', '/api/urine_logs'], async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM urine_logs');
+    const logsMap = {};
+    result.rows.forEach(row => {
+      logsMap[row.date_key] = row.logs || {
+        protein: {
+          val: row.val,
+          color: row.color,
+          textcolor: row.text_color
+        },
+        notes: row.notes
+      };
+    });
+    res.json(logsMap);
+  } catch (err) {
+    console.error("Error al obtener el listado completo de registros:", err);
+    res.status(500).json({ error: "Error de servidor al cargar registros" });
+  }
+});
+
+// GET: Obtener registros de tiras de proteína por fecha específica
+app.get(['/api/urine-logs/:dateKey', '/api/urine_logs/:dateKey'], async (req, res) => {
   const { dateKey } = req.params;
   try {
     const result = await pool.query('SELECT * FROM urine_logs WHERE date_key = $1', [dateKey]);
@@ -175,14 +197,18 @@ app.get('/api/urine_logs/:dateKey', async (req, res) => {
   }
 });
 
-// POST: Guardar registros de tiras de proteína
-app.post('/api/urine_logs/:dateKey', checkAppPassword, async (req, res) => {
-  const { dateKey } = req.params;
+// POST: Guardar registros de tiras de proteína (Acepta guardado con o sin fecha en la URL)
+app.post(['/api/urine-logs', '/api/urine_logs', '/api/urine-logs/:dateKey', '/api/urine_logs/:dateKey'], checkAppPassword, async (req, res) => {
   const body = req.body;
+  const dateKey = req.params.dateKey || body.dateKey || body.date;
 
-  const proteinVal = body.protein ? body.protein.val : body.val;
+  if (!dateKey) {
+    return res.status(400).json({ error: "Falta la fecha (dateKey)" });
+  }
+
+  const proteinVal = body.protein ? (body.protein.val || body.protein) : (body.val || body.proteinas);
   const proteinColor = body.protein ? body.protein.color : body.color;
-  const proteinTextColor = body.protein ? body.protein.textcolor : body.text_color;
+  const proteinTextColor = body.protein ? (body.protein.textcolor || body.protein.text_color) : body.text_color;
   const notes = body.notes || '';
 
   try {
