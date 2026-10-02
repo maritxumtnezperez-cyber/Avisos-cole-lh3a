@@ -479,7 +479,12 @@ async function loadUrineLogForDate(dateStr) {
     const log = urineLogs[dateStr];
     document.getElementById('urineNotes').value = log.notes || '';
     
-    const proData = log.protein || { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' };
+    // Extraer datos con soporte para distintas claves
+    const val = log.val || log.value || log.proteinas || (log.protein && log.protein.val) || 'Neg';
+    const color = log.color || (log.protein && log.protein.color) || '#fef9c3';
+    const textcolor = log.text_color || log.textcolor || (log.protein && log.protein.textcolor) || '#713f12';
+
+    const proData = { val, color, textcolor };
     proteinSelection = proData;
 
     const grid = document.querySelector('.color-options-grid[data-param="proteinas"]');
@@ -524,7 +529,10 @@ async function renderUrineLogsList() {
     const card = document.createElement('div');
     card.style.cssText = "background:white; padding:12px; border-radius:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.08); display:flex; justify-content:space-between; flex-direction:column;";
 
-    const proData = log.protein || { val: 'Neg', color: '#fef9c3', textcolor: '#713f12' };
+    // Lectura robusta para resolver undefined y aplicar colores
+    const val = log.val || log.value || log.proteinas || (log.protein && log.protein.val) || 'Sin dato';
+    const bgColor = log.color || (log.protein && log.protein.color) || '#fef9c3';
+    const textColor = log.text_color || log.textcolor || (log.protein && log.protein.textcolor) || '#713f12';
 
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -532,8 +540,8 @@ async function renderUrineLogsList() {
         <button onclick="deleteUrineLog('${dateKey}')" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:16px;">🗑️</button>
       </div>
       <div>
-        <span class="strip-summary-item" style="background:${proData.color}; color:${proData.textcolor}; border:1px solid rgba(0,0,0,0.1);">
-          Proteínas: ${proData.val}
+        <span class="strip-summary-item" style="background:${bgColor}; color:${textColor}; border:1px solid rgba(0,0,0,0.1); padding:4px 8px; border-radius:6px; font-weight:bold; display:inline-block;">
+          Proteínas: ${val}
         </span>
       </div>
       ${log.notes ? `<p style="font-size:12px; color:#475569; margin-top:8px;">📝 ${log.notes}</p>` : ''}
