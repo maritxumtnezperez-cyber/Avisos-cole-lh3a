@@ -576,193 +576,66 @@
     </button>
   </nav>
 
-  <!-- SCRIPT DE NAVEGACIÓN Y TIRAS DE ORINA -->
-  <script>
-    let currentUrineDate = new Date();
-    let selectedUrinePill = null;
-
-    const MONTH_NAMES = [
-      "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
-      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    ];
-
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Inicializar fecha de hoy
-      const todayStr = new Date().toISOString().split('T')[0];
-      const urineDateInput = document.getElementById('urineDate');
-      if (urineDateInput) urineDateInput.value = todayStr;
-
-      // 2. Selección de valor (color pills)
-      const pills = document.querySelectorAll('.color-pill');
-      pills.forEach(pill => {
-        pill.addEventListener('click', () => {
-          pills.forEach(p => p.classList.remove('selected'));
-          pill.classList.add('selected');
-          selectedUrinePill = {
-            val: pill.dataset.val,
-            color: pill.dataset.color,
-            textcolor: pill.dataset.textcolor
-          };
-        });
-      });
-
-      // 3. Botones de cambio de mes
-      document.getElementById('prevUrineMonth')?.addEventListener('click', () => {
-        currentUrineDate.setMonth(currentUrineDate.getMonth() - 1);
-        renderUrineCalendar();
-      });
-
-      document.getElementById('nextUrineMonth')?.addEventListener('click', () => {
-        currentUrineDate.setMonth(currentUrineDate.getMonth() + 1);
-        renderUrineCalendar();
-      });
-
-      // 4. Cambio directo de fecha
-      urineDateInput?.addEventListener('change', (e) => {
-        if (e.target.value) {
-          const parts = e.target.value.split('-');
-          currentUrineDate = new Date(parts[0], parts[1] - 1, parts[2]);
-          renderUrineCalendar();
-        }
-      });
-
-      // 5. Asignar evento al botón de Guardar
-      document.getElementById('saveUrineStrip')?.addEventListener('click', saveUrineData);
-
-      // Render inicial del calendario de tiras
-      renderUrineCalendar();
-    });
-
-    async function renderUrineCalendar() {
-      const year = currentUrineDate.getFullYear();
-      const month = currentUrineDate.getMonth();
-
-      const monthLabel = document.getElementById('urineMonthLabel');
-      if (monthLabel) monthLabel.textContent = `${MONTH_NAMES[month]} ${year}`;
-
-      const grid = document.getElementById('urineCalendarGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
-
-      // Cabecera días
-      const dayHeaders = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-      dayHeaders.forEach(dh => {
-        const h = document.createElement('div');
-        h.style.textAlign = 'center';
-        h.style.fontWeight = 'bold';
-        h.style.fontSize = '12px';
-        h.style.color = '#64748b';
-        h.textContent = dh;
-        grid.appendChild(h);
-      });
-
-      const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
-      const totalDays = new Date(year, month + 1, 0).getDate();
-
-      for (let i = 0; i < firstDayIndex; i++) {
-        const emptyCell = document.createElement('div');
-        emptyCell.className = 'calendar-day-cell empty';
-        grid.appendChild(emptyCell);
-      }
-
-      const selectedDateVal = document.getElementById('urineDate')?.value;
-
-      for (let day = 1; day <= totalDays; day++) {
-        const monthStr = String(month + 1).padStart(2, '0');
-        const dayStr = String(day).padStart(2, '0');
-        const dateKey = `${year}-${monthStr}-${dayStr}`;
-
-        const cell = document.createElement('div');
-        cell.className = 'calendar-day-cell';
-        cell.textContent = day;
-        cell.dataset.date = dateKey;
-
-        if (selectedDateVal === dateKey) {
-          cell.classList.add('selected');
-        }
-
-        // Obtener dato existente para pintar el día
-        try {
-          const res = await fetch(`/api/urine_logs/${dateKey}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data) {
-              const color = data.protein?.color || data.color;
-              const textcolor = data.protein?.textcolor || data.text_color || '#000000';
-
-              if (color) {
-                cell.style.backgroundColor = color;
-                cell.style.color = textcolor;
-                cell.style.fontWeight = 'bold';
-              }
-            }
-          }
-        } catch (e) {
-          console.error("Error cargando día:", dateKey, e);
-        }
-
-        cell.addEventListener('click', () => {
-          document.querySelectorAll('#urineCalendarGrid .calendar-day-cell').forEach(c => c.classList.remove('selected'));
-          cell.classList.add('selected');
-
-          const dateInput = document.getElementById('urineDate');
-          if (dateInput) dateInput.value = dateKey;
-
-          const title = document.getElementById('selectedUrineDateTitle');
-          if (title) title.textContent = `Anotar Proteínas: ${dayStr}/${monthStr}/${year}`;
-        });
-
-        grid.appendChild(cell);
-      }
-    }
-
-    async function saveUrineData() {
-      const dateKey = document.getElementById('urineDate')?.value;
-      if (!dateKey) {
-        alert("Por favor selecciona una fecha válida.");
-        return;
-      }
-
-      if (!selectedUrinePill) {
-        alert("Por favor selecciona un valor de proteína (Neg, Trazas, +, ++, +++).");
-        return;
-      }
-
-      const notes = document.getElementById('urineNotes')?.value || '';
-
-      const payload = {
-        protein: selectedUrinePill,
-        notes: notes
-      };
-
-      // Contraseña requerida por el backend
-      const appPassword = "78875879";
-
-      try {
-        const res = await fetch(`/api/urine_logs/${dateKey}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-app-password': appPassword
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const result = await res.json();
-        if (res.ok && result.ok) {
-          alert("¡Valor de proteína guardado con éxito!");
-          renderUrineCalendar();
-        } else {
-          alert("Error al guardar: " + (result.error || "Error del servidor (" + res.status + ")"));
-        }
-      } catch (err) {
-        console.error("Error enviando datos:", err);
-        alert("Error de conexión con el servidor");
-      }
-    }
-  </script>
-
-  <!-- Carga del script original para eventos, pasados y navegación global -->
+  <!-- Carga del script principal de tu app -->
   <script src="/app.js"></script>
+
+  <!-- Parche solo para enviar la contraseña al guardar la orina sin alterar app.js -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const originalBtn = document.getElementById('saveUrineStrip');
+      if (originalBtn) {
+        // Interceptamos la llamada para inyectar la cabecera x-app-password
+        const newBtn = originalBtn.cloneNode(true);
+        originalBtn.parentNode.replaceChild(newBtn, originalBtn);
+
+        newBtn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const dateKey = document.getElementById('urineDate')?.value;
+          if (!dateKey) {
+            alert("Por favor selecciona una fecha.");
+            return;
+          }
+
+          // Buscar la opción seleccionada en tu UI
+          const selectedPill = document.querySelector('.color-pill.selected');
+          if (!selectedPill) {
+            alert("Por favor selecciona un valor de proteína.");
+            return;
+          }
+
+          const payload = {
+            protein: {
+              val: selectedPill.dataset.val,
+              color: selectedPill.dataset.color,
+              textcolor: selectedPill.dataset.textcolor
+            },
+            notes: document.getElementById('urineNotes')?.value || ''
+          };
+
+          try {
+            const res = await fetch(`/api/urine_logs/${dateKey}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-app-password': '78875879'
+              },
+              body: JSON.stringify(payload)
+            });
+
+            const result = await res.json();
+            if (res.ok && result.ok) {
+              alert("¡Valor guardado correctamente!");
+              if (typeof renderUrineCalendar === 'function') renderUrineCalendar();
+              else location.reload();
+            } else {
+              alert("Error: " + (result.error || "No se pudo guardar"));
+            }
+          } catch (err) {
+            alert("Error de conexión al guardar.");
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>
