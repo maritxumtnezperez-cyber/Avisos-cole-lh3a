@@ -267,14 +267,6 @@
       box-shadow: 0 0 0 2px #38bdf8;
       transform: scale(1.05);
     }
-    .strip-summary-item {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 6px;
-      text-align: center;
-      font-size: 12px;
-      font-weight: bold;
-    }
 
     /* Navegación Inferior (5 Pestañas) */
     nav.bottom {
@@ -311,7 +303,7 @@
     }
   </style>
 
-  <!-- Interceptor global para autorizar y formatear peticiones al servidor -->
+  <!-- Interceptor global para autorizar peticiones al servidor -->
   <script>
     (function() {
       const originalFetch = window.fetch;
@@ -330,26 +322,7 @@
           }
         };
 
-        // Inyectar la contraseña requerida por el backend en las cabeceras
         setHeader('x-app-password', '78875879');
-
-        // Compatibilidad de estructura para guardar orina
-        if (config.body && typeof resource === 'string' && resource.includes('/api/urine')) {
-          try {
-            const bodyObj = JSON.parse(config.body);
-            const proteinValue = bodyObj.proteinas || bodyObj.protein || bodyObj.value || "";
-
-            bodyObj.proteinas = proteinValue;
-            bodyObj.protein = proteinValue;
-            bodyObj.value = proteinValue;
-            if (!bodyObj.date && bodyObj.dateKey) bodyObj.date = bodyObj.dateKey;
-
-            config.body = JSON.stringify(bodyObj);
-          } catch (e) {
-            console.warn("No se pudo formatear el body JSON:", e);
-          }
-        }
-
         return originalFetch(resource, config);
       };
     })();
@@ -514,7 +487,7 @@
       <!-- Calendario -->
       <div id="urineCalendarGrid" class="calendar-grid"></div>
 
-      <!-- Formulario de Registro exclusivo de Proteínas -->
+      <!-- Formulario de Registro de Proteínas -->
       <div style="margin-top: 20px; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
         <h3 style="margin-bottom: 12px; color: #39aa6a;" id="selectedUrineDateTitle">Anotar Proteínas</h3>
         
@@ -620,60 +593,91 @@
     </button>
   </nav>
 
-  <!-- Script principal de la app -->
+  <!-- Carga del script principal original -->
   <script src="/app.js"></script>
 
-  <!-- Control de guardado seguro sin recarga -->
+  <!-- Script de anulación y guardado directo garantizado -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const btnSave = document.getElementById('saveUrineStrip');
-      if (btnSave) {
-        btnSave.addEventListener('click', async (e) => {
+      // Manejar la selección de las píldoras de color visualmente
+      document.querySelectorAll('.color-options-grid .color-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          const parentGrid = pill.parentElement;
+          parentGrid.querySelectorAll('.color-pill').forEach(p => p.classList.remove('selected'));
+          pill.classList.add('selected');
+        });
+      });
+
+      // Reemplazar el botón por un clon limpio para eliminar cualquier listener previo de app.js
+      const oldBtn = document.getElementById('saveUrineStrip');
+      if (oldBtn) {
+        const newBtn = oldBtn.cloneNode(true);
+        oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+
+        newBtn.addEventListener('click', async (e) => {
           e.preventDefault();
           e.stopPropagation();
 
-          const dateKey = document.getElementById('urineDate')?.value;
-          if (!dateKey) {
+          const dateVal = document.getElementById('urineDate')?.value;
+          if (!dateVal) {
             alert("Por favor selecciona una fecha.");
             return;
           }
 
           const selectedPill = document.querySelector('.color-pill.selected');
           if (!selectedPill) {
-            alert("Por favor selecciona un valor de proteína.");
+            alert("Por favor selecciona un valor (Neg, Trazas, +, etc.).");
             return;
           }
 
+          const val = selectedPill.dataset.val;
+          const color = selectedPill.dataset.color;
+          const text_color = selectedPill.dataset.textcolor;
+          const notes = document.getElementById('urineNotes')?.value || '';
+
+          // Objeto con todas las claves posibles requeridas por la base de datos o servidor
           const payload = {
-            date: dateKey,
-            proteinas: selectedPill.dataset.val,
-            color: selectedPill.dataset.color,
-            text_color: selectedPill.dataset.textcolor,
-            notes: document.getElementById('urineNotes')?.value || ''
+            date: dateVal,
+            dateKey: dateVal,
+            proteinas: val,
+            protein: val,
+            value: val,
+            color: color,
+            text_color: text_color,
+            notes: notes
           };
 
           try {
-            const res = await fetch(`/api/urine_logs/${dateKey}`, {
+            // Se realiza la petición enviando el cuerpo normalizado
+            let response = await fetch(`/api/urine_logs/${dateVal}`, {
               method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
+              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload)
             });
 
-            if (res.ok) {
+            // Si la primera ruta no existe, reintentar con la ruta alternativa de backend
+            if (!response.ok && response.status === 404) {
+              response = await fetch(`/api/urine`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+            }
+
+            if (response.ok) {
               alert("¡Valor guardado correctamente!");
+              // Actualizar el calendario e historial en pantalla
               if (typeof renderUrineCalendar === 'function') renderUrineCalendar();
               if (typeof loadUrineLogs === 'function') loadUrineLogs();
             } else {
-              const errData = await res.json().catch(() => ({}));
-              alert("Error al guardar: " + (errData.error || errData.message || "No se pudo completar la operación en el servidor."));
+              const resData = await response.json().catch(() => ({}));
+              alert("Error al guardar: " + (resData.error || resData.message || "Respuesta no válida del servidor."));
             }
-          } catch (err) {
-            console.error("Error al realizar la petición:", err);
+          } catch (error) {
+            console.error("Error al conectar con la API:", error);
             alert("Error de conexión al servidor.");
           }
-        }, true);
+        });
       }
     });
   </script>
