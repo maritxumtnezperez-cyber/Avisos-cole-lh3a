@@ -496,7 +496,7 @@
           <textarea id="urineNotes" rows="2" placeholder="Notas adicionales..."></textarea>
         </div>
 
-        <button id="saveUrineStrip" class="btn-primary">Guardar Valor</button>
+        <button type="button" id="saveUrineStrip" class="btn-primary">Guardar Valor</button>
       </div>
 
       <!-- Detalle de Registros del Mes -->
@@ -579,7 +579,7 @@
   <!-- Carga del script principal de la app -->
   <script src="/app.js"></script>
 
-  <!-- Parche para guardar las proteínas con la contraseña x-app-password -->
+  <!-- Parche para guardar sin recargar la página ni cambiar de pestaña -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const originalBtn = document.getElementById('saveUrineStrip');
@@ -588,7 +588,9 @@
         originalBtn.parentNode.replaceChild(newBtn, originalBtn);
 
         newBtn.addEventListener('click', async (e) => {
+          // Bloqueamos recargas y propagaciones del evento
           e.preventDefault();
+          e.stopPropagation();
 
           const dateKey = document.getElementById('urineDate')?.value;
           if (!dateKey) {
@@ -629,10 +631,12 @@
             if (res.ok && (result.ok || result.success || res.status === 200)) {
               alert("¡Valor guardado correctamente!");
 
+              // Actualizamos las funciones visuales de app.js en segundo plano
               if (typeof renderUrineCalendar === 'function') {
                 renderUrineCalendar();
-              } else {
-                location.reload();
+              }
+              if (typeof loadUrineLogs === 'function') {
+                loadUrineLogs();
               }
             } else {
               alert("Error al guardar: " + (result.error || "No se pudo completar el guardado."));
