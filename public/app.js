@@ -456,6 +456,18 @@ async function renderUrineModule() {
 
     if (urineLogs[dateString]) {
       dayCell.classList.add('has-urine');
+      const log = urineLogs[dateString];
+      
+      // Obtener el color asignado para ese día
+      const bgColor = log.color || (log.protein && log.protein.color);
+      const textColor = log.text_color || log.textcolor || (log.protein && log.protein.textcolor);
+
+      if (bgColor) {
+        dayCell.style.backgroundColor = bgColor;
+      }
+      if (textColor) {
+        dayCell.style.color = textColor;
+      }
     }
 
     dayCell.addEventListener('click', () => {
