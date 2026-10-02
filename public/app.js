@@ -444,7 +444,7 @@ async function renderUrineModule() {
   for (let day = 1; day <= totalDays; day++) {
     const dayCell = document.createElement('div');
     dayCell.className = 'calendar-day';
-    dayCell.textContent = day;
+    dayCell.style.position = 'relative'; // Para posicionar la X roja de la observación
 
     const formattedDay = day < 10 ? `0${day}` : day;
     const formattedMonth = (month + 1) < 10 ? `0${month + 1}` : (month + 1);
@@ -468,7 +468,20 @@ async function renderUrineModule() {
       if (textColor) {
         dayCell.style.color = textColor;
       }
+
+      // Si existe observación/nota, se agrega la X roja
+      if (log.notes && log.notes.trim() !== '') {
+        const noteBadge = document.createElement('span');
+        noteBadge.textContent = '❌';
+        noteBadge.title = 'Tiene observación';
+        noteBadge.style.cssText = "position:absolute; top:2px; right:2px; font-size:10px; line-height:1;";
+        dayCell.appendChild(noteBadge);
+      }
     }
+
+    // Insertar el número del día después del posible badge para asegurar su orden interno
+    const dayText = document.createTextNode(day);
+    dayCell.insertBefore(dayText, dayCell.firstChild);
 
     dayCell.addEventListener('click', () => {
       urineDateInput.value = dateString;
