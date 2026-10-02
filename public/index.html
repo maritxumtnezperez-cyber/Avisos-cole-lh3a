@@ -310,6 +310,28 @@
       margin-bottom: 2px;
     }
   </style>
+
+  <!-- Inyecta automáticamente la contraseña en todas las peticiones a la API -->
+  <script>
+    (function() {
+      const originalFetch = window.fetch;
+      window.fetch = async function(...args) {
+        let [resource, config] = args;
+        config = config || {};
+        config.headers = config.headers || {};
+
+        if (config.headers instanceof Headers) {
+          config.headers.append('x-app-password', '78875879');
+        } else if (Array.isArray(config.headers)) {
+          config.headers.push(['x-app-password', '78875879']);
+        } else {
+          config.headers['x-app-password'] = '78875879';
+        }
+
+        return originalFetch(resource, config);
+      };
+    })();
+  </script>
 </head>
 <body>
 
@@ -576,78 +598,7 @@
     </button>
   </nav>
 
-  <!-- Carga del script principal de la app -->
+  <!-- Carga del script principal original de la app -->
   <script src="/app.js"></script>
-
-  <!-- Parche para guardar sin recargar la página ni cambiar de pestaña -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const originalBtn = document.getElementById('saveUrineStrip');
-      if (originalBtn) {
-        const newBtn = originalBtn.cloneNode(true);
-        originalBtn.parentNode.replaceChild(newBtn, originalBtn);
-
-        newBtn.addEventListener('click', async (e) => {
-          // Bloqueamos recargas y propagaciones del evento
-          e.preventDefault();
-          e.stopPropagation();
-
-          const dateKey = document.getElementById('urineDate')?.value;
-          if (!dateKey) {
-            alert("Por favor selecciona una fecha.");
-            return;
-          }
-
-          const selectedPill = document.querySelector('.color-pill.selected');
-          if (!selectedPill) {
-            alert("Por favor selecciona un valor de proteína.");
-            return;
-          }
-
-          const payload = {
-            proteinas: selectedPill.dataset.val,
-            color: selectedPill.dataset.color,
-            text_color: selectedPill.dataset.textcolor,
-            notes: document.getElementById('urineNotes')?.value || '',
-            protein: {
-              val: selectedPill.dataset.val,
-              color: selectedPill.dataset.color,
-              textcolor: selectedPill.dataset.textcolor
-            }
-          };
-
-          try {
-            const res = await fetch(`/api/urine_logs/${dateKey}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'x-app-password': '78875879'
-              },
-              body: JSON.stringify(payload)
-            });
-
-            const result = await res.json();
-
-            if (res.ok && (result.ok || result.success || res.status === 200)) {
-              alert("¡Valor guardado correctamente!");
-
-              // Actualizamos las funciones visuales de app.js en segundo plano
-              if (typeof renderUrineCalendar === 'function') {
-                renderUrineCalendar();
-              }
-              if (typeof loadUrineLogs === 'function') {
-                loadUrineLogs();
-              }
-            } else {
-              alert("Error al guardar: " + (result.error || "No se pudo completar el guardado."));
-            }
-          } catch (err) {
-            console.error("Error al guardar:", err);
-            alert("Error de conexión al guardar.");
-          }
-        });
-      }
-    });
-  </script>
 </body>
 </html>
