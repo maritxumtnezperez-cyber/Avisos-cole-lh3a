@@ -576,27 +576,26 @@
     </button>
   </nav>
 
-  <!-- Carga del script principal de tu app -->
+  <!-- Carga del script principal de la app -->
   <script src="/app.js"></script>
 
-  <!-- Parche solo para enviar la contraseña al guardar la orina sin alterar app.js -->
+  <!-- Parche para guardar las proteínas con la contraseña x-app-password -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const originalBtn = document.getElementById('saveUrineStrip');
       if (originalBtn) {
-        // Interceptamos la llamada para inyectar la cabecera x-app-password
         const newBtn = originalBtn.cloneNode(true);
         originalBtn.parentNode.replaceChild(newBtn, originalBtn);
 
         newBtn.addEventListener('click', async (e) => {
           e.preventDefault();
+
           const dateKey = document.getElementById('urineDate')?.value;
           if (!dateKey) {
             alert("Por favor selecciona una fecha.");
             return;
           }
 
-          // Buscar la opción seleccionada en tu UI
           const selectedPill = document.querySelector('.color-pill.selected');
           if (!selectedPill) {
             alert("Por favor selecciona un valor de proteína.");
@@ -604,12 +603,15 @@
           }
 
           const payload = {
+            proteinas: selectedPill.dataset.val,
+            color: selectedPill.dataset.color,
+            text_color: selectedPill.dataset.textcolor,
+            notes: document.getElementById('urineNotes')?.value || '',
             protein: {
               val: selectedPill.dataset.val,
               color: selectedPill.dataset.color,
               textcolor: selectedPill.dataset.textcolor
-            },
-            notes: document.getElementById('urineNotes')?.value || ''
+            }
           };
 
           try {
@@ -623,14 +625,20 @@
             });
 
             const result = await res.json();
-            if (res.ok && result.ok) {
+
+            if (res.ok && (result.ok || result.success || res.status === 200)) {
               alert("¡Valor guardado correctamente!");
-              if (typeof renderUrineCalendar === 'function') renderUrineCalendar();
-              else location.reload();
+
+              if (typeof renderUrineCalendar === 'function') {
+                renderUrineCalendar();
+              } else {
+                location.reload();
+              }
             } else {
-              alert("Error: " + (result.error || "No se pudo guardar"));
+              alert("Error al guardar: " + (result.error || "No se pudo completar el guardado."));
             }
           } catch (err) {
+            console.error("Error al guardar:", err);
             alert("Error de conexión al guardar.");
           }
         });
