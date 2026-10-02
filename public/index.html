@@ -125,27 +125,6 @@
       cursor: pointer;
       margin-bottom: 12px;
     }
-    .btn-action {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      text-align: center;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-      box-sizing: border-box;
-      border: none;
-      cursor: pointer;
-    }
-    .btn-add-calendar {
-      background-color: #39aa6a;
-      color: white;
-    }
-    .btn-delete {
-      background-color: #fee2e2;
-      color: #dc2626;
-    }
 
     /* Calendario */
     .calendar-header {
@@ -303,7 +282,7 @@
     }
   </style>
 
-  <!-- Interceptor global para autorizar peticiones al servidor -->
+  <!-- Inyector automático de la contraseña en las cabeceras -->
   <script>
     (function() {
       const originalFetch = window.fetch;
@@ -487,7 +466,7 @@
       <!-- Calendario -->
       <div id="urineCalendarGrid" class="calendar-grid"></div>
 
-      <!-- Formulario de Registro de Proteínas -->
+      <!-- Formulario sin etiqueta <form> para evitar recargas nativas -->
       <div style="margin-top: 20px; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
         <h3 style="margin-bottom: 12px; color: #39aa6a;" id="selectedUrineDateTitle">Anotar Proteínas</h3>
         
@@ -496,11 +475,11 @@
           <input type="date" id="urineDate">
         </div>
 
-        <!-- Único Parámetro: Proteínas -->
+        <!-- Opciones de Proteínas (por defecto la primera seleccionada) -->
         <div class="urine-param-card">
           <div class="urine-param-title">Proteínas (PRO)</div>
-          <div class="color-options-grid" data-param="proteinas">
-            <div class="color-pill" style="background:#fef9c3; color:#713f12;" data-val="Neg" data-color="#fef9c3" data-textcolor="#713f12">Neg</div>
+          <div class="color-options-grid" id="urinePillsContainer">
+            <div class="color-pill selected" style="background:#fef9c3; color:#713f12;" data-val="Neg" data-color="#fef9c3" data-textcolor="#713f12">Neg</div>
             <div class="color-pill" style="background:#a7f3d0; color:#065f46;" data-val="Trazas" data-color="#a7f3d0" data-textcolor="#065f46">Trazas</div>
             <div class="color-pill" style="background:#34d399; color:#064e3b;" data-val="+" data-color="#34d399" data-textcolor="#064e3b">+</div>
             <div class="color-pill" style="background:#059669; color:#ffffff;" data-val="++" data-color="#059669" data-textcolor="#ffffff">++</div>
@@ -593,49 +572,54 @@
     </button>
   </nav>
 
-  <!-- Carga del script principal original -->
+  <!-- Carga de app.js original -->
   <script src="/app.js"></script>
 
-  <!-- Script de anulación y guardado directo garantizado -->
+  <!-- Script con verificación visual y envío robusto -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Manejar la selección de las píldoras de color visualmente
-      document.querySelectorAll('.color-options-grid .color-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-          const parentGrid = pill.parentElement;
-          parentGrid.querySelectorAll('.color-pill').forEach(p => p.classList.remove('selected'));
-          pill.classList.add('selected');
-        });
-      });
+      // 1. Establecer fecha de hoy si no hay ninguna puesta
+      const urineDateElem = document.getElementById('urineDate');
+      if (urineDateElem && !urineDateElem.value) {
+        const today = new Date().toISOString().split('T')[0];
+        urineDateElem.value = today;
+      }
 
-      // Reemplazar el botón por un clon limpio para eliminar cualquier listener previo de app.js
+      // 2. Controlar la selección de botones de color mediante delegación
+      const pillsContainer = document.getElementById('urinePillsContainer');
+      if (pillsContainer) {
+        pillsContainer.addEventListener('click', (e) => {
+          const pill = e.target.closest('.color-pill');
+          if (pill) {
+            pillsContainer.querySelectorAll('.color-pill').forEach(p => p.classList.remove('selected'));
+            pill.classList.add('selected');
+          }
+        });
+      }
+
+      // 3. Reemplazar botón por un clon limpio
       const oldBtn = document.getElementById('saveUrineStrip');
       if (oldBtn) {
-        const newBtn = oldBtn.cloneNode(true);
-        oldBtn.parentNode.replaceChild(newBtn, oldBtn);
+        const saveBtn = oldBtn.cloneNode(true);
+        oldBtn.parentNode.replaceChild(saveBtn, oldBtn);
 
-        newBtn.addEventListener('click', async (e) => {
+        saveBtn.addEventListener('click', async (e) => {
           e.preventDefault();
-          e.stopPropagation();
 
           const dateVal = document.getElementById('urineDate')?.value;
           if (!dateVal) {
-            alert("Por favor selecciona una fecha.");
+            alert("Selecciona una fecha.");
             return;
           }
 
-          const selectedPill = document.querySelector('.color-pill.selected');
-          if (!selectedPill) {
-            alert("Por favor selecciona un valor (Neg, Trazas, +, etc.).");
-            return;
-          }
-
+          // Tomar el elemento seleccionado o la opción 'Neg' por defecto
+          const selectedPill = document.querySelector('#urinePillsContainer .color-pill.selected') || document.querySelector('#urinePillsContainer .color-pill');
+          
           const val = selectedPill.dataset.val;
           const color = selectedPill.dataset.color;
           const text_color = selectedPill.dataset.textcolor;
           const notes = document.getElementById('urineNotes')?.value || '';
 
-          // Objeto con todas las claves posibles requeridas por la base de datos o servidor
           const payload = {
             date: dateVal,
             dateKey: dateVal,
@@ -647,35 +631,42 @@
             notes: notes
           };
 
-          try {
-            // Se realiza la petición enviando el cuerpo normalizado
-            let response = await fetch(`/api/urine_logs/${dateVal}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
+          // Intentar peticiones a las distintas rutas posibles del backend Express
+          const endpoints = [
+            `/api/urine_logs/${dateVal}`,
+            `/api/urine-logs`,
+            `/api/urine`
+          ];
 
-            // Si la primera ruta no existe, reintentar con la ruta alternativa de backend
-            if (!response.ok && response.status === 404) {
-              response = await fetch(`/api/urine`, {
+          let success = false;
+          let lastErrorMessage = "";
+
+          for (const url of endpoints) {
+            try {
+              const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
               });
-            }
 
-            if (response.ok) {
-              alert("¡Valor guardado correctamente!");
-              // Actualizar el calendario e historial en pantalla
-              if (typeof renderUrineCalendar === 'function') renderUrineCalendar();
-              if (typeof loadUrineLogs === 'function') loadUrineLogs();
-            } else {
-              const resData = await response.json().catch(() => ({}));
-              alert("Error al guardar: " + (resData.error || resData.message || "Respuesta no válida del servidor."));
+              if (response.ok) {
+                success = true;
+                break;
+              } else if (response.status !== 404) {
+                const resData = await response.json().catch(() => ({}));
+                lastErrorMessage = resData.error || resData.message || `Error HTTP ${response.status}`;
+              }
+            } catch (err) {
+              lastErrorMessage = err.message;
             }
-          } catch (error) {
-            console.error("Error al conectar con la API:", error);
-            alert("Error de conexión al servidor.");
+          }
+
+          if (success) {
+            alert("¡Guardado correctamente!");
+            if (typeof renderUrineCalendar === 'function') renderUrineCalendar();
+            if (typeof loadUrineLogs === 'function') loadUrineLogs();
+          } else {
+            alert("No se pudo guardar: " + (lastErrorMessage || "Error de comunicación con Render."));
           }
         });
       }
