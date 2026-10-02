@@ -311,7 +311,7 @@
     }
   </style>
 
-  <!-- Inyecta automáticamente la contraseña en todas las peticiones a la API -->
+  <!-- Interceptor global para autorizar y formatear peticiones al servidor -->
   <script>
     (function() {
       const originalFetch = window.fetch;
@@ -320,12 +320,34 @@
         config = config || {};
         config.headers = config.headers || {};
 
-        if (config.headers instanceof Headers) {
-          config.headers.append('x-app-password', '78875879');
-        } else if (Array.isArray(config.headers)) {
-          config.headers.push(['x-app-password', '78875879']);
-        } else {
-          config.headers['x-app-password'] = '78875879';
+        const setHeader = (key, val) => {
+          if (config.headers instanceof Headers) {
+            config.headers.set(key, val);
+          } else if (Array.isArray(config.headers)) {
+            config.headers.push([key, val]);
+          } else {
+            config.headers[key] = val;
+          }
+        };
+
+        // Inyectar la contraseña requerida por el backend en las cabeceras
+        setHeader('x-app-password', '78875879');
+
+        // Compatibilidad de estructura para guardar orina
+        if (config.body && typeof resource === 'string' && resource.includes('/api/urine')) {
+          try {
+            const bodyObj = JSON.parse(config.body);
+            const proteinValue = bodyObj.proteinas || bodyObj.protein || bodyObj.value || "";
+
+            bodyObj.proteinas = proteinValue;
+            bodyObj.protein = proteinValue;
+            bodyObj.value = proteinValue;
+            if (!bodyObj.date && bodyObj.dateKey) bodyObj.date = bodyObj.dateKey;
+
+            config.body = JSON.stringify(bodyObj);
+          } catch (e) {
+            console.warn("No se pudo formatear el body JSON:", e);
+          }
         }
 
         return originalFetch(resource, config);
@@ -598,7 +620,62 @@
     </button>
   </nav>
 
-  <!-- Carga del script principal original de la app -->
+  <!-- Script principal de la app -->
   <script src="/app.js"></script>
+
+  <!-- Control de guardado seguro sin recarga -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const btnSave = document.getElementById('saveUrineStrip');
+      if (btnSave) {
+        btnSave.addEventListener('click', async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const dateKey = document.getElementById('urineDate')?.value;
+          if (!dateKey) {
+            alert("Por favor selecciona una fecha.");
+            return;
+          }
+
+          const selectedPill = document.querySelector('.color-pill.selected');
+          if (!selectedPill) {
+            alert("Por favor selecciona un valor de proteína.");
+            return;
+          }
+
+          const payload = {
+            date: dateKey,
+            proteinas: selectedPill.dataset.val,
+            color: selectedPill.dataset.color,
+            text_color: selectedPill.dataset.textcolor,
+            notes: document.getElementById('urineNotes')?.value || ''
+          };
+
+          try {
+            const res = await fetch(`/api/urine_logs/${dateKey}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+              alert("¡Valor guardado correctamente!");
+              if (typeof renderUrineCalendar === 'function') renderUrineCalendar();
+              if (typeof loadUrineLogs === 'function') loadUrineLogs();
+            } else {
+              const errData = await res.json().catch(() => ({}));
+              alert("Error al guardar: " + (errData.error || errData.message || "No se pudo completar la operación en el servidor."));
+            }
+          } catch (err) {
+            console.error("Error al realizar la petición:", err);
+            alert("Error de conexión al servidor.");
+          }
+        }, true);
+      }
+    });
+  </script>
 </body>
 </html>
