@@ -16,45 +16,33 @@ let proteinSelection = {
 };
 
 // Días festivos/no lectivos entre semana (Lunes a Viernes) del Calendario Bentades 2026/2027
+// Se usan exclusivamente para marcar la casilla en rojo dentro del calendario
 const bentadesHolidays = [
-  { date: '2026-10-12', title: 'Fiesta Nacional' },
-  { date: '2026-12-07', title: 'Puente de la Constitución' },
-  { date: '2026-12-08', title: 'Inmaculada Concepción' },
-  { date: '2026-12-21', title: 'Vacaciones de Navidad' },
-  { date: '2026-12-22', title: 'Vacaciones de Navidad' },
-  { date: '2026-12-23', title: 'Vacaciones de Navidad' },
-  { date: '2026-12-24', title: 'Nochebuena' },
-  { date: '2026-12-25', title: 'Navidad' },
-  { date: '2026-12-28', title: 'Vacaciones de Navidad' },
-  { date: '2026-12-29', title: 'Vacaciones de Navidad' },
-  { date: '2026-12-30', title: 'Vacaciones de Navidad' },
-  { date: '2026-12-31', title: 'Nochevieja' },
-  { date: '2027-01-01', title: 'Año Nuevo' },
-  { date: '2027-01-04', title: 'Vacaciones de Navidad' },
-  { date: '2027-01-05', title: 'Vacaciones de Navidad' },
-  { date: '2027-01-06', title: 'Reyes Magos' },
-  { date: '2027-01-18', title: 'Festivo de centro' },
-  { date: '2027-03-25', title: 'Semana Santa' },
-  { date: '2027-03-26', title: 'Semana Santa' },
-  { date: '2027-03-29', title: 'Semana Santa' },
-  { date: '2027-03-30', title: 'Semana Santa' },
-  { date: '2027-03-31', title: 'Semana Santa' },
-  { date: '2027-04-01', title: 'Semana de Pascua' },
-  { date: '2027-04-02', title: 'Semana de Pascua' }
+  '2026-10-12',
+  '2026-12-07',
+  '2026-12-08',
+  '2026-12-21',
+  '2026-12-22',
+  '2026-12-23',
+  '2026-12-24',
+  '2026-12-25',
+  '2026-12-28',
+  '2026-12-29',
+  '2026-12-30',
+  '2026-12-31',
+  '2027-01-01',
+  '2027-01-04',
+  '2027-01-05',
+  '2027-01-06',
+  '2027-01-18',
+  '2027-03-25',
+  '2027-03-26',
+  '2027-03-29',
+  '2027-03-30',
+  '2027-03-31',
+  '2027-04-01',
+  '2027-04-02'
 ];
-
-// Obtener festivos convertidos a formato de evento/noticia
-function getHolidayEvents() {
-  return bentadesHolidays.map((h, index) => ({
-    id: `holiday-${index}`,
-    title: `🎉 ${h.title}`,
-    category: 'FESTIVO',
-    date: h.date,
-    time: 'Todo el día',
-    description: 'Día festivo / no lectivo (Calendario escolar Bentades)',
-    isHoliday: true
-  }));
-}
 
 // Formato de fecha DD/MM/AAAA
 function formatDate(dateStr) {
@@ -113,26 +101,23 @@ if (filterCategory) {
   });
 }
 
-// OBTENER Y MANEJAR EVENTOS GENERALES
+// OBTENER SÓLO AVISOS GENERALES (SIN INCLUIR FESTIVOS COMO EVENTOS)
 async function getNotices() {
-  let serverNotices = [];
   try {
     const res = await fetch('/api/notices', {
       headers: { 'x-app-password': savedPassword || '' }
     });
     if (res.ok) {
-      serverNotices = await res.json();
+      return await res.json();
     } else if (res.status === 401) {
       localStorage.removeItem("appPassword");
       window.location.replace("/login.html");
       return [];
     }
   } catch (err) {
-    serverNotices = [];
+    return [];
   }
-  
-  // Combinar avisos del servidor con los días festivos
-  return [...serverNotices, ...getHolidayEvents()];
+  return [];
 }
 
 function getGoogleCalendarUrl(title, date, time, description) {
@@ -241,22 +226,16 @@ async function renderNotices() {
   }
 
   if (futureNotices.length === 0) {
-    noticeList.innerHTML = '<p class="empty-msg">No hay eventos programados en esta categoría.</p>';
+    noticeList.innerHTML = '<p class="empty-msg">No hay avisos programados.</p>';
   } else {
     futureNotices.forEach((notice) => {
       const card = document.createElement('div');
       card.className = 'notice-card';
       card.id = `event-card-${notice.id}`;
-      card.style.cssText = notice.isHoliday 
-        ? "background:#fef2f2; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);"
-        : "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
+      card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
       
       const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
       const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
-
-      const deleteBtnHtml = notice.isHoliday 
-        ? '' 
-        : `<button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>`;
 
       card.innerHTML = `
         <span class="category-tag">${notice.category || 'General'}</span>
@@ -269,7 +248,7 @@ async function renderNotices() {
         ${imageHtml}
         <div class="card-actions-column">
           ${notice.date ? `<a href="${calUrl}" target="_blank" class="btn-action btn-add-calendar">📅 Añadir a Google Calendar</a>` : ''}
-          ${deleteBtnHtml}
+          <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>
         </div>
       `;
       noticeList.appendChild(card);
@@ -278,16 +257,13 @@ async function renderNotices() {
 
   if (pastNoticeList) {
     if (pastNotices.length === 0) {
-      pastNoticeList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
+      pastNoticeList.innerHTML = '<p class="empty-msg">No hay avisos pasados.</p>';
     } else {
       pastNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
         card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
         const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
-        const deleteBtnHtml = notice.isHoliday 
-          ? '' 
-          : `<button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>`;
 
         card.innerHTML = `
           <span class="category-tag">${notice.category || 'General'}</span>
@@ -299,7 +275,7 @@ async function renderNotices() {
           <p class="event-desc">${notice.description || ''}</p>
           ${imageHtml}
           <div class="card-actions-column">
-            ${deleteBtnHtml}
+            <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>
           </div>
         `;
         pastNoticeList.appendChild(card);
@@ -338,7 +314,6 @@ async function renderCalendar() {
   const totalDays = new Date(year, month + 1, 0).getDate();
   const notices = await getNotices();
   const today = new Date();
-  const holidayDatesList = bentadesHolidays.map(h => h.date);
 
   for (let i = 0; i < firstDayIndex; i++) {
     const emptyCell = document.createElement('div');
@@ -359,7 +334,8 @@ async function renderCalendar() {
       dayCell.classList.add('today');
     }
 
-    if (holidayDatesList.includes(dateString)) {
+    // MARCA EN ROJO LOS FESTIVOS DE LA LISTA
+    if (bentadesHolidays.includes(dateString)) {
       dayCell.classList.add('holiday');
     }
 
@@ -370,6 +346,7 @@ async function renderCalendar() {
     calendarGrid.appendChild(dayCell);
   }
 
+  // LISTA DE EVENTOS DEL MES (SÓLO AVISOS CREADOS, SIN FESTIVOS)
   if (monthEventsList) {
     monthEventsList.innerHTML = '';
     const monthNotices = notices.filter(n => {
@@ -380,14 +357,12 @@ async function renderCalendar() {
     }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
     if (monthNotices.length === 0) {
-      monthEventsList.innerHTML = '<p class="empty-msg">No hay eventos en este mes.</p>';
+      monthEventsList.innerHTML = '<p class="empty-msg">No hay avisos en este mes.</p>';
     } else {
       monthNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
-        card.style.cssText = notice.isHoliday 
-          ? "background:#fef2f2; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);"
-          : "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
+        card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
         
         const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
         const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
@@ -412,7 +387,7 @@ async function renderCalendar() {
 }
 
 /* ========================================================
-   LÓGICA ACTUALIZADA DE PROTEÍNAS (DESDE POSTGRESQL)
+   LÓGICA DE PROTEÍNAS
 ======================================================== */
 
 async function getUrineLogs() {
@@ -620,7 +595,7 @@ async function renderUrineLogsList() {
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
         <strong style="color:#1e293b;">📅 ${formatDate(dateKey)}</strong>
-        <button onclick="deleteUrineLog('${dateKey}')" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:16px;">🗑️</button>
+        <button onclick="deleteUrineLog('${dateKey}')" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:16px;">🗑️️</button>
       </div>
       <div>
         <span class="strip-summary-item" style="background:${bgColor}; color:${textColor}; border:1px solid rgba(0,0,0,0.1); padding:4px 8px; border-radius:6px; font-weight:bold; display:inline-block;">
@@ -674,10 +649,10 @@ document.getElementById('saveUrineStrip')?.addEventListener('click', async () =>
 
   const success = await saveUrineLogServer(dateVal, proteinSelection, notesVal);
   if (success) {
-    alert('Valor de proteína registrado correctamente en la nube');
+    alert('Valor registrado correctamente');
     renderUrineModule();
   } else {
-    alert('Error al guardar el valor en el servidor');
+    alert('Error al guardar en el servidor');
   }
 });
 
@@ -718,7 +693,7 @@ if (publishBtn) {
     const file = imageFileInput.files[0];
 
     if (!title) {
-      alert('Por favor, introduce un título para el evento.');
+      alert('Por favor, introduce un título para el aviso.');
       return;
     }
 
@@ -744,7 +719,7 @@ if (publishBtn) {
 
         if (!res.ok) {
           const errData = await res.json();
-          alert(errData.error || 'Error al publicar evento');
+          alert(errData.error || 'Error al publicar aviso');
           return;
         }
 
@@ -754,7 +729,7 @@ if (publishBtn) {
         descriptionInput.value = '';
         imageFileInput.value = '';
 
-        alert('Evento publicado con éxito');
+        alert('Aviso publicado con éxito');
         renderNotices();
         renderCalendar();
         showScreen('home');
@@ -776,7 +751,7 @@ if (publishBtn) {
 }
 
 async function deleteNotice(id) {
-  if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
+  if (confirm('¿Estás seguro de que deseas eliminar este aviso?')) {
     try {
       const res = await fetch(`/api/notices/${id}`, {
         method: 'DELETE',
