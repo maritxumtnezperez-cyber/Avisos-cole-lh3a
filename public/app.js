@@ -15,35 +15,6 @@ let proteinSelection = {
   textcolor: '#713f12'
 };
 
-// Días festivos/no lectivos entre semana (Lunes a Viernes) del Calendario Bentades 2026/2027
-// Se usan exclusivamente para marcar la casilla en rojo dentro del calendario
-const bentadesHolidays = [
-  '2026-10-12',
-  '2026-12-07',
-  '2026-12-08',
-  '2026-12-21',
-  '2026-12-22',
-  '2026-12-23',
-  '2026-12-24',
-  '2026-12-25',
-  '2026-12-28',
-  '2026-12-29',
-  '2026-12-30',
-  '2026-12-31',
-  '2027-01-01',
-  '2027-01-04',
-  '2027-01-05',
-  '2027-01-06',
-  '2027-01-18',
-  '2027-03-25',
-  '2027-03-26',
-  '2027-03-29',
-  '2027-03-30',
-  '2027-03-31',
-  '2027-04-01',
-  '2027-04-02'
-];
-
 // Formato de fecha DD/MM/AAAA
 function formatDate(dateStr) {
   if (!dateStr) return 'Sin fecha';
@@ -101,23 +72,23 @@ if (filterCategory) {
   });
 }
 
-// OBTENER SÓLO AVISOS GENERALES (SIN INCLUIR FESTIVOS COMO EVENTOS)
+// OBTENER Y MANEJAR EVENTOS GENERALES
 async function getNotices() {
   try {
     const res = await fetch('/api/notices', {
       headers: { 'x-app-password': savedPassword || '' }
     });
-    if (res.ok) {
-      return await res.json();
-    } else if (res.status === 401) {
-      localStorage.removeItem("appPassword");
-      window.location.replace("/login.html");
+    if (!res.ok) {
+      if (res.status === 401) {
+        localStorage.removeItem("appPassword");
+        window.location.replace("/login.html");
+      }
       return [];
     }
+    return await res.json();
   } catch (err) {
     return [];
   }
-  return [];
 }
 
 function getGoogleCalendarUrl(title, date, time, description) {
@@ -127,7 +98,7 @@ function getGoogleCalendarUrl(title, date, time, description) {
   let startTime = '090000';
   let endTime = '100000';
 
-  if (time && time !== 'Todo el día') {
+  if (time) {
     const cleanTime = time.replace(':', '');
     startTime = cleanTime.padEnd(4, '0') + '00';
     const hour = parseInt(cleanTime.substring(0, 2), 10);
@@ -177,7 +148,7 @@ async function renderNotices() {
     const parts = dateStr.split('-');
     let hour = 23, minute = 59;
     
-    if (timeStr && timeStr !== 'Todo el día') {
+    if (timeStr) {
       const timeParts = timeStr.split(':');
       hour = parseInt(timeParts[0], 10) || 0;
       minute = parseInt(timeParts[1], 10) || 0;
@@ -226,14 +197,13 @@ async function renderNotices() {
   }
 
   if (futureNotices.length === 0) {
-    noticeList.innerHTML = '<p class="empty-msg">No hay avisos programados.</p>';
+    noticeList.innerHTML = '<p class="empty-msg">No hay eventos programados en esta categoría.</p>';
   } else {
     futureNotices.forEach((notice) => {
       const card = document.createElement('div');
       card.className = 'notice-card';
       card.id = `event-card-${notice.id}`;
       card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
-      
       const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
       const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
@@ -257,14 +227,13 @@ async function renderNotices() {
 
   if (pastNoticeList) {
     if (pastNotices.length === 0) {
-      pastNoticeList.innerHTML = '<p class="empty-msg">No hay avisos pasados.</p>';
+      pastNoticeList.innerHTML = '<p class="empty-msg">No hay eventos pasados.</p>';
     } else {
       pastNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
         card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
         const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
-
         card.innerHTML = `
           <span class="category-tag">${notice.category || 'General'}</span>
           <h3>${notice.title}</h3>
@@ -334,19 +303,27 @@ async function renderCalendar() {
       dayCell.classList.add('today');
     }
 
-    // MARCA EN ROJO LOS FESTIVOS DE LA LISTA
-    if (bentadesHolidays.includes(dateString)) {
-      dayCell.classList.add('holiday');
-    }
+    // Filtrar eventos correspondientes a la fecha actual
+    const dayNotices = notices.filter(n => n.date === dateString);
 
-    if (notices.some(n => n.date === dateString)) {
+    if (dayNotices.length > 0) {
       dayCell.classList.add('has-event');
+
+      // Asignación de clases dinámicas según la categoría del evento
+      const isHoliday = dayNotices.some(n => n.category === 'Festivo' || n.category === 'HOLIDAY');
+      const isMedical = dayNotices.some(n => n.category === 'Médico' || n.category === 'MEDICAL');
+
+      if (isHoliday) {
+        dayCell.classList.add('holiday');
+      }
+      if (isMedical) {
+        dayCell.classList.add('has-medical-event');
+      }
     }
 
     calendarGrid.appendChild(dayCell);
   }
 
-  // LISTA DE EVENTOS DEL MES (SÓLO AVISOS CREADOS, SIN FESTIVOS)
   if (monthEventsList) {
     monthEventsList.innerHTML = '';
     const monthNotices = notices.filter(n => {
@@ -357,13 +334,12 @@ async function renderCalendar() {
     }).sort((a, b) => new Date(a.date) - new Date(b.date));
 
     if (monthNotices.length === 0) {
-      monthEventsList.innerHTML = '<p class="empty-msg">No hay avisos en este mes.</p>';
+      monthEventsList.innerHTML = '<p class="empty-msg">No hay eventos en este mes.</p>';
     } else {
       monthNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
         card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
-        
         const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
         const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
@@ -387,7 +363,7 @@ async function renderCalendar() {
 }
 
 /* ========================================================
-   LÓGICA DE PROTEÍNAS
+   LÓGICA ACTUALIZADA DE PROTEÍNAS (DESDE POSTGRESQL)
 ======================================================== */
 
 async function getUrineLogs() {
@@ -649,10 +625,10 @@ document.getElementById('saveUrineStrip')?.addEventListener('click', async () =>
 
   const success = await saveUrineLogServer(dateVal, proteinSelection, notesVal);
   if (success) {
-    alert('Valor registrado correctamente');
+    alert('Valor de proteína registrado correctamente en la nube');
     renderUrineModule();
   } else {
-    alert('Error al guardar en el servidor');
+    alert('Error al guardar el valor en el servidor');
   }
 });
 
@@ -693,7 +669,7 @@ if (publishBtn) {
     const file = imageFileInput.files[0];
 
     if (!title) {
-      alert('Por favor, introduce un título para el aviso.');
+      alert('Por favor, introduce un título para el evento.');
       return;
     }
 
@@ -719,7 +695,7 @@ if (publishBtn) {
 
         if (!res.ok) {
           const errData = await res.json();
-          alert(errData.error || 'Error al publicar aviso');
+          alert(errData.error || 'Error al publicar evento');
           return;
         }
 
@@ -729,7 +705,7 @@ if (publishBtn) {
         descriptionInput.value = '';
         imageFileInput.value = '';
 
-        alert('Aviso publicado con éxito');
+        alert('Evento publicado con éxito');
         renderNotices();
         renderCalendar();
         showScreen('home');
@@ -751,7 +727,7 @@ if (publishBtn) {
 }
 
 async function deleteNotice(id) {
-  if (confirm('¿Estás seguro de que deseas eliminar este aviso?')) {
+  if (confirm('¿Estás seguro de que deseas eliminar este evento?')) {
     try {
       const res = await fetch(`/api/notices/${id}`, {
         method: 'DELETE',
