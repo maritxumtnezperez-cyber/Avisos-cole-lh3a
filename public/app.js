@@ -15,6 +15,43 @@ let proteinSelection = {
   textcolor: '#713f12'
 };
 
+// Días festivos/no lectivos entre semana (Lunes a Viernes) del Calendario Bentades 2026/2027
+const bentadesHolidays = [
+  // Octubre 2026
+  '2026-10-12', // Lunes (Fiesta Nacional)
+
+  // Diciembre 2026
+  '2026-12-07', // Lunes (Puente Constitución)
+  '2026-12-08', // Martes (Inmaculada Concepción)
+  '2026-12-21', // Lunes (Vacaciones Navidad)
+  '2026-12-22', // Martes (Vacaciones Navidad)
+  '2026-12-23', // Miércoles (Vacaciones Navidad)
+  '2026-12-24', // Jueves (Nochebuena)
+  '2026-12-25', // Viernes (Navidad)
+  '2026-12-28', // Lunes (Vacaciones Navidad)
+  '2026-12-29', // Martes (Vacaciones Navidad)
+  '2026-12-30', // Miércoles (Vacaciones Navidad)
+  '2026-12-31', // Jueves (Nochevieja)
+
+  // Enero 2027
+  '2027-01-01', // Viernes (Año Nuevo)
+  '2027-01-04', // Lunes (Vacaciones Navidad)
+  '2027-01-05', // Martes (Vacaciones Navidad)
+  '2027-01-06', // Miércoles (Reyes Magos)
+  '2027-01-18', // Lunes (Festivo de centro)
+
+  // Marzo 2027
+  '2027-03-25', // Jueves (Semana Santa)
+  '2027-03-26', // Viernes (Semana Santa)
+  '2027-03-29', // Lunes (Semana Santa)
+  '2027-03-30', // Martes (Semana Santa)
+  '2027-03-31', // Miércoles (Semana Santa)
+
+  // Abril 2027
+  '2027-04-01', // Jueves (Semana de Pascua)
+  '2027-04-02'  // Viernes (Semana de Pascua)
+];
+
 // Formato de fecha DD/MM/AAAA
 function formatDate(dateStr) {
   if (!dateStr) return 'Sin fecha';
@@ -301,6 +338,11 @@ async function renderCalendar() {
 
     if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
       dayCell.classList.add('today');
+    }
+
+    // Marcar festivos laborables (excluyendo fines de semana)
+    if (bentadesHolidays.includes(dateString)) {
+      dayCell.classList.add('holiday');
     }
 
     if (notices.some(n => n.date === dateString)) {
