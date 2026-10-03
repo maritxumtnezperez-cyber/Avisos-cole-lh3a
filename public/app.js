@@ -17,40 +17,44 @@ let proteinSelection = {
 
 // Días festivos/no lectivos entre semana (Lunes a Viernes) del Calendario Bentades 2026/2027
 const bentadesHolidays = [
-  // Octubre 2026
-  '2026-10-12', // Lunes (Fiesta Nacional)
-
-  // Diciembre 2026
-  '2026-12-07', // Lunes (Puente Constitución)
-  '2026-12-08', // Martes (Inmaculada Concepción)
-  '2026-12-21', // Lunes (Vacaciones Navidad)
-  '2026-12-22', // Martes (Vacaciones Navidad)
-  '2026-12-23', // Miércoles (Vacaciones Navidad)
-  '2026-12-24', // Jueves (Nochebuena)
-  '2026-12-25', // Viernes (Navidad)
-  '2026-12-28', // Lunes (Vacaciones Navidad)
-  '2026-12-29', // Martes (Vacaciones Navidad)
-  '2026-12-30', // Miércoles (Vacaciones Navidad)
-  '2026-12-31', // Jueves (Nochevieja)
-
-  // Enero 2027
-  '2027-01-01', // Viernes (Año Nuevo)
-  '2027-01-04', // Lunes (Vacaciones Navidad)
-  '2027-01-05', // Martes (Vacaciones Navidad)
-  '2027-01-06', // Miércoles (Reyes Magos)
-  '2027-01-18', // Lunes (Festivo de centro)
-
-  // Marzo 2027
-  '2027-03-25', // Jueves (Semana Santa)
-  '2027-03-26', // Viernes (Semana Santa)
-  '2027-03-29', // Lunes (Semana Santa)
-  '2027-03-30', // Martes (Semana Santa)
-  '2027-03-31', // Miércoles (Semana Santa)
-
-  // Abril 2027
-  '2027-04-01', // Jueves (Semana de Pascua)
-  '2027-04-02'  // Viernes (Semana de Pascua)
+  { date: '2026-10-12', title: 'Fiesta Nacional' },
+  { date: '2026-12-07', title: 'Puente de la Constitución' },
+  { date: '2026-12-08', title: 'Inmaculada Concepción' },
+  { date: '2026-12-21', title: 'Vacaciones de Navidad' },
+  { date: '2026-12-22', title: 'Vacaciones de Navidad' },
+  { date: '2026-12-23', title: 'Vacaciones de Navidad' },
+  { date: '2026-12-24', title: 'Nochebuena' },
+  { date: '2026-12-25', title: 'Navidad' },
+  { date: '2026-12-28', title: 'Vacaciones de Navidad' },
+  { date: '2026-12-29', title: 'Vacaciones de Navidad' },
+  { date: '2026-12-30', title: 'Vacaciones de Navidad' },
+  { date: '2026-12-31', title: 'Nochevieja' },
+  { date: '2027-01-01', title: 'Año Nuevo' },
+  { date: '2027-01-04', title: 'Vacaciones de Navidad' },
+  { date: '2027-01-05', title: 'Vacaciones de Navidad' },
+  { date: '2027-01-06', title: 'Reyes Magos' },
+  { date: '2027-01-18', title: 'Festivo de centro' },
+  { date: '2027-03-25', title: 'Semana Santa' },
+  { date: '2027-03-26', title: 'Semana Santa' },
+  { date: '2027-03-29', title: 'Semana Santa' },
+  { date: '2027-03-30', title: 'Semana Santa' },
+  { date: '2027-03-31', title: 'Semana Santa' },
+  { date: '2027-04-01', title: 'Semana de Pascua' },
+  { date: '2027-04-02', title: 'Semana de Pascua' }
 ];
+
+// Obtener festivos convertidos a formato de evento/noticia
+function getHolidayEvents() {
+  return bentadesHolidays.map((h, index) => ({
+    id: `holiday-${index}`,
+    title: `🎉 ${h.title}`,
+    category: 'FESTIVO',
+    date: h.date,
+    time: 'Todo el día',
+    description: 'Día festivo / no lectivo (Calendario escolar Bentades)',
+    isHoliday: true
+  }));
+}
 
 // Formato de fecha DD/MM/AAAA
 function formatDate(dateStr) {
@@ -111,21 +115,24 @@ if (filterCategory) {
 
 // OBTENER Y MANEJAR EVENTOS GENERALES
 async function getNotices() {
+  let serverNotices = [];
   try {
     const res = await fetch('/api/notices', {
       headers: { 'x-app-password': savedPassword || '' }
     });
-    if (!res.ok) {
-      if (res.status === 401) {
-        localStorage.removeItem("appPassword");
-        window.location.replace("/login.html");
-      }
+    if (res.ok) {
+      serverNotices = await res.json();
+    } else if (res.status === 401) {
+      localStorage.removeItem("appPassword");
+      window.location.replace("/login.html");
       return [];
     }
-    return await res.json();
   } catch (err) {
-    return [];
+    serverNotices = [];
   }
+  
+  // Combinar avisos del servidor con los días festivos
+  return [...serverNotices, ...getHolidayEvents()];
 }
 
 function getGoogleCalendarUrl(title, date, time, description) {
@@ -135,7 +142,7 @@ function getGoogleCalendarUrl(title, date, time, description) {
   let startTime = '090000';
   let endTime = '100000';
 
-  if (time) {
+  if (time && time !== 'Todo el día') {
     const cleanTime = time.replace(':', '');
     startTime = cleanTime.padEnd(4, '0') + '00';
     const hour = parseInt(cleanTime.substring(0, 2), 10);
@@ -185,7 +192,7 @@ async function renderNotices() {
     const parts = dateStr.split('-');
     let hour = 23, minute = 59;
     
-    if (timeStr) {
+    if (timeStr && timeStr !== 'Todo el día') {
       const timeParts = timeStr.split(':');
       hour = parseInt(timeParts[0], 10) || 0;
       minute = parseInt(timeParts[1], 10) || 0;
@@ -240,9 +247,16 @@ async function renderNotices() {
       const card = document.createElement('div');
       card.className = 'notice-card';
       card.id = `event-card-${notice.id}`;
-      card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
+      card.style.cssText = notice.isHoliday 
+        ? "background:#fef2f2; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);"
+        : "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
+      
       const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
       const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
+
+      const deleteBtnHtml = notice.isHoliday 
+        ? '' 
+        : `<button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>`;
 
       card.innerHTML = `
         <span class="category-tag">${notice.category || 'General'}</span>
@@ -255,7 +269,7 @@ async function renderNotices() {
         ${imageHtml}
         <div class="card-actions-column">
           ${notice.date ? `<a href="${calUrl}" target="_blank" class="btn-action btn-add-calendar">📅 Añadir a Google Calendar</a>` : ''}
-          <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>
+          ${deleteBtnHtml}
         </div>
       `;
       noticeList.appendChild(card);
@@ -271,6 +285,10 @@ async function renderNotices() {
         card.className = 'notice-card';
         card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
         const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
+        const deleteBtnHtml = notice.isHoliday 
+          ? '' 
+          : `<button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>`;
+
         card.innerHTML = `
           <span class="category-tag">${notice.category || 'General'}</span>
           <h3>${notice.title}</h3>
@@ -281,7 +299,7 @@ async function renderNotices() {
           <p class="event-desc">${notice.description || ''}</p>
           ${imageHtml}
           <div class="card-actions-column">
-            <button class="btn-action btn-delete" onclick="deleteNotice('${notice.id}')">Eliminar</button>
+            ${deleteBtnHtml}
           </div>
         `;
         pastNoticeList.appendChild(card);
@@ -320,6 +338,7 @@ async function renderCalendar() {
   const totalDays = new Date(year, month + 1, 0).getDate();
   const notices = await getNotices();
   const today = new Date();
+  const holidayDatesList = bentadesHolidays.map(h => h.date);
 
   for (let i = 0; i < firstDayIndex; i++) {
     const emptyCell = document.createElement('div');
@@ -340,8 +359,7 @@ async function renderCalendar() {
       dayCell.classList.add('today');
     }
 
-    // Marcar festivos laborables (excluyendo fines de semana)
-    if (bentadesHolidays.includes(dateString)) {
+    if (holidayDatesList.includes(dateString)) {
       dayCell.classList.add('holiday');
     }
 
@@ -367,7 +385,10 @@ async function renderCalendar() {
       monthNotices.forEach(notice => {
         const card = document.createElement('div');
         card.className = 'notice-card';
-        card.style.cssText = "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
+        card.style.cssText = notice.isHoliday 
+          ? "background:#fef2f2; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);"
+          : "background:white; padding:16px; border-radius:12px; margin-bottom:12px; border: 2px solid #39aa6a; box-shadow: 0 4px 10px rgba(57, 170, 106, 0.15);";
+        
         const imageHtml = (notice.image || notice.imageUrl) ? `<div class="img-container-full"><img src="${notice.image || notice.imageUrl}" alt="Imagen de evento" style="max-width:100%; border-radius:8px;"></div>` : '';
         const calUrl = getGoogleCalendarUrl(notice.title, notice.date, notice.time, notice.description);
 
@@ -486,7 +507,7 @@ async function renderUrineModule() {
   for (let day = 1; day <= totalDays; day++) {
     const dayCell = document.createElement('div');
     dayCell.className = 'calendar-day';
-    dayCell.style.position = 'relative'; // Para posicionar la X roja de la observación
+    dayCell.style.position = 'relative';
 
     const formattedDay = day < 10 ? `0${day}` : day;
     const formattedMonth = (month + 1) < 10 ? `0${month + 1}` : (month + 1);
@@ -500,7 +521,6 @@ async function renderUrineModule() {
       dayCell.classList.add('has-urine');
       const log = urineLogs[dateString];
       
-      // Obtener el color asignado para ese día
       const bgColor = log.color || (log.protein && log.protein.color);
       const textColor = log.text_color || log.textcolor || (log.protein && log.protein.textcolor);
 
@@ -511,7 +531,6 @@ async function renderUrineModule() {
         dayCell.style.color = textColor;
       }
 
-      // Si existe observación/nota, se agrega la X roja
       if (log.notes && log.notes.trim() !== '') {
         const noteBadge = document.createElement('span');
         noteBadge.textContent = '❌';
@@ -521,7 +540,6 @@ async function renderUrineModule() {
       }
     }
 
-    // Insertar el número del día después del posible badge para asegurar su orden interno
     const dayText = document.createTextNode(day);
     dayCell.insertBefore(dayText, dayCell.firstChild);
 
@@ -546,7 +564,6 @@ async function loadUrineLogForDate(dateStr) {
     const log = urineLogs[dateStr];
     document.getElementById('urineNotes').value = log.notes || '';
     
-    // Extraer datos con soporte para distintas claves
     const val = log.val || log.value || log.proteinas || (log.protein && log.protein.val) || 'Neg';
     const color = log.color || (log.protein && log.protein.color) || '#fef9c3';
     const textcolor = log.text_color || log.textcolor || (log.protein && log.protein.textcolor) || '#713f12';
@@ -596,7 +613,6 @@ async function renderUrineLogsList() {
     const card = document.createElement('div');
     card.style.cssText = "background:white; padding:12px; border-radius:10px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,0.08); display:flex; justify-content:space-between; flex-direction:column;";
 
-    // Lectura robusta para resolver undefined y aplicar colores
     const val = log.val || log.value || log.proteinas || (log.protein && log.protein.val) || 'Sin dato';
     const bgColor = log.color || (log.protein && log.protein.color) || '#fef9c3';
     const textColor = log.text_color || log.textcolor || (log.protein && log.protein.textcolor) || '#713f12';
