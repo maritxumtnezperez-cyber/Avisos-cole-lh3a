@@ -247,6 +247,23 @@
       transform: scale(1.05);
     }
 
+    /* Botón de exportar a Excel */
+    .btn-export {
+      width: 100%;
+      padding: 12px;
+      background: white;
+      color: #39aa6a;
+      border: 2px solid #39aa6a;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .btn-export:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
     /* Navegación Inferior (5 Pestañas) */
     nav.bottom {
       position: fixed;
@@ -510,6 +527,11 @@
         <h3>📋 Historial de proteínas del mes</h3>
         <div id="urineLogsList" style="margin-top: 10px;"></div>
       </div>
+
+      <!-- Exportar todos los registros a Excel -->
+      <div style="margin-top: 20px;">
+        <button type="button" id="exportUrineExcel" class="btn-export">⬇️ Descargar resultados en Excel</button>
+      </div>
     </section>
 
     <!-- Pantalla: Administración / Publicar -->
@@ -581,6 +603,9 @@
       <label>Tiras</label>
     </button>
   </nav>
+
+  <!-- Librería para generar archivos Excel (.xlsx) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <!-- Carga de app.js original -->
   <script src="/app.js"></script>
@@ -677,6 +702,65 @@
             if (typeof loadUrineLogs === 'function') loadUrineLogs();
           } else {
             alert("No se pudo guardar: " + (lastErrorMessage || "Error de comunicación con Render."));
+          }
+        });
+      }
+
+      // 4. Descargar todos los registros de proteínas en Excel
+      const exportBtn = document.getElementById('exportUrineExcel');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', async () => {
+          if (typeof XLSX === 'undefined') {
+            alert("No se pudo cargar la librería de Excel. Comprueba la conexión e inténtalo de nuevo.");
+            return;
+          }
+
+          const originalText = exportBtn.textContent;
+          exportBtn.disabled = true;
+          exportBtn.textContent = "Preparando archivo...";
+
+          try {
+            // El backend devuelve un objeto indexado por fecha: { "2026-10-15": { val, notes, ... } }
+            let logs = null;
+            try {
+              const response = await fetch('/api/urine-logs');
+              if (!response.ok) throw new Error(`Error HTTP ${response.status}`);
+              logs = await response.json();
+            } catch (err) {
+              alert("No se pudieron cargar los registros: " + err.message);
+              return;
+            }
+
+            const rows = Object.keys(logs || {})
+              .sort()
+              .map(dateKey => {
+                const log = logs[dateKey] || {};
+                const protein = log.protein;
+                const valor = log.val || log.value || log.proteinas ||
+                  (typeof protein === 'string' ? protein : (protein && protein.val)) || '';
+                const [y, m, d] = dateKey.slice(0, 10).split('-');
+                const fecha = (y && m && d) ? `${d}/${m}/${y}` : dateKey;
+                return [fecha, valor, log.notes || ''];
+              });
+
+            if (rows.length === 0) {
+              alert("No hay registros para exportar.");
+              return;
+            }
+
+            const ws = XLSX.utils.aoa_to_sheet([
+              ['Fecha', 'Proteínas (PRO)', 'Observaciones'],
+              ...rows
+            ]);
+            ws['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 45 }];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Proteínas');
+
+            const today = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `proteinas-orina-${today}.xlsx`);
+          } finally {
+            exportBtn.disabled = false;
+            exportBtn.textContent = originalText;
           }
         });
       }
