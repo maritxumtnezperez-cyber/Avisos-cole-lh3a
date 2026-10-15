@@ -604,8 +604,8 @@
     </button>
   </nav>
 
-  <!-- Librería para generar archivos Excel (.xlsx) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Librería para generar archivos Excel (.xlsx) con colores -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
   <!-- Carga de app.js original -->
   <script src="/app.js"></script>
@@ -706,11 +706,28 @@
         });
       }
 
-      // 4. Descargar todos los registros de proteínas en Excel
+      // 4. Descargar todos los registros de proteínas en Excel (con los colores de la app)
       const exportBtn = document.getElementById('exportUrineExcel');
       if (exportBtn) {
+        // Mismos colores que las opciones de la tira (fondo / texto)
+        const PILL_COLORS = {
+          'Neg':    { bg: '#fef9c3', fg: '#713f12' },
+          'Trazas': { bg: '#a7f3d0', fg: '#065f46' },
+          '+':      { bg: '#34d399', fg: '#064e3b' },
+          '++':     { bg: '#059669', fg: '#ffffff' },
+          '+++':    { bg: '#0d6f61', fg: '#D12947' }
+        };
+
+        // '#rgb' / '#rrggbb' -> 'FFRRGGBB' (formato de Excel); null si no es válido
+        const toArgb = (hex) => {
+          if (typeof hex !== 'string') return null;
+          let h = hex.trim().replace('#', '');
+          if (h.length === 3) h = h.split('').map(c => c + c).join('');
+          return /^[0-9a-fA-F]{6}$/.test(h) ? 'FF' + h.toUpperCase() : null;
+        };
+
         exportBtn.addEventListener('click', async () => {
-          if (typeof XLSX === 'undefined') {
+          if (typeof ExcelJS === 'undefined') {
             alert("No se pudo cargar la librería de Excel. Comprueba la conexión e inténtalo de nuevo.");
             return;
           }
@@ -731,33 +748,62 @@
               return;
             }
 
-            const rows = Object.keys(logs || {})
-              .sort()
-              .map(dateKey => {
-                const log = logs[dateKey] || {};
-                const protein = log.protein;
-                const valor = log.val || log.value || log.proteinas ||
-                  (typeof protein === 'string' ? protein : (protein && protein.val)) || '';
-                const [y, m, d] = dateKey.slice(0, 10).split('-');
-                const fecha = (y && m && d) ? `${d}/${m}/${y}` : dateKey;
-                return [fecha, valor, log.notes || ''];
-              });
-
-            if (rows.length === 0) {
+            const dateKeys = Object.keys(logs || {}).sort();
+            if (dateKeys.length === 0) {
               alert("No hay registros para exportar.");
               return;
             }
 
-            const ws = XLSX.utils.aoa_to_sheet([
-              ['Fecha', 'Proteínas (PRO)', 'Observaciones'],
-              ...rows
-            ]);
-            ws['!cols'] = [{ wch: 12 }, { wch: 16 }, { wch: 45 }];
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Proteínas');
+            const workbook = new ExcelJS.Workbook();
+            const sheet = workbook.addWorksheet('Proteínas');
+            sheet.columns = [
+              { header: 'Fecha', key: 'fecha', width: 12 },
+              { header: 'Proteínas (PRO)', key: 'valor', width: 16 },
+              { header: 'Observaciones', key: 'notas', width: 45 }
+            ];
+            sheet.getRow(1).font = { bold: true };
 
+            dateKeys.forEach(dateKey => {
+              const log = logs[dateKey] || {};
+              const protein = log.protein;
+              const valor = String(
+                log.val || log.value || log.proteinas ||
+                (typeof protein === 'string' ? protein : (protein && protein.val)) || ''
+              );
+
+              // Color guardado en el registro; si no hay, el de la opción de la tira
+              const known = PILL_COLORS[valor] || {};
+              const bg = toArgb(log.color || (protein && protein.color) || known.bg);
+              const fg = toArgb(log.text_color || log.textcolor || (protein && protein.textcolor) || known.fg);
+
+              const [y, m, d] = dateKey.slice(0, 10).split('-');
+              const fecha = (y && m && d) ? `${d}/${m}/${y}` : dateKey;
+
+              const row = sheet.addRow({ fecha, valor, notas: log.notes || '' });
+              const cell = row.getCell(2);
+              cell.alignment = { horizontal: 'center' };
+              if (valor) {
+                cell.font = { bold: true, ...(fg ? { color: { argb: fg } } : {}) };
+                if (bg) {
+                  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+                }
+              }
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], {
+              type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
             const today = new Date().toISOString().split('T')[0];
-            XLSX.writeFile(wb, `proteinas-orina-${today}.xlsx`);
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `proteinas-orina-${today}.xlsx`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+          } catch (err) {
+            alert("No se pudo generar el Excel: " + err.message);
           } finally {
             exportBtn.disabled = false;
             exportBtn.textContent = originalText;
